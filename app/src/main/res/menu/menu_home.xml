@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_new_tab"
+        android:icon="@drawable/ic_new_tab"
+        android:title="New tab"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_add_shortcut"
+        android:icon="@drawable/ic_add_shortcut_popup"
+        android:title="Add shortcut"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/menu_copy"
+        android:icon="@drawable/ic_link"
+        android:title="Copy link"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_history"
+        android:icon="@drawable/ic_history"
+        android:title="History"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/menu_feedback"
+        android:icon="@drawable/ic_feedback"
+        android:title="Feedback"
+        app:showAsAction="always" />
+</menu>

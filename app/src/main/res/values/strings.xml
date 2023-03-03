@@ -1,0 +1,107 @@
+<resources>
+    <string name="app_name">Video Downloader</string>
+
+    <!--AdMob Id-->
+    <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admob_banner_ad_id" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="admob_interstitial_ad_id" translatable="false">ca-app-pub-3940256099942544/1033173712X</string>
+    <string name="admob_native_ad_id" translatable="false">ca-app-pub-3940256099942544/2247696110</string>
+    <string name="admob_open_ad_id" translatable="false">ca-app-pub-3940256099942544/3419835294X</string>
+
+
+
+    <string name="share_via">Share via…</string>
+    <string-array name="blocked_sites">
+        <item>youtube.com</item>
+    </string-array>
+    <string name="share_message">Download the best video downloader app of all time!</string>
+    <string name="premium_feature_message">Unlimited Access with No ads</string>
+    <string name="no_video_resource_message">Please go to <b>video detail page</b> to <b>play video first</b>, and the download button will be available after Video Downloader detects the video.</string>
+    <string name="home_search_hint">Search or type web address</string>
+
+    <string name="add_shortcut">Add shortcut</string>
+    <string name="facebook">Facebook</string>
+    <string name="instagram">Instagram</string>
+    <string name="linkedin">Linkedin</string>
+    <string name="pinterest">Pinterest</string>
+    <string name="tiktok">Tiktok</string>
+    <string name="dailymotion">Dailymotion</string>
+    <string name="vimeo">Vimeo</string>
+    <string name="buzz_video">Buzz video</string>
+    <string name="imdb">IMDB</string>
+    <string name="vlive">Vlive</string>
+    <string name="str_default">Default</string>
+    <string name="feedback_email">gsvideodownloader@gmail.com</string>
+    <string name="retry">RETRY</string>
+    <string name="view">VIEW</string>
+    <string name="pause">PAUSE</string>
+    <string name="resume">RESUME</string>
+    <string name="download">Download</string>
+    <string name="privacy_policy_url">http://kunkun-app.appspot.com/policy</string>
+    <string name="init_failed">Initialization failed</string>
+    <string name="download_cancelled">Download task cancelled</string>
+
+    <string name="fps_value">%d fps</string>
+    <string name="abr_value">%d abr</string>
+    <string name="duration">%d:%d</string>
+
+    <string name="cancel_download">Cancel download</string>
+
+    <string name="common_permission_hint">Authorization Hint</string>
+    <string name="common_permission_message">Use of this feature requires permission to %s</string>
+    <string name="common_permission_granted">granted</string>
+    <string name="common_permission_denied">Cancel</string>
+
+    <string name="youtubedl_update_noti_title">Updating yt-dlp</string>
+    <string name="command_noti_text">Running command</string>
+    <string name="download_noti_channel_name">dvd download</string>
+    <string name="download_start">Starting download</string>
+    <string name="youtubedl_update">Update yt-dlp</string>
+    <string name="youtubedl_update_noti_channel_name">yt-dlp update</string>
+    <string name="already_updated">Already up to date</string>
+    <string name="updated_successful">Update successful</string>
+
+
+    <string name="common_permission_alert">Authorization Alert</string>
+    <string name="common_permission_fail_hint">Authorization failed, please grant permission correctly</string>
+    <string name="common_permission_fail_assign_hint">Authorization failed, please grant %s correctly</string>
+    <string name="common_permission_manual_fail_hint">Failed to obtain permission, please grant permission manually</string>
+    <string name="common_permission_manual_assign_fail_hint">Failed to obtain permission, please grant %s manually</string>
+    <string name="common_permission_background_location_fail_hint">Failed to obtain background location permission,\nPlease select "Always Allow"</string>
+    <string name="common_permission_background_sensors_fail_hint">Failed to obtain background sensor permission,\nPlease select "Always Allow"</string>
+    <string name="common_permission_media_location_hint_fail">Failed to get media location permission\nPlease clear app data and try again</string>
+    <string name="common_permission_goto_setting_page">Goto Authorization</string>
+
+    <string name="common_permission_calendar">Calendar permission</string>
+    <string name="common_permission_camera">Camera permission</string>
+    <string name="common_permission_contacts">contacts permissions</string>
+    <string name="common_permission_location">Location permission</string>
+    <string name="common_permission_location_background">background location permission</string>
+    <string name="common_permission_wireless_devices">Nearby device permissions</string>
+    <string name="common_permission_microphone">Microphone permission</string>
+    <string name="common_permission_phone">Phone permission</string>
+    <string name="common_permission_call_log">Call log permission</string>
+    <string name="common_permission_sensors">Body sensor permissions</string>
+    <string name="common_permission_sensors_background">Background body sensor permission</string>
+    <string name="common_permission_activity_recognition_29">Fitness exercise permission</string>
+    <string name="common_permission_activity_recognition_30">Physical Activity Permission</string>
+    <string name="common_permission_media_location">Read media file location permission</string>
+    <string name="common_permission_sms">SMS permission</string>
+    <string name="common_permission_storage">Storage permission</string>
+    <string name="common_permission_post_notifications">Send notification permission</string>
+    <string name="common_permission_image_and_video">photo and video permissions</string>
+    <string name="common_permission_audio">Music and audio permissions</string>
+
+    <string name="common_permission_manage_storage">All file access permissions</string>
+    <string name="common_permission_install">Install app permissions</string>
+    <string name="common_permission_window">Floating window permission</string>
+    <string name="common_permission_setting">Modify system setting permission</string>
+    <string name="common_permission_notification">Notification permission</string>
+    <string name="common_permission_notification_listener">Notification bar listening permission</string>
+    <string name="common_permission_task">View usage permission</string>
+    <string name="common_permission_alarm">View alarm reminder permission</string>
+    <string name="common_permission_not_disturb">Do not disturb permission</string>
+    <string name="common_permission_ignore_battery">Ignore battery optimization permission</string>
+    <string name="common_permission_picture_in_picture">PIP permission</string>
+    <string name="common_permission_vpn">\tVPN\tPermission</string>
+</resources>

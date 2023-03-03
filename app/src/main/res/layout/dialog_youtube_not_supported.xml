@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A1E1E1E">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_margin="@dimen/_16sdp"
+        android:background="@drawable/bg_rounder_corner_12dp"
+        android:orientation="vertical"
+        android:padding="@dimen/_16sdp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="YouTube not supported"
+            android:textColor="@color/text_1"
+            android:textSize="@dimen/_14sdp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_10sdp"
+            android:gravity="center_vertical"
+            android:text="Youtube is not supported according to google policy. Due to legal restrictions, videos on cannot be downloaded.\n\nPlease download videos from other websites."
+            android:textColor="@color/text_1"
+            android:textSize="@dimen/_12sdp" />
+
+
+        <TextView
+            android:id="@+id/txtGotIt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/_16sdp"
+            android:background="@drawable/bg_search"
+            android:backgroundTint="@color/primary_green"
+            android:gravity="center"
+            android:paddingStart="@dimen/_32sdp"
+            android:paddingTop="@dimen/_8sdp"
+            android:paddingEnd="@dimen/_32sdp"
+            android:paddingBottom="@dimen/_8sdp"
+            android:text="Got it"
+            android:textColor="@color/white"
+            android:textSize="@dimen/_12sdp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</RelativeLayout>

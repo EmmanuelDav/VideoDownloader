@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_green">#26B566</color>
+    <color name="accent_1">#5FC88F</color>
+    <color name="accent_2">#FF6464</color>
+    <color name="accent_3">#767DFF</color>
+
+    <color name="text_1">#1F1F39</color>
+    <color name="text_2">#23262F</color>
+    <color name="text_3">#4C5D77</color>
+    <color name="text_4">#777E90</color>
+    <color name="text_5">#B1B5C3</color>
+    <color name="text_6">#E6E8EC</color>
+    <color name="text_7">#F4F5F6</color>
+    <color name="text_8">#FCFCFD</color>
+
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="transparent">#00000000</color>
+    <color name="primary">#CB0606</color>
+    <color name="primaryVariant">#CB0606</color>
+    <color name="text_color">#CB0606</color>
+    <color name="tint_color">#CB0606</color>
+    <color name="background_color">#CB0606</color>
+    <color name="grey">#d1d1d1</color>
+    <color name="hint_text_color">#808080</color>
+
+    <!--DAY NIGHT COLORS-->
+    <color name="background_color_day_night">#FFFFFF</color>
+    <color name="text_color_day_night">#000000</color>
+    <color name="text_color_day_night_1">#FFFFFF</color>
+
+</resources>

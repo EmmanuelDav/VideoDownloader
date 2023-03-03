@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--DAY NIGHT COLORS-->
+    <color name="background_color_day_night">#16242E</color>
+    <color name="text_color_day_night">#FFFFFF</color>
+    <color name="text_color_day_night_1">#16242E</color>
+
+</resources>

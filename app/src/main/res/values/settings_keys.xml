@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="vibrateON">vibrateOn</string>
+    <string name="soundON">soundOn</string>
+    <string name="adBlockON">adBlockOn</string>
+    <string name="wifiON">wifiOn</string>
+    <string name="policyAccept">policyAccept</string>
+    <string name="adFiltersLastUpdated">adFiltersLasUpdated</string>
+
+</resources>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_share"
+        android:icon="@drawable/ic_share_new"
+        android:title="Share"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/menu_rename"
+        android:icon="@drawable/ic_rename_video"
+        android:title="Rename"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/menu_edit_video"
+        android:icon="@drawable/ic_gift"
+        android:title="Edit with video maker"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_open_link"
+        android:icon="@drawable/ic_go_to_website"
+        android:title="Go to website"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_delete"
+        android:icon="@drawable/ic_delete_dialog"
+        android:title="Delete"
+        app:showAsAction="always" />
+</menu>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <com.kunkunapp.allvideodowloader.views.Badge
+        android:id="@+id/notifications_nav_badge"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="center"
+        android:background="@drawable/ic_tab_unselected"
+        android:gravity="center"
+        android:lines="1"
+        android:text="20"
+        android:textStyle="bold"
+        android:layout_marginBottom="@dimen/_5sdp"
+        android:textColor="@color/color_text_select"
+        android:textSize="@dimen/_8sdp" />
+</merge>
