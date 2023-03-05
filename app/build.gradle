@@ -18,6 +18,16 @@ android {
         versionCode 1
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+        }
+
+    }
+
+    allprojects {
+        repositories {
+            maven { url "https://jitpack.io" }
+        }
     }
 
     buildTypes {
@@ -26,7 +36,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -35,6 +45,15 @@ android {
         jvmTarget = '1.8'
     }
 
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            universalApk true
+        }
+    }
+    namespace 'com.kunkunapp.allvideodowloader'
 }
 
 dependencies {

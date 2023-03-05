@@ -17,6 +17,7 @@
         android:icon="@mipmap/ic_logo"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
+        android:extractNativeLibs="true"
         android:roundIcon="@mipmap/ic_logo"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"

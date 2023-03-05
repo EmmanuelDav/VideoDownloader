@@ -87,7 +87,7 @@ public abstract class VideoList {
         this.bottomSheetDialog = bottomSheetDialog;
         selectedVideo = 0;
         VideoListAdapter videoListAdapter = new VideoListAdapter();
-        view.setAdapter(videoListAdapter);
+      //  view.setAdapter(videoListAdapter);
         view.setLayoutManager(new GridLayoutManager(activity, 3));
         view.setHasFixedSize(true);
         videos = Collections.synchronizedList(new ArrayList<Video>());
@@ -198,8 +198,8 @@ public abstract class VideoList {
             videos.remove(i);
         }*/
         videos.clear();
-        ((VideoListAdapter) view.getAdapter()).expandedItem = -1;
-        view.getAdapter().notifyDataSetChanged();
+//        ((VideoListAdapter) view.getAdapter()).expandedItem = -1;
+   //     view.getAdapter().notifyDataSetChanged();
     }
 
     class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.VideoItem> {
@@ -448,5 +448,9 @@ public abstract class VideoList {
         nameBuilder.append(time);
         file = new File(Environment.getExternalStoragePublicDirectory(MyApp.getInstance().getApplicationContext().getString(R.string.app_name)), nameBuilder + "." + type);
         return nameBuilder.toString();
+    }
+
+    void clear(){
+        videos.clear();
     }
 }

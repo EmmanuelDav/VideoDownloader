@@ -3,9 +3,19 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        jcenter()
         maven { url "https://jitpack.io" }
         maven { url 'https://maven.google.com' }
+        jcenter()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
 }
 rootProject.name = "Video Downloader"

@@ -17,25 +17,23 @@ import com.kunkunapp.allvideodowloader.utils.Constants
 import com.kunkunapp.allvideodowloader.work.CancelReceiver
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import com.kunkunapp.allvideodowloader.utils.ThemeSettings.Companion.getInstance
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class MyApp : Application() {
 
     private var downloadService: Intent? = null
     private var onBackPressedListener: MainActivity.OnBackPressedListener? = null
     private var context: Context? = null
+    lateinit var applicationScope: CoroutineScope
     private var appOpenManager: AppOpenManager? = null
 
 
     override fun onCreate() {
         super.onCreate()
-
         instance = this
         context = applicationContext
+        applicationScope = CoroutineScope(SupervisorJob())
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(this)
         AppCompatDelegate.setDefaultNightMode(
@@ -45,15 +43,14 @@ class MyApp : Application() {
             )!!.toInt()
         )
         context = this.applicationContext
-        GlobalScope.launch {
+        applicationScope.launch((Dispatchers.IO)) {
             try {
-                withContext(Dispatchers.IO) {
-                    YoutubeDL.getInstance().init(this@MyApp)
-                    FFmpeg.getInstance().init(this@MyApp)
-                    Log.d(TAG, "onCreate: Successful")
-                }
+                YoutubeDL.getInstance().init(this@MyApp)
+                FFmpeg.getInstance().init(this@MyApp)
+                Log.d(TAG, "onCreate: Successful")
             } catch (e: Exception) {
-              //  Toast.makeText(applicationContext, R.string.init_failed, Toast.LENGTH_LONG).show()
+                e.printStackTrace()
+                Log.d(TAG, "Failed Initialization: " + e.message)
             }
         }
         registerReceiver(CancelReceiver(), IntentFilter())

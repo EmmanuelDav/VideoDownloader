@@ -22,6 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.animation.BounceInterpolator;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -35,7 +37,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
@@ -51,6 +55,8 @@ import com.hjq.permissions.XXPermissions;
 import com.kunkunapp.allvideodowloader.MyApp;
 import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
+import com.kunkunapp.allvideodowloader.adapters.VidInfoAdapter;
+import com.kunkunapp.allvideodowloader.adapters.VidInfoListener;
 import com.kunkunapp.allvideodowloader.fragments.base.BaseFragment;
 import com.kunkunapp.allvideodowloader.utils.HistorySQLite;
 import com.kunkunapp.allvideodowloader.utils.PermissionInterceptor;
@@ -179,13 +185,11 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         dialog = new BottomSheetDialog(activity, R.style.CustomBottomSheetDialogTheme);
         dialog.setCancelable(true);
         dialog.setContentView(R.layout.bottom_download_options);
-
         RecyclerView qualities = dialog.findViewById(R.id.qualities_rv);
         ImageView imgVideo = dialog.findViewById(R.id.imgVideo);
         EditText txtTitle = dialog.findViewById(R.id.txtTitle);
         TextView txtDownload = dialog.findViewById(R.id.txtDownload);
         ImageView dismiss = dialog.findViewById(R.id.dismiss);
-
         assert dismiss != null;
         dismiss.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -193,10 +197,18 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 dialog.dismiss();
             }
         });
-
+        qualities.setLayoutManager(new LinearLayoutManager(activity));
+        qualities.setAdapter(new VidInfoAdapter(new VidInfoListener(vidFormatItem -> {
+            viewModel.selectedItem = vidFormatItem;
+//            new DownloadPathDialogFragment().show(
+//                    getChildFragmentManager(),
+//                    "download_location_chooser_dialog"
+//            );
+            return null;
+        })));
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
         if (videoList != null) {
-            videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog);
+            //videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog);
         } else {
             videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog) {
                 @Override
@@ -205,7 +217,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                     if (mInterstitialAd != null) {
                         mInterstitialAd.show(getBaseActivity());
                     }
-                    updateFoundVideosBar();
+                    //updateFoundVideosBar();
                 }
 
                 @Override
@@ -215,8 +227,67 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 }
             };
         }
+        viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
+            ((VidInfoAdapter) qualities.getAdapter()).fill(videoInfo);
+        });
+        viewModel.getLoadState().observe(getViewLifecycleOwner(), loadState -> {
+            switch (loadState) {
+                case INITIAL:
 
+                case LOADING:
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Glide.with(activity)
+                                    .load(R.drawable.ic_download_dis)
+                                    .into(videosFoundHUD);
+                            if (foundVideosWindow.getVisibility() == View.VISIBLE)
+                                foundVideosWindow.setVisibility(View.GONE);
+                        }
+                    });
+                    break;
+
+                case LOADED:
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            RequestOptions options = new RequestOptions()
+                                    .skipMemoryCache(true)
+                                    .centerInside()
+                                    .placeholder(R.drawable.ic_download_det)
+                                    .transform(new CircleCrop());
+
+                            Glide.with(activity)
+                                    .load(R.drawable.ic_download_det)
+                                    .apply(options)
+                                    .into(videosFoundHUD);
+
+                            ObjectAnimator animY = ObjectAnimator.ofFloat(videosFoundHUD, "translationY", -100f, 0f);
+                            animY.setDuration(1000);
+                            animY.setInterpolator(new BounceInterpolator());
+                            animY.setRepeatCount(2);
+                            animY.addListener(new AnimatorListenerAdapter() {
+                                @Override
+                                public void onAnimationEnd(Animator animation, boolean isReverse) {
+                                    super.onAnimationEnd(animation, isReverse);
+                                    Glide.with(activity)
+                                            .load(R.drawable.ic_download_enable)
+                                            .into(videosFoundHUD);
+                                }
+                            });
+                            animY.start();
+                        }
+                    });
+
+                case FAILED:
+                    Log.d("TAG", "createFoundVideosWindow: Failed ");
+                    updateFoundVideosBar();
+                    break;
+
+            }
+        });
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle
@@ -302,6 +373,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                             getBaseActivity().isEnableSuggetion = false;
                             urlBox.setText(url);
                             BrowserWindow.this.url = url;
+                            viewModel.fetchInfo(url);
                         }
                     });
                     view.findViewById(R.id.loadingProgress).setVisibility(View.GONE);
@@ -338,7 +410,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                                 long numericSize = Long.parseLong(size);
                                 if (numericSize > 700000) {
                                     videoList.selectedVideo = 0;
-                                    videoList.addItem(size, type, link, name, page, chunked, website, audio);
+                                   // videoList.addItem(size, type, link, name, page, chunked, website, audio);
 
                                     activity.runOnUiThread(new Runnable() {
                                         @Override
@@ -579,7 +651,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             public void run() {
                 getBaseActivity().isDisableOnResume = false;
             }
-        },500);
+        }, 500);
     }
 
     @Override
