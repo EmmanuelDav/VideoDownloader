@@ -59,6 +59,8 @@ import com.kunkunapp.allvideodowloader.database.AppDatabase;
 import com.kunkunapp.allvideodowloader.database.AppExecutors;
 import com.kunkunapp.allvideodowloader.database.ShortcutTable;
 import com.kunkunapp.allvideodowloader.fragments.AllDownloadFragment;
+import com.kunkunapp.allvideodowloader.fragments.DownloadsCompFragment;
+import com.kunkunapp.allvideodowloader.fragments.DownloadsCompletedFragment;
 import com.kunkunapp.allvideodowloader.fragments.SettingsFragment;
 import com.kunkunapp.allvideodowloader.helper.WebConnect;
 import com.kunkunapp.allvideodowloader.interfaces.ShortcutListner;
@@ -113,7 +115,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RecyclerView rvShortcut;
     private ShortcutAdapter shortcutAdapter;
     private RelativeLayout tabContainer;
-    private AllDownloadFragment allDownloadFragment;
     ImageView appSettingsBtn2;
     ImageView imgMore2;
     public EditText inputURLText;
@@ -157,7 +158,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initViews() {
-        allDownloadFragment = new AllDownloadFragment();
         homeContainer = findViewById(R.id.homeContainer);
         inputURLText = findViewById(R.id.inputURLText);
         appSettingsBtn2 = findViewById(R.id.appSettingsBtn2);
@@ -493,7 +493,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
             }
         });
-        popup.setForceShowIcon(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            popup.setForceShowIcon(true);
+        }
         popup.show();
     }
 
@@ -867,10 +869,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             suggestionAdapter.setResultList(null);
             return;
         }
-        if (allDownloadFragment.isSelectedMode) {
-            allDownloadFragment.unSelectAll();
-            return;
-        }
 
         if (navView.getSelectedItemId() == R.id.navDownload) {
             navView.setSelectedItemId(R.id.navHome);
@@ -954,7 +952,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (manager.findFragmentByTag(DOWNLOAD) == null) {
             browserManager.hideCurrentWindow();
             browserManager.pauseCurrentWindow();
-            manager.beginTransaction().add(R.id.mainContent, allDownloadFragment, DOWNLOAD).commit();
+            manager.beginTransaction().add(R.id.mainContent, new DownloadsCompFragment(), DOWNLOAD).commit();
         }
     }
 

@@ -5,21 +5,15 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Download::class, ShortcutTable::class], version = 1, exportSchema = false)
+@Database(entities = [ShortcutTable::class, Download::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
-
     abstract fun shortcutDao(): ShortcutDao?
-
-
     abstract fun downloadsDao(): DownloadsDao
 
     companion object {
-        // Singleton prevents multiple instances of database opening at the
-        // same time.
         @Volatile
         private var INSTANCE: AppDatabase? = null
-
         private const val name = "dvd_db"
 
         fun getDatabase(context: Context): AppDatabase {

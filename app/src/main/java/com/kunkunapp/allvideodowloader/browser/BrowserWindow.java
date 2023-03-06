@@ -58,6 +58,7 @@ import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
 import com.kunkunapp.allvideodowloader.adapters.VidInfoAdapter;
 import com.kunkunapp.allvideodowloader.adapters.VidInfoListener;
+import com.kunkunapp.allvideodowloader.fragments.DownloadPathDialogFragment;
 import com.kunkunapp.allvideodowloader.fragments.base.BaseFragment;
 import com.kunkunapp.allvideodowloader.utils.HistorySQLite;
 import com.kunkunapp.allvideodowloader.utils.PermissionInterceptor;
@@ -200,14 +201,13 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 dialog.dismiss();
             }
         });
-        qualities.setLayoutManager(new GridLayoutManager(activity, 3));
-        qualities.setHasFixedSize(true);
+        qualities.setLayoutManager(new LinearLayoutManager(activity));
         qualities.setAdapter(new VidInfoAdapter(new VidInfoListener(vidFormatItem -> {
             viewModel.selectedItem = vidFormatItem;
-//            new DownloadPathDialogFragment().show(
-//                    getChildFragmentManager(),
-//                    "download_location_chooser_dialog"
-//            );
+            new DownloadPathDialogFragment().show(
+                    getChildFragmentManager(),
+                    "download_location_chooser_dialog"
+            );
             return null;
         })));
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
