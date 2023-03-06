@@ -124,7 +124,7 @@ public abstract class VideoList {
         this.bottomSheetDialog = bottomSheetDialog;
         selectedVideo = 0;
         VideoListAdapter videoListAdapter = new VideoListAdapter();
-        view.setAdapter(videoListAdapter);
+      //  view.setAdapter(videoListAdapter);
         view.setLayoutManager(new GridLayoutManager(activity, 3));
         view.setHasFixedSize(true);
 

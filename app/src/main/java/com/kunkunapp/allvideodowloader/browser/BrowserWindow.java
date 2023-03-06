@@ -39,6 +39,7 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.webkit.WebSettingsCompat;
@@ -65,6 +66,7 @@ import com.kunkunapp.allvideodowloader.utils.VisitedPage;
 import com.kunkunapp.allvideodowloader.viewModel.VidInfoViewModel;
 import com.kunkunapp.allvideodowloader.views.CustomMediaController;
 import com.kunkunapp.allvideodowloader.views.CustomVideoView;
+import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.util.Arrays;
 import java.util.List;
@@ -103,6 +105,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
     private boolean isVisible = false;
 
     private VidInfoViewModel viewModel;
+    VideoInfo mVideoInfo;
 
 
     public BrowserWindow(Activity activity) {
@@ -112,7 +115,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
     @Override
     public void onClick(View v) {
         if (v == videosFoundHUD) {
-            if (videoList.getSize() > 0) {
+            if (videoList != null) {
                 XXPermissions.with(activity)
                         .permission(Permission.MANAGE_EXTERNAL_STORAGE)
                         .interceptor(new PermissionInterceptor())
@@ -197,7 +200,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 dialog.dismiss();
             }
         });
-        qualities.setLayoutManager(new LinearLayoutManager(activity));
+        qualities.setLayoutManager(new GridLayoutManager(activity, 3));
+        qualities.setHasFixedSize(true);
         qualities.setAdapter(new VidInfoAdapter(new VidInfoListener(vidFormatItem -> {
             viewModel.selectedItem = vidFormatItem;
 //            new DownloadPathDialogFragment().show(
@@ -228,6 +232,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             };
         }
         viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
+            mVideoInfo = videoInfo;
             ((VidInfoAdapter) qualities.getAdapter()).fill(videoInfo);
         });
         viewModel.getLoadState().observe(getViewLifecycleOwner(), loadState -> {
