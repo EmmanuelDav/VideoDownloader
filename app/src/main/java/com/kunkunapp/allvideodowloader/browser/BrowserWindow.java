@@ -1,5 +1,7 @@
 package com.kunkunapp.allvideodowloader.browser;
 
+import static java.util.Collections.emptyList;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
@@ -56,8 +58,6 @@ import com.hjq.permissions.XXPermissions;
 import com.kunkunapp.allvideodowloader.MyApp;
 import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
-import com.kunkunapp.allvideodowloader.adapters.VidInfoAdapter;
-import com.kunkunapp.allvideodowloader.adapters.VidInfoListener;
 import com.kunkunapp.allvideodowloader.fragments.DownloadPathDialogFragment;
 import com.kunkunapp.allvideodowloader.fragments.base.BaseFragment;
 import com.kunkunapp.allvideodowloader.utils.HistorySQLite;
@@ -201,40 +201,43 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 dialog.dismiss();
             }
         });
-        qualities.setAdapter(new VidInfoAdapter(new VidInfoListener(vidFormatItem -> {
-            viewModel.selectedItem = vidFormatItem;
-            new DownloadPathDialogFragment().show(
-                    getChildFragmentManager(),
-                    "download_location_chooser_dialog"
-            );
-            return null;
-        })));
+//        qualities.setAdapter(new VidInfoAdapter(new VidInfoListener(vidFormatItem -> {
+//            viewModel.selectedItem = vidFormatItem;
+//            new DownloadPathDialogFragment().show(
+//                    getChildFragmentManager(),
+//                    "download_location_chooser_dialog"
+//            );
+//            return null;
+//        })));
         qualities.setLayoutManager(new GridLayoutManager(activity, 3));
         qualities.setHasFixedSize(true);
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
-        if (videoList != null) {
-            //videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog);
-        } else {
-            videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog) {
-                @Override
-                void onItemDeleted() {
-                    dialog.dismiss();
-                    if (mInterstitialAd != null) {
-                        mInterstitialAd.show(getBaseActivity());
-                    }
-                    //updateFoundVideosBar();
-                }
-
-                @Override
-                void onVideoPlayed(String url) {
-                    dialog.dismiss();
-                    updateVideoPlayer(url);
-                }
-            };
-        }
         viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
+            if (videoInfo == null) {
+                return;
+            }
             mVideoInfo = videoInfo;
-            ((VidInfoAdapter) qualities.getAdapter()).fill(videoInfo, imgVideo, txtTitle);
+            if (videoList != null) {
+                videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo);
+            } else {
+                videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo) {
+                    @Override
+                    void onItemDeleted() {
+                        dialog.dismiss();
+                        if (mInterstitialAd != null) {
+                            mInterstitialAd.show(getBaseActivity());
+                        }
+                        //updateFoundVideosBar();
+                    }
+
+                    @Override
+                    void onVideoPlayed(String url) {
+                        dialog.dismiss();
+                        updateVideoPlayer(url);
+                    }
+                };
+            }
+
         });
         viewModel.getLoadState().observe(getViewLifecycleOwner(), loadState -> {
             switch (loadState) {
@@ -371,7 +374,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
 
                 @Override
                 public void onPageStarted(final WebView webview, final String url, Bitmap favicon) {
-                    videoList.deleteAllItems();
+                  //  videoList.deleteAllItems();
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
@@ -415,8 +418,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                             if (size != null && isNumber(size)) {
                                 long numericSize = Long.parseLong(size);
                                 if (numericSize > 700000) {
-                                    videoList.selectedVideo = 0;
-                                   // videoList.addItem(size, type, link, name, page, chunked, website, audio);
+//                                    videoList.selectedVideo = 0;
+                                 //   videoList.addItem(size, type, link, name, page, chunked, website, audio);
 
                                     activity.runOnUiThread(new Runnable() {
                                         @Override
@@ -489,7 +492,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 @Override
                 public void onReceivedTitle(WebView view, String title) {
                     super.onReceivedTitle(view, title);
-                    videoList.deleteAllItems();
+                  //  videoList.deleteAllItems();
                     updateFoundVideosBar();
 
                     VisitedPage vp = new VisitedPage();
@@ -557,7 +560,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
     }
 
     private void updateFoundVideosBar() {
-        if (videoList.getSize() > 0) {
+        if (mVideoInfo != null && mVideoInfo.getFormats().size() > 0) {
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

@@ -6,6 +6,7 @@ import android.media.MediaMetadataRetriever;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Gravity;
@@ -40,6 +41,7 @@ import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
 import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.utils.PermissionInterceptor;
+import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,76 +57,64 @@ public abstract class VideoList {
     public int selectedVideo = 0;
     private Activity activity;
     private RecyclerView view;
-    private List<Video> videos;
     ImageView imgVideo;
     EditText txtTitle;
     TextView txtDownload;
     BottomSheetDialog bottomSheetDialog;
-
-    public class Video {
-        String size;
-        String type;
-        String link;
-        String name;
-        String page;
-        String website;
-        boolean chunked = false;
-        boolean checked = false;
-        boolean expanded = false;
-        boolean audio;
-    }
+    VideoInfo videoInfo;
 
     abstract void onItemDeleted();
 
     abstract void onVideoPlayed(String url);
 
-    VideoList(Activity activity, RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog) {
+    VideoList(Activity activity, RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo v) {
         this.activity = activity;
         this.view = view;
         this.imgVideo = imgVideo;
         this.txtTitle = txtTitle;
         this.txtDownload = txtDownload;
         this.bottomSheetDialog = bottomSheetDialog;
+        this.videoInfo = v;
         selectedVideo = 0;
-       // VideoListAdapter videoListAdapter = new VideoListAdapter();
-      //  view.setAdapter(videoListAdapter);
-        //view.setLayoutManager(new GridLayoutManager(activity, 3));
-        //view.setHasFixedSize(true);
-        videos = Collections.synchronizedList(new ArrayList<Video>());
-//        txtDownload.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                XXPermissions.with(activity)
-//                        .permission(Permission.MANAGE_EXTERNAL_STORAGE)
-//                        .interceptor(new PermissionInterceptor())
-//                        .request(new OnPermissionCallback() {
-//                            @Override
-//                            public void onGranted(List<String> permissions, boolean all) {
-//                                if (!all) {
-//                                    return;
-//                                }
-//                                startDownload(videoListAdapter);
-//                            }
-//
-//                            @Override
-//                            public void onDenied(List<String> permissions, boolean never) {
-//                                OnPermissionCallback.super.onDenied(permissions, never);
-//                                Log.d(TAG, "onDenied: =====");
-//                            }
-//                        });
-//            }
-//        });
+        VideoListAdapter videoListAdapter = new VideoListAdapter();
+        view.setAdapter(videoListAdapter);
+        view.setLayoutManager(new GridLayoutManager(activity, 3));
+        view.setHasFixedSize(true);
+        txtDownload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                XXPermissions.with(activity)
+                        .permission(Permission.MANAGE_EXTERNAL_STORAGE)
+                        .interceptor(new PermissionInterceptor())
+                        .request(new OnPermissionCallback() {
+                            @Override
+                            public void onGranted(List<String> permissions, boolean all) {
+                                if (!all) {
+                                    return;
+                                }
+                               // startDownload(videoListAdapter);
+                            }
+
+                            @Override
+                            public void onDenied(List<String> permissions, boolean never) {
+                                OnPermissionCallback.super.onDenied(permissions, never);
+                                Log.d(TAG, "onDenied: =====");
+                            }
+                        });
+            }
+        });
     }
 
-    void recreateVideoList(RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog) {
+    void recreateVideoList(RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo videoInfo) {
         this.view = view;
         this.imgVideo = imgVideo;
         this.txtTitle = txtTitle;
         this.txtDownload = txtDownload;
         this.bottomSheetDialog = bottomSheetDialog;
+        this.videoInfo = videoInfo;
         selectedVideo = 0;
         VideoListAdapter videoListAdapter = new VideoListAdapter();
-      //  view.setAdapter(videoListAdapter);
+        view.setAdapter(videoListAdapter);
         view.setLayoutManager(new GridLayoutManager(activity, 3));
         view.setHasFixedSize(true);
 
@@ -141,7 +131,7 @@ public abstract class VideoList {
 
                                     return;
                                 }
-                                startDownload(videoListAdapter);
+                                //startDownload(videoListAdapter);
                             }
 
                             @Override
@@ -155,49 +145,16 @@ public abstract class VideoList {
         });
     }
 
-    void addItem(String size, String type, String link, String name, String page,
-                 boolean chunked, String website, boolean audio) {
-        Video video = new Video();
-        video.size = size;
-        video.type = type;
-        video.link = link;
-        video.name = name;
-        video.page = page;
-        video.chunked = chunked;
-        video.website = website;
-        video.audio = audio;
-        videos.clear();
-        if (!audio) {
-            boolean duplicate = false;
-            for (ListIterator<Video> iterator = videos.listIterator(); iterator.hasNext(); ) {
-                Video v = iterator.next();
-                if (v.link.equals(video.link)) {
-                    duplicate = true;
-                    break;
-                }
-            }
-            if (!duplicate) {
-                videos.add(video);
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        view.getAdapter().notifyDataSetChanged();
-                    }
-                });
-            }
-
-        }
-    }
 
     int getSize() {
-        return videos.size();
+        return videoInfo.getFormats().size();
     }
 
     void deleteAllItems() {
         /*for (int i = 0; i < videos.size(); ) {
             videos.remove(i);
         }*/
-        videos.clear();
+        //videos.clear();
 //        ((VideoListAdapter) view.getAdapter()).expandedItem = -1;
    //     view.getAdapter().notifyDataSetChanged();
     }
@@ -216,42 +173,30 @@ public abstract class VideoList {
         public void onBindViewHolder(VideoItem holder, int position) {
             if (position == 0) {
                 imgVideo.setVisibility(View.VISIBLE);
-                if (videos.get(position).name != null && videos.get(position).name.length() > 0) {
+                if (videoInfo.getTitle() != null && videoInfo.getTitle().length() > 0) {
                     txtTitle.setVisibility(View.VISIBLE);
-                    txtTitle.setText(videos.get(position).name);
+                    txtTitle.setText(videoInfo.getTitle());
                 } else {
                     txtTitle.setVisibility(View.INVISIBLE);
                 }
                 Glide.with(activity)
-                        .load(videos.get(position).link)
+                        .load(videoInfo.getManifestUrl())
                         .thumbnail(0.5f)
                         .into(imgVideo);
             }
 
-            Video video = videos.get(position);
-            if (video.size != null) {
+            if (TextUtils.isEmpty(String.valueOf(videoInfo.getFileSize()))) {
                 String sizeFormatted = Formatter.formatShortFileSize(activity,
-                        Long.parseLong(video.size));
+                        Long.parseLong(String.valueOf(videoInfo.getFileSize())));
                 holder.videoFoundSize.setText(sizeFormatted);
             } else holder.videoFoundSize.setText(" ");
 
-            holder.name.setText(video.name);
-            Log.d(TAG, "onBindViewHolder: link: " + video.name);
-            if (video.name.toLowerCase().endsWith(".mp4")) {
+            holder.name.setText(videoInfo.getFulltitle());
                 try {
-                    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                    retriever.setDataSource(video.link);
-                    int width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-                    int height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
-                    retriever.release();
-                    String resolution = width + "x" + height;
-                    holder.txtQuality.setText(BrowserWindow.convertSolution(resolution));
-                } catch (IllegalArgumentException | IOException e) {
+                    holder.txtQuality.setText(BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormat()));
+                } catch (IllegalArgumentException e) {
                     e.printStackTrace();
                 }
-            } else {
-                holder.txtQuality.setText("unknown");
-            }
             if (selectedVideo == position) {
                 holder.imgSelected.setVisibility(View.VISIBLE);
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
@@ -271,15 +216,15 @@ public abstract class VideoList {
 
         @Override
         public int getItemCount() {
-            if (videos.size() == 0) {
+            if (videoInfo.getFormats().size() == 0) {
                 imgVideo.setVisibility(View.GONE);
                 txtTitle.setVisibility(View.GONE);
                 bottomSheetDialog.dismiss();
             }
-            if (videos.size() >= 5) {
+            if (videoInfo.getFormats().size() >= 5) {
                 return 5;
             }
-            return videos.size();
+            return videoInfo.getFormats().size();
         }
 
         class VideoItem extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -328,108 +273,108 @@ public abstract class VideoList {
         return index >= 0 && index < list.size();
     }
 
-    public void startDownload(VideoListAdapter videoListAdapter) {
-        Log.d(TAG, "startDownload: ");
-        if (indexExists(videos, selectedVideo)) {
-            FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(activity)
-                    .setDownloadConcurrentLimit(10000)
-                    .build();
-
-            Video video = videos.get(selectedVideo);
-            Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
-
-            SharedPreferences prefs = activity.getSharedPreferences("settings", 0);
-            String strDownloadLocation = prefs.getString("downloadLocation", "/storage/emulated/0/Download/Videodownloader");
-
-            File dir = new File(strDownloadLocation);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            String strName = txtTitle.getText().toString().trim().replaceAll("[^\\w ()'!\\[\\]\\-]", "");
-            strName = strName.trim();
-            if (strName.length() > 127) {//allowed filename length is 127
-                strName = strName.substring(0, 127);
-            } else if (strName.equals("")) {
-                strName = "video";
-            }
-
-            final String filePath = dir.getAbsolutePath() + "/" + strName + "." + video.type;
-            if (new File(filePath).exists()) {
-                Toast.makeText(activity, "Please enter other name, file already exist.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            Request request = new Request(video.link, filePath);
-            request.setPriority(Priority.HIGH);
-            request.setTag(video.page);
-            boolean wifiOn = prefs.getBoolean(activity.getString(R.string.wifiON), false);
-            if (wifiOn) {
-                request.setNetworkType(NetworkType.WIFI_ONLY);
-            } else {
-                request.setNetworkType(NetworkType.ALL);
-            }
-            request.addHeader("clientKey", "SD78DF93_3947&MVNGHE1WONG");
-            fetch.enqueue(request, request1 -> {
-                LayoutInflater inflater = activity.getLayoutInflater();
-                View layout = inflater.inflate(R.layout.toast_download,
-                        (ViewGroup) activity.findViewById(R.id.toast_layout_root));
-                Toast toast = new Toast(activity);
-                toast.setGravity(Gravity.BOTTOM, 0, 250);
-                toast.setDuration(Toast.LENGTH_LONG);
-                toast.setView(layout);
-                toast.show();
-
-                ((MainActivity) activity).downloadCount = (((MainActivity) activity).downloadCount + 1);
-                ((MainActivity) activity).badgeDownload.setNumber(((MainActivity) activity).downloadCount);
-
-                bottomSheetDialog.dismiss();
-
-                boolean isRatingDisplay = prefs.getBoolean("is_rating_display", false);
-                if (!isRatingDisplay) {
-                    ReviewManager reviewManager = ReviewManagerFactory.create(activity);
-                    Task<ReviewInfo> requestRate = reviewManager.requestReviewFlow();
-                    requestRate.addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            ReviewInfo reviewInfo = task.getResult();
-                            Task<Void> flow = reviewManager.launchReviewFlow(activity, reviewInfo);
-                            flow.addOnCompleteListener(task1 -> {
-                                prefs.edit().putBoolean("is_rating_display", true);
-                            });
-                        }
-                    });
-                }
-            }, error -> {
-                Toast.makeText(activity, "Download Failed", Toast.LENGTH_LONG).show();
-            });
-
-            return;
-        }
-
-        /*if (indexExists(videos, selectedVideo)) {
-            Video video = videos.get(selectedVideo);
-            DownloadQueues queues = DownloadQueues.load(activity);
-            queues.insertToTop(video.size, video.type, video.link, video.name, video
-                    .page, video.chunked, video.website);
-            queues.save(activity);
-            DownloadVideo topVideo = queues.getTopVideo();
-            Intent downloadService = MyApp.getInstance().getDownloadService();
-            DownloadManager.stop();
-            downloadService.putExtra("link", topVideo.link);
-            downloadService.putExtra("name", topVideo.name);
-            downloadService.putExtra("type", topVideo.type);
-            downloadService.putExtra("size", topVideo.size);
-            downloadService.putExtra("page", topVideo.page);
-            downloadService.putExtra("chunked", topVideo.chunked);
-            downloadService.putExtra("website", topVideo.website);
-            MyApp.getInstance().startService(downloadService);
-            videos.remove(selectedVideo);
-            videoListAdapter.expandedItem = -1;
-            selectedVideo = 0;
-            videoListAdapter.notifyDataSetChanged();
-            onItemDeleted();
-            Toast.makeText(activity, "Download is started", Toast.LENGTH_LONG).show();
-        }*/
-    }
+//    public void startDownload(VideoListAdapter videoListAdapter) {
+//        Log.d(TAG, "startDownload: ");
+//        if (indexExists(videos, selectedVideo)) {
+//            FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(activity)
+//                    .setDownloadConcurrentLimit(10000)
+//                    .build();
+//
+//            Video video = videos.get(selectedVideo);
+//            Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
+//
+//            SharedPreferences prefs = activity.getSharedPreferences("settings", 0);
+//            String strDownloadLocation = prefs.getString("downloadLocation", "/storage/emulated/0/Download/Videodownloader");
+//
+//            File dir = new File(strDownloadLocation);
+//            if (!dir.exists()) {
+//                dir.mkdirs();
+//            }
+//
+//            String strName = txtTitle.getText().toString().trim().replaceAll("[^\\w ()'!\\[\\]\\-]", "");
+//            strName = strName.trim();
+//            if (strName.length() > 127) {//allowed filename length is 127
+//                strName = strName.substring(0, 127);
+//            } else if (strName.equals("")) {
+//                strName = "video";
+//            }
+//
+//            final String filePath = dir.getAbsolutePath() + "/" + strName + "." + video.type;
+//            if (new File(filePath).exists()) {
+//                Toast.makeText(activity, "Please enter other name, file already exist.", Toast.LENGTH_SHORT).show();
+//                return;
+//            }
+//            Request request = new Request(video.link, filePath);
+//            request.setPriority(Priority.HIGH);
+//            request.setTag(video.page);
+//            boolean wifiOn = prefs.getBoolean(activity.getString(R.string.wifiON), false);
+//            if (wifiOn) {
+//                request.setNetworkType(NetworkType.WIFI_ONLY);
+//            } else {
+//                request.setNetworkType(NetworkType.ALL);
+//            }
+//            request.addHeader("clientKey", "SD78DF93_3947&MVNGHE1WONG");
+//            fetch.enqueue(request, request1 -> {
+//                LayoutInflater inflater = activity.getLayoutInflater();
+//                View layout = inflater.inflate(R.layout.toast_download,
+//                        (ViewGroup) activity.findViewById(R.id.toast_layout_root));
+//                Toast toast = new Toast(activity);
+//                toast.setGravity(Gravity.BOTTOM, 0, 250);
+//                toast.setDuration(Toast.LENGTH_LONG);
+//                toast.setView(layout);
+//                toast.show();
+//
+//                ((MainActivity) activity).downloadCount = (((MainActivity) activity).downloadCount + 1);
+//                ((MainActivity) activity).badgeDownload.setNumber(((MainActivity) activity).downloadCount);
+//
+//                bottomSheetDialog.dismiss();
+//
+//                boolean isRatingDisplay = prefs.getBoolean("is_rating_display", false);
+//                if (!isRatingDisplay) {
+//                    ReviewManager reviewManager = ReviewManagerFactory.create(activity);
+//                    Task<ReviewInfo> requestRate = reviewManager.requestReviewFlow();
+//                    requestRate.addOnCompleteListener(task -> {
+//                        if (task.isSuccessful()) {
+//                            ReviewInfo reviewInfo = task.getResult();
+//                            Task<Void> flow = reviewManager.launchReviewFlow(activity, reviewInfo);
+//                            flow.addOnCompleteListener(task1 -> {
+//                                prefs.edit().putBoolean("is_rating_display", true);
+//                            });
+//                        }
+//                    });
+//                }
+//            }, error -> {
+//                Toast.makeText(activity, "Download Failed", Toast.LENGTH_LONG).show();
+//            });
+//
+//            return;
+//        }
+//
+//        /*if (indexExists(videos, selectedVideo)) {
+//            Video video = videos.get(selectedVideo);
+//            DownloadQueues queues = DownloadQueues.load(activity);
+//            queues.insertToTop(video.size, video.type, video.link, video.name, video
+//                    .page, video.chunked, video.website);
+//            queues.save(activity);
+//            DownloadVideo topVideo = queues.getTopVideo();
+//            Intent downloadService = MyApp.getInstance().getDownloadService();
+//            DownloadManager.stop();
+//            downloadService.putExtra("link", topVideo.link);
+//            downloadService.putExtra("name", topVideo.name);
+//            downloadService.putExtra("type", topVideo.type);
+//            downloadService.putExtra("size", topVideo.size);
+//            downloadService.putExtra("page", topVideo.page);
+//            downloadService.putExtra("chunked", topVideo.chunked);
+//            downloadService.putExtra("website", topVideo.website);
+//            MyApp.getInstance().startService(downloadService);
+//            videos.remove(selectedVideo);
+//            videoListAdapter.expandedItem = -1;
+//            selectedVideo = 0;
+//            videoListAdapter.notifyDataSetChanged();
+//            onItemDeleted();
+//            Toast.makeText(activity, "Download is started", Toast.LENGTH_LONG).show();
+//        }*/
+//    }
 
     private String getValidName(String name, String type) {
         name = name.replaceAll("[^\\w ()'!\\[\\]\\-]", "");
@@ -450,7 +395,7 @@ public abstract class VideoList {
         return nameBuilder.toString();
     }
 
-    void clear(){
-        videos.clear();
-    }
+    //void clear(){
+        //videos.clear();
+   // }
 }
