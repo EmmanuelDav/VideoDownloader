@@ -19,13 +19,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.text.style.IconMarginSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,7 +30,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -44,24 +40,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.kunkunapp.allvideodowloader.database.Download;
 import com.kunkunapp.allvideodowloader.helper.RenameVideoPref;
-import com.tonyodev.fetch2.AbstractFetchListener;
-import com.tonyodev.fetch2.Download;
-import com.tonyodev.fetch2.Error;
+import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel;
+
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
-import com.tonyodev.fetch2.FetchListener;
 import com.tonyodev.fetch2.Status;
-import com.tonyodev.fetch2.database.DownloadDatabase;
-import com.tonyodev.fetch2core.Func;
 import com.kunkunapp.allvideodowloader.BuildConfig;
 import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
-import com.kunkunapp.allvideodowloader.fragments.base.BaseFragment;
 import com.kunkunapp.allvideodowloader.helper.WebConnect;
 import com.kunkunapp.allvideodowloader.utils.Utils;
 
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -69,7 +60,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +71,8 @@ public class AllDownloadFragment extends Fragment {
     ImageView imgCast;
     RecyclerView downloadsList;
     DownloadAdapter downloadAdapter;
-    private Fetch fetch;
+    DownloadsViewModel downloadsViewModel;
+
     private static final long UNKNOWN_REMAINING_TIME = -1;
     private static final long UNKNOWN_DOWNLOADED_BYTES_PER_SECOND = 0;
     public ArrayList<DownloadData> selectedList = new ArrayList<>();
@@ -99,13 +90,7 @@ public class AllDownloadFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_all_download, container, false);
-
-        FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(getActivity())
-                .setDownloadConcurrentLimit(3)
-                .build();
-        fetch = Fetch.Impl.getInstance(fetchConfiguration);
-
-
+        downloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
         renameVideoPref = new RenameVideoPref(getActivity());
         downloadAdapter = new DownloadAdapter();
         downloadsList = view.findViewById(R.id.downloadsList);
@@ -154,10 +139,10 @@ public class AllDownloadFragment extends Fragment {
                     public void onClick(View v) {
                         dialog.dismiss();
                         for (DownloadData download : selectedList) {
-                            File file = new File(download.download.getFile());
+                            File file = new File(download.download.getDownloadedPath());
                             if (file.exists()) {
                                 file.delete();
-                                fetch.remove(download.download.getId());
+                                //fetch.remove((int) download.download.getId());
                             }
                         }
                         unSelectAll();
@@ -194,79 +179,22 @@ public class AllDownloadFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        fetch.getDownloads(new Func<List<Download>>() {
-            @Override
-            public void call(@NonNull List<Download> downloads) {
-                final ArrayList<Download> list = new ArrayList<>(downloads);
-                Collections.sort(list, (first, second) -> Long.compare(second.getCreated(), first.getCreated()));
-                for (Download download : list) {
-                    File file = new File(download.getFile());
-                    String strRename = renameVideoPref.getString(String.valueOf(download.getId()), "");
-                    if (strRename.length() > 0) {
-                        File desFile = new File(strRename);
-                        if (desFile.exists()) {
-                            downloadAdapter.addDownload(download);
-                        }
-                    } else if (file.exists()) {
+        downloadsViewModel.getAllDownloads().observe(getViewLifecycleOwner(),downloads -> {
+            final ArrayList<Download> list = new ArrayList<>(downloads);
+            for (Download download : list) {
+                File file = new File(download.getDownloadedPath());
+                String strRename = renameVideoPref.getString(String.valueOf(download.getId()), "");
+                if (strRename.length() > 0) {
+                    File desFile = new File(strRename);
+                    if (desFile.exists()) {
                         downloadAdapter.addDownload(download);
                     }
+                } else if (file.exists()) {
+                    downloadAdapter.addDownload(download);
                 }
             }
-        }).addListener(fetchListener);
+        } );
     }
-
-    private final FetchListener fetchListener = new AbstractFetchListener() {
-        @Override
-        public void onAdded(@NotNull Download download) {
-            downloadAdapter.addDownload(download);
-        }
-
-        @Override
-        public void onQueued(@NotNull Download download, boolean waitingOnNetwork) {
-            downloadAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
-        }
-
-        @Override
-        public void onCompleted(@NotNull Download download) {
-            downloadAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
-        }
-
-        @Override
-        public void onError(@NonNull Download download, @NonNull Error error, @Nullable Throwable throwable) {
-            super.onError(download, error, throwable);
-            downloadAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
-        }
-
-        @Override
-        public void onProgress(@NotNull Download download, long etaInMilliseconds, long downloadedBytesPerSecond) {
-            downloadAdapter.update(download, etaInMilliseconds, downloadedBytesPerSecond);
-        }
-
-        @Override
-        public void onPaused(@NotNull Download download) {
-            downloadAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
-        }
-
-        @Override
-        public void onResumed(@NotNull Download download) {
-            downloadAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
-        }
-
-        @Override
-        public void onCancelled(@NotNull Download download) {
-            downloadAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
-        }
-
-        @Override
-        public void onRemoved(@NotNull Download download) {
-            downloadAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
-        }
-
-        @Override
-        public void onDeleted(@NotNull Download download) {
-            downloadAdapter.update(download, UNKNOWN_REMAINING_TIME, UNKNOWN_DOWNLOADED_BYTES_PER_SECOND);
-        }
-    };
 
 
     private class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.ViewHolder> {
@@ -287,7 +215,7 @@ public class AllDownloadFragment extends Fragment {
             }
             if (!found) {
                 final DownloadData downloadData = new DownloadData();
-                downloadData.id = download.getId();
+                downloadData.id = (int) download.getId();
                 downloadData.download = download;
                 downloads.add(downloadData);
                 notifyItemInserted(downloads.size() - 1);
@@ -301,20 +229,22 @@ public class AllDownloadFragment extends Fragment {
             for (int position = 0; position < downloads.size(); position++) {
                 final DownloadData downloadData = downloads.get(position);
                 if (downloadData.id == download.getId()) {
-                    switch (download.getStatus()) {
-                        case REMOVED:
-                        case DELETED: {
-                            downloads.remove(position);
-                            notifyItemRemoved(position);
-                            break;
-                        }
-                        default: {
-                            downloadData.download = download;
-                            downloadData.eta = eta;
-                            downloadData.downloadedBytesPerSecond = downloadedBytesPerSecond;
-                            notifyItemChanged(position);
-                        }
-                    }
+//                    switch (download.getStatus()) {
+//                        case REMOVED:
+//                        case DELETED: {
+//                            downloads.remove(position);
+//                            notifyItemRemoved(position);
+//                            break;
+//                        }
+//                        default: {
+//
+//                        }
+//                    }
+
+                    downloadData.download = download;
+                    downloadData.eta = eta;
+                    downloadData.downloadedBytesPerSecond = downloadedBytesPerSecond;
+                    notifyItemChanged(position);
                     return;
                 }
             }
@@ -329,21 +259,21 @@ public class AllDownloadFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             DownloadData downloadData = downloads.get(position);
-            String url = "";
+           // String url = "";
             if (downloadData.download != null) {
-                url = downloadData.download.getUrl();
+              //  url = downloadData.download.getUrl();
             }
-            final Status status = downloadData.download.getStatus();
+           // final Status status = downloadData.download.get();
             Glide.with(getActivity())
-                    .load(downloadData.download.getFile())
+                    .load(downloadData.download.getDownloadedPath())
                     .into(holder.imgVideo);
 
-            int progress = downloadData.download.getProgress();
+            int progress = (int) downloadData.download.getDownloadedPercent();
             if (progress == -1) { // Download progress is undermined at the moment.
                 progress = 0;
             }
 
-            File tempFile = new File(downloadData.download.getFile());
+            File tempFile = new File(downloadData.download.getDownloadedPath());
             String strRename = renameVideoPref.getString(String.valueOf(downloadData.download.getId()), "");
             if (strRename.length() > 0) {
                 File desFile = new File(strRename);
@@ -353,10 +283,10 @@ public class AllDownloadFragment extends Fragment {
             }
             File file = tempFile;
             holder.downloadVideoName.setText(file.getName());
-            String strDesc = progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloaded()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotal());
+            String strDesc = progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
             holder.downloadProgressText.setText(strDesc);
             holder.downloadProgressBar.setProgress(progress);
-            holder.edtSearch.setText(downloadData.download.getTag());
+            holder.edtSearch.setText(downloadData.download.getName());
             holder.imgVideo.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -377,15 +307,15 @@ public class AllDownloadFragment extends Fragment {
                         notifyDataSetChanged();
                         return;
                     }
-                    if (status == Status.COMPLETED) {
-                        MediaScannerConnection.scanFile(getActivity(),
-                                new String[]{file.toString()}, null,
-                                new MediaScannerConnection.OnScanCompletedListener() {
-                                    public void onScanCompleted(String path, Uri uri) {
-                                        openFile(file);
-                                    }
-                                });
-                    }
+//                    if (status == Status.COMPLETED) {
+//                        MediaScannerConnection.scanFile(getActivity(),
+//                                new String[]{file.toString()}, null,
+//                                new MediaScannerConnection.OnScanCompletedListener() {
+//                                    public void onScanCompleted(String path, Uri uri) {
+//                                        openFile(file);
+//                                    }
+//                                });
+//                    }
                 }
             });
             holder.imgVideo.setOnLongClickListener(new View.OnLongClickListener() {
@@ -459,37 +389,37 @@ public class AllDownloadFragment extends Fragment {
                         notifyDataSetChanged();
                         return;
                     }
-                    if (status == Status.COMPLETED) {
-                        MediaScannerConnection.scanFile(getActivity(),
-                                new String[]{file.toString()}, null,
-                                new MediaScannerConnection.OnScanCompletedListener() {
-                                    public void onScanCompleted(String path, Uri uri) {
-                                        openFile(file);
-                                    }
-                                });
-                    }
+//                    if (status == Status.COMPLETED) {
+//                        MediaScannerConnection.scanFile(getActivity(),
+//                                new String[]{file.toString()}, null,
+//                                new MediaScannerConnection.OnScanCompletedListener() {
+//                                    public void onScanCompleted(String path, Uri uri) {
+//                                        openFile(file);
+//                                    }
+//                                });
+//                    }
                 }
             });
             holder.imgCancel.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    fetch.remove(downloadData.download.getId());
+                  //  fetch.remove(downloadData.download.getId());
                 }
             });
             holder.imgResume.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (status == Status.FAILED || status == Status.CANCELLED) {
-                        fetch.retry(downloadData.download.getId());
-                    } else {
-                        fetch.resume(downloadData.download.getId());
-                    }
+//                    if (status == Status.FAILED || status == Status.CANCELLED) {
+//                        //fetch.retry(downloadData.download.getId());
+//                    } else {
+//                      //  fetch.resume(downloadData.download.getId());
+//                    }
                 }
             });
             holder.imgPause.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    fetch.pause(downloadData.download.getId());
+                    //fetch.pause((int) downloadData.download.getId());
                 }
             });
             holder.imgMore.setOnClickListener(new View.OnClickListener() {
@@ -561,7 +491,7 @@ public class AllDownloadFragment extends Fragment {
                                         public void onClick(View v) {
                                             dialog.dismiss();
                                             if (file.delete()) {
-                                                fetch.remove(downloadData.download.getId());
+                                                //fetch.remove((int) downloadData.download.getId());
                                             }
                                         }
                                     });
@@ -587,73 +517,73 @@ public class AllDownloadFragment extends Fragment {
             holder.imgSelect.setVisibility(View.GONE);
             holder.downloadProgressBar.setVisibility(View.VISIBLE);
 
-            switch (status) {
-                case CANCELLED: {
-                    String strDesc2 = "Cancelled " + progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloaded()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotal());
-                    holder.downloadProgressText.setText(strDesc2);
-                    holder.imgCancel.setVisibility(View.GONE);
-                    holder.imgPause.setVisibility(View.GONE);
-                    holder.imgResume.setVisibility(View.VISIBLE);
-                    break;
-                }
-                case COMPLETED: {
-                    holder.imgCancel.setVisibility(View.GONE);
-                    holder.imgPause.setVisibility(View.GONE);
-                    holder.imgResume.setVisibility(View.GONE);
-                    holder.downloadProgressBar.setVisibility(View.GONE);
-                    holder.txtDuration.setVisibility(View.VISIBLE);
-                    holder.imgMore.setVisibility(View.VISIBLE);
-
-                    String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getCreated()));
-                    String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotal()) + "  " + dateString;
-                    holder.downloadProgressText.setText(strDescComplete);
-
-                    if (file.exists()) {
-                        String duration = null;
-                        try {
-                            duration = getFileDuration(file);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        if (duration != null)
-                            holder.txtDuration.setText(duration);
-                    }
-
-                    break;
-                }
-                case FAILED: {
-                    holder.imgCancel.setVisibility(View.VISIBLE);
-                    holder.imgPause.setVisibility(View.GONE);
-                    holder.imgResume.setVisibility(View.VISIBLE);
-                    String strDescFailed = "Failed " + progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloaded()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotal());
-                    holder.downloadProgressText.setText(strDescFailed);
-                    break;
-                }
-                case PAUSED: {
-                    String strDesc2 = "Paused " + progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloaded()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotal());
-                    holder.downloadProgressText.setText(strDesc2);
-                    holder.imgCancel.setVisibility(View.VISIBLE);
-                    holder.imgPause.setVisibility(View.GONE);
-                    holder.imgResume.setVisibility(View.VISIBLE);
-                    break;
-                }
-                case DOWNLOADING:
-                case QUEUED: {
-                    holder.imgCancel.setVisibility(View.VISIBLE);
-                    holder.imgPause.setVisibility(View.VISIBLE);
-                    holder.imgResume.setVisibility(View.GONE);
-                    break;
-                }
-                case ADDED: {
-                    holder.imgCancel.setVisibility(View.VISIBLE);
-                    holder.imgPause.setVisibility(View.VISIBLE);
-                    holder.imgResume.setVisibility(View.GONE);
-                    break;
-                }
-                default: {
-                    break;
-                }
-            }
+//            switch (status) {
+//                case CANCELLED: {
+//                    String strDesc2 = "Cancelled " + progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
+//                    holder.downloadProgressText.setText(strDesc2);
+//                    holder.imgCancel.setVisibility(View.GONE);
+//                    holder.imgPause.setVisibility(View.GONE);
+//                    holder.imgResume.setVisibility(View.VISIBLE);
+//                    break;
+//                }
+//                case COMPLETED: {
+//                    holder.imgCancel.setVisibility(View.GONE);
+//                    holder.imgPause.setVisibility(View.GONE);
+//                    holder.imgResume.setVisibility(View.GONE);
+//                    holder.downloadProgressBar.setVisibility(View.GONE);
+//                    holder.txtDuration.setVisibility(View.VISIBLE);
+//                    holder.imgMore.setVisibility(View.VISIBLE);
+//
+//                    String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getTimestamp()));
+//                    String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize()) + "  " + dateString;
+//                    holder.downloadProgressText.setText(strDescComplete);
+//
+//                    if (file.exists()) {
+//                        String duration = null;
+//                        try {
+//                            duration = getFileDuration(file);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        if (duration != null)
+//                            holder.txtDuration.setText(duration);
+//                    }
+//
+//                    break;
+//                }
+//                case FAILED: {
+//                    holder.imgCancel.setVisibility(View.VISIBLE);
+//                    holder.imgPause.setVisibility(View.GONE);
+//                    holder.imgResume.setVisibility(View.VISIBLE);
+//                    String strDescFailed = "Failed " + progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
+//                    holder.downloadProgressText.setText(strDescFailed);
+//                    break;
+//                }
+//                case PAUSED: {
+//                    String strDesc2 = "Paused " + progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
+//                    holder.downloadProgressText.setText(strDesc2);
+//                    holder.imgCancel.setVisibility(View.VISIBLE);
+//                    holder.imgPause.setVisibility(View.GONE);
+//                    holder.imgResume.setVisibility(View.VISIBLE);
+//                    break;
+//                }
+//                case DOWNLOADING:
+//                case QUEUED: {
+//                    holder.imgCancel.setVisibility(View.VISIBLE);
+//                    holder.imgPause.setVisibility(View.VISIBLE);
+//                    holder.imgResume.setVisibility(View.GONE);
+//                    break;
+//                }
+//                case ADDED: {
+//                    holder.imgCancel.setVisibility(View.VISIBLE);
+//                    holder.imgPause.setVisibility(View.VISIBLE);
+//                    holder.imgResume.setVisibility(View.GONE);
+//                    break;
+//                }
+//                default: {
+//                    break;
+//                }
+//            }
 
             if (isSelectedMode) {
                 holder.imgCancel.setVisibility(View.GONE);
@@ -887,17 +817,6 @@ public class AllDownloadFragment extends Fragment {
             e.printStackTrace();
         }
     }
-
-/*
-    public String getMimeType(String url) {
-        String type = null;
-        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
-        if (extension != null) {
-            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-        }
-        return type;
-    }
-*/
 
     public String getMimeType(Uri uri) {
         String mimeType = null;

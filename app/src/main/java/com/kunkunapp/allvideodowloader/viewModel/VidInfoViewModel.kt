@@ -11,6 +11,7 @@ import com.kunkunapp.allvideodowloader.MyApp
 import com.kunkunapp.allvideodowloader.work.DownloadWorker
 import com.kunkunapp.allvideodowloader.model.VidInfoItem
 import com.yausername.youtubedl_android.YoutubeDL
+import com.yausername.youtubedl_android.mapper.VideoFormat
 import com.yausername.youtubedl_android.mapper.VideoInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,48 +59,35 @@ class VidInfoViewModel : ViewModel() {
     }
 
 
-     fun startDownload(vidFormatItem: VidInfoItem.VidFormatItem, downloadDir: String, activity:Activity) {
-        val vidInfo = vidFormatItem.vidInfo
-        val vidFormat = vidFormatItem.vidFormat
-        val workTag = vidInfo.id
-        val workManager = WorkManager.getInstance(activity?.applicationContext!!)
-        val state =
-            workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
-        val running = state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED
-        if (running) {
-            Toast.makeText(
-                activity,
-                "download_already_running",
-                Toast.LENGTH_LONG
-            ).show()
-            return
-        }
-        val workData = workDataOf(
-            DownloadWorker.urlKey to vidInfo.webpageUrl,
-            DownloadWorker.nameKey to vidInfo.title,
-            DownloadWorker.formatIdKey to vidFormat.formatId,
-            DownloadWorker.acodecKey to vidFormat.acodec,
-            DownloadWorker.vcodecKey to vidFormat.vcodec,
-            DownloadWorker.downloadDirKey to downloadDir,
-            DownloadWorker.sizeKey to vidFormat.fileSize,
-            DownloadWorker.taskIdKey to vidInfo.id
-        )
-        val workRequest = OneTimeWorkRequestBuilder<DownloadWorker>()
-            .addTag(workTag)
-            .setInputData(workData)
-            .build()
-
-        workManager.enqueueUniqueWork(
-            workTag,
-            ExistingWorkPolicy.KEEP,
-            workRequest
-        )
-        Toast.makeText(
-            activity,
-            "download_queued",
-            Toast.LENGTH_LONG
-        ).show()
-    }
+     fun startDownload(vidFormatItem: VideoInfo, videoInfo : VideoFormat, downloadDir: String, activity:Activity) {
+         val workTag = vidFormatItem.id
+         val workManager = WorkManager.getInstance(activity?.applicationContext!!)
+         val state = workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
+         val running = state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED
+         if (running) {
+             Toast.makeText(
+                 activity,
+                 "download_already_running",
+                 Toast.LENGTH_LONG
+             ).show()
+             return
+         }
+         val workData = workDataOf(
+             DownloadWorker.urlKey to vidFormatItem.webpageUrl,
+             DownloadWorker.nameKey to vidFormatItem.title,
+             DownloadWorker.formatIdKey to vidFormatItem.formatId,
+             DownloadWorker.acodecKey to videoInfo.acodec,
+             DownloadWorker.vcodecKey to videoInfo.vcodec,
+             DownloadWorker.downloadDirKey to downloadDir,
+             DownloadWorker.sizeKey to vidFormatItem.fileSize,
+             DownloadWorker.taskIdKey to vidFormatItem.id
+         )
+         val workRequest = OneTimeWorkRequestBuilder<DownloadWorker>()
+             .addTag(workTag)
+             .setInputData(workData)
+             .build()
+         workManager.enqueueUniqueWork(workTag, ExistingWorkPolicy.KEEP, workRequest)
+     }
 
 
 }

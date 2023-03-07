@@ -34,6 +34,7 @@ import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.kunkunapp.allvideodowloader.MyApp;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
+import com.kunkunapp.allvideodowloader.viewModel.VidInfoViewModel;
 import com.tonyodev.fetch2.Fetch;
 import com.tonyodev.fetch2.FetchConfiguration;
 import com.tonyodev.fetch2.NetworkType;
@@ -41,6 +42,7 @@ import com.tonyodev.fetch2.Priority;
 import com.tonyodev.fetch2.Request;
 import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.utils.PermissionInterceptor;
+import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.io.File;
@@ -62,17 +64,19 @@ public abstract class VideoList {
     TextView txtDownload;
     BottomSheetDialog bottomSheetDialog;
     VideoInfo videoInfo;
+    VidInfoViewModel viewModel;
 
     abstract void onItemDeleted();
 
     abstract void onVideoPlayed(String url);
 
-    VideoList(Activity activity, RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo v) {
+    VideoList(Activity activity, RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo v, VidInfoViewModel viewModel) {
         this.activity = activity;
         this.view = view;
         this.imgVideo = imgVideo;
         this.txtTitle = txtTitle;
         this.txtDownload = txtDownload;
+        this.viewModel = viewModel;
         this.bottomSheetDialog = bottomSheetDialog;
         this.videoInfo = v;
         selectedVideo = 0;
@@ -92,7 +96,7 @@ public abstract class VideoList {
                                 if (!all) {
                                     return;
                                 }
-                                // startDownload(videoListAdapter);
+                                 startDownload(viewModel);
                             }
 
                             @Override
@@ -105,7 +109,7 @@ public abstract class VideoList {
         });
     }
 
-    void recreateVideoList(RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo videoInfo) {
+    void recreateVideoList(RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo videoInfo, VidInfoViewModel viewModel) {
         this.view = view;
         this.imgVideo = imgVideo;
         this.txtTitle = txtTitle;
@@ -113,6 +117,7 @@ public abstract class VideoList {
         this.bottomSheetDialog = bottomSheetDialog;
         this.videoInfo = videoInfo;
         selectedVideo = 0;
+        this.viewModel = viewModel;
         VideoListAdapter videoListAdapter = new VideoListAdapter();
         view.setAdapter(videoListAdapter);
         view.setLayoutManager(new GridLayoutManager(activity, 3));
@@ -128,10 +133,9 @@ public abstract class VideoList {
                             @Override
                             public void onGranted(List<String> permissions, boolean all) {
                                 if (!all) {
-
                                     return;
                                 }
-                                //startDownload(videoListAdapter);
+                                startDownload(viewModel);
                             }
 
                             @Override
@@ -150,14 +154,6 @@ public abstract class VideoList {
         return videoInfo.getFormats().size();
     }
 
-    void deleteAllItems() {
-        /*for (int i = 0; i < videos.size(); ) {
-            videos.remove(i);
-        }*/
-        //videos.clear();
-//        ((VideoListAdapter) view.getAdapter()).expandedItem = -1;
-        //     view.getAdapter().notifyDataSetChanged();
-    }
 
     class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.VideoItem> {
         int expandedItem = -1;
@@ -188,9 +184,6 @@ public abstract class VideoList {
             String sizeFormatted = Formatter.formatShortFileSize(activity, Long.parseLong(String.valueOf(videoInfo.getFormats().get(position).getFileSizeApproximate())));
             holder.videoFoundSize.setText(sizeFormatted);
             holder.name.setText(videoInfo.getFulltitle());
-
-            Log.d(TAG, "onBindViewHolder: "+videoInfo.getFormats().get(position).getFormatId());
-            Log.d(TAG, "bin and Size: "+BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormat()));
 
             try {
                 holder.txtQuality.setText(BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormatId()));
@@ -269,112 +262,28 @@ public abstract class VideoList {
         }
     }
 
-    public boolean indexExists(final List list, final int index) {
-        return index >= 0 && index < list.size();
-    }
+    public void startDownload(VidInfoViewModel model) {
+        VideoFormat video = videoInfo.getFormats().get(selectedVideo);
+        VideoInfo mVideoInfo = videoInfo;
+        SharedPreferences prefs = activity.getSharedPreferences("settings", 0);
+        String strDownloadLocation = prefs.getString("downloadLocation", "/storage/emulated/0/Download/Videodownloader");
+        File dir = new File(strDownloadLocation);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        model.startDownload(mVideoInfo,video,strDownloadLocation,activity);
+        LayoutInflater inflater = activity.getLayoutInflater();
+        View layout = inflater.inflate(R.layout.toast_download, (ViewGroup) activity.findViewById(R.id.toast_layout_root));
+        Toast toast = new Toast(activity);
+        toast.setGravity(Gravity.BOTTOM, 0, 250);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(layout);
+        toast.show();
+        ((MainActivity) activity).downloadCount = (((MainActivity) activity).downloadCount + 1);
+        ((MainActivity) activity).badgeDownload.setNumber(((MainActivity) activity).downloadCount);
+        bottomSheetDialog.dismiss();
 
-//    public void startDownload(VideoListAdapter videoListAdapter) {
-//        Log.d(TAG, "startDownload: ");
-//        if (indexExists(videos, selectedVideo)) {
-//            FetchConfiguration fetchConfiguration = new FetchConfiguration.Builder(activity)
-//                    .setDownloadConcurrentLimit(10000)
-//                    .build();
-//
-//            Video video = videos.get(selectedVideo);
-//            Fetch fetch = Fetch.Impl.getInstance(fetchConfiguration);
-//
-//            SharedPreferences prefs = activity.getSharedPreferences("settings", 0);
-//            String strDownloadLocation = prefs.getString("downloadLocation", "/storage/emulated/0/Download/Videodownloader");
-//
-//            File dir = new File(strDownloadLocation);
-//            if (!dir.exists()) {
-//                dir.mkdirs();
-//            }
-//
-//            String strName = txtTitle.getText().toString().trim().replaceAll("[^\\w ()'!\\[\\]\\-]", "");
-//            strName = strName.trim();
-//            if (strName.length() > 127) {//allowed filename length is 127
-//                strName = strName.substring(0, 127);
-//            } else if (strName.equals("")) {
-//                strName = "video";
-//            }
-//
-//            final String filePath = dir.getAbsolutePath() + "/" + strName + "." + video.type;
-//            if (new File(filePath).exists()) {
-//                Toast.makeText(activity, "Please enter other name, file already exist.", Toast.LENGTH_SHORT).show();
-//                return;
-//            }
-//            Request request = new Request(video.link, filePath);
-//            request.setPriority(Priority.HIGH);
-//            request.setTag(video.page);
-//            boolean wifiOn = prefs.getBoolean(activity.getString(R.string.wifiON), false);
-//            if (wifiOn) {
-//                request.setNetworkType(NetworkType.WIFI_ONLY);
-//            } else {
-//                request.setNetworkType(NetworkType.ALL);
-//            }
-//            request.addHeader("clientKey", "SD78DF93_3947&MVNGHE1WONG");
-//            fetch.enqueue(request, request1 -> {
-//                LayoutInflater inflater = activity.getLayoutInflater();
-//                View layout = inflater.inflate(R.layout.toast_download,
-//                        (ViewGroup) activity.findViewById(R.id.toast_layout_root));
-//                Toast toast = new Toast(activity);
-//                toast.setGravity(Gravity.BOTTOM, 0, 250);
-//                toast.setDuration(Toast.LENGTH_LONG);
-//                toast.setView(layout);
-//                toast.show();
-//
-//                ((MainActivity) activity).downloadCount = (((MainActivity) activity).downloadCount + 1);
-//                ((MainActivity) activity).badgeDownload.setNumber(((MainActivity) activity).downloadCount);
-//
-//                bottomSheetDialog.dismiss();
-//
-//                boolean isRatingDisplay = prefs.getBoolean("is_rating_display", false);
-//                if (!isRatingDisplay) {
-//                    ReviewManager reviewManager = ReviewManagerFactory.create(activity);
-//                    Task<ReviewInfo> requestRate = reviewManager.requestReviewFlow();
-//                    requestRate.addOnCompleteListener(task -> {
-//                        if (task.isSuccessful()) {
-//                            ReviewInfo reviewInfo = task.getResult();
-//                            Task<Void> flow = reviewManager.launchReviewFlow(activity, reviewInfo);
-//                            flow.addOnCompleteListener(task1 -> {
-//                                prefs.edit().putBoolean("is_rating_display", true);
-//                            });
-//                        }
-//                    });
-//                }
-//            }, error -> {
-//                Toast.makeText(activity, "Download Failed", Toast.LENGTH_LONG).show();
-//            });
-//
-//            return;
-//        }
-//
-//        /*if (indexExists(videos, selectedVideo)) {
-//            Video video = videos.get(selectedVideo);
-//            DownloadQueues queues = DownloadQueues.load(activity);
-//            queues.insertToTop(video.size, video.type, video.link, video.name, video
-//                    .page, video.chunked, video.website);
-//            queues.save(activity);
-//            DownloadVideo topVideo = queues.getTopVideo();
-//            Intent downloadService = MyApp.getInstance().getDownloadService();
-//            DownloadManager.stop();
-//            downloadService.putExtra("link", topVideo.link);
-//            downloadService.putExtra("name", topVideo.name);
-//            downloadService.putExtra("type", topVideo.type);
-//            downloadService.putExtra("size", topVideo.size);
-//            downloadService.putExtra("page", topVideo.page);
-//            downloadService.putExtra("chunked", topVideo.chunked);
-//            downloadService.putExtra("website", topVideo.website);
-//            MyApp.getInstance().startService(downloadService);
-//            videos.remove(selectedVideo);
-//            videoListAdapter.expandedItem = -1;
-//            selectedVideo = 0;
-//            videoListAdapter.notifyDataSetChanged();
-//            onItemDeleted();
-//            Toast.makeText(activity, "Download is started", Toast.LENGTH_LONG).show();
-//        }*/
-//    }
+    }
 
     private String getValidName(String name, String type) {
         name = name.replaceAll("[^\\w ()'!\\[\\]\\-]", "");

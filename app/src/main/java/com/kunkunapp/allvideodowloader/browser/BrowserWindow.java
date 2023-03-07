@@ -218,9 +218,9 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             }
             mVideoInfo = videoInfo;
             if (videoList != null) {
-                videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo);
+                videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo, viewModel);
             } else {
-                videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo) {
+                videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo,viewModel) {
                     @Override
                     void onItemDeleted() {
                         dialog.dismiss();

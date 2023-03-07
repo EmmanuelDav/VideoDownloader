@@ -118,6 +118,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RelativeLayout tabContainer;
     ImageView appSettingsBtn2;
     ImageView imgMore2;
+    private AllDownloadFragment allDownloadFragment;
     public EditText inputURLText;
     public RelativeLayout homeContainer;
     public SuggestionAdapter suggestionAdapter;
@@ -159,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initViews() {
+        allDownloadFragment = new AllDownloadFragment();
         homeContainer = findViewById(R.id.homeContainer);
         inputURLText = findViewById(R.id.inputURLText);
         appSettingsBtn2 = findViewById(R.id.appSettingsBtn2);
@@ -871,6 +873,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
+        if (allDownloadFragment.isSelectedMode) {
+            allDownloadFragment.unSelectAll();
+            return;
+        }
+
         if (navView.getSelectedItemId() == R.id.navDownload) {
             navView.setSelectedItemId(R.id.navHome);
             return;
@@ -953,7 +960,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (manager.findFragmentByTag(DOWNLOAD) == null) {
             browserManager.hideCurrentWindow();
             browserManager.pauseCurrentWindow();
-            manager.beginTransaction().add(R.id.mainContent, new DownloadsCompFragment(), DOWNLOAD).commit();
+            manager.beginTransaction().add(R.id.mainContent, allDownloadFragment, DOWNLOAD).commit();
         }
     }
 
