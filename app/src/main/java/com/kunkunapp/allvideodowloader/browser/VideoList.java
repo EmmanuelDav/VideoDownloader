@@ -2,11 +2,6 @@ package com.kunkunapp.allvideodowloader.browser;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.media.MediaMetadataRetriever;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
-import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Gravity;
@@ -20,39 +15,27 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.play.core.review.ReviewInfo;
-import com.google.android.play.core.review.ReviewManager;
-import com.google.android.play.core.review.ReviewManagerFactory;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
-import com.kunkunapp.allvideodowloader.MyApp;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
 import com.kunkunapp.allvideodowloader.viewModel.VidInfoViewModel;
-import com.tonyodev.fetch2.Fetch;
-import com.tonyodev.fetch2.FetchConfiguration;
-import com.tonyodev.fetch2.NetworkType;
-import com.tonyodev.fetch2.Priority;
-import com.tonyodev.fetch2.Request;
 import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.utils.PermissionInterceptor;
 import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.function.Function;
+
+import kotlin.Unit;
 
 public abstract class VideoList {
     private static final String TAG = VideoList.class.getCanonicalName();
@@ -64,19 +47,16 @@ public abstract class VideoList {
     TextView txtDownload;
     BottomSheetDialog bottomSheetDialog;
     VideoInfo videoInfo;
-    VidInfoViewModel viewModel;
+    private VideoFormat videoFormat;
 
-    abstract void onItemDeleted();
+    abstract  void onItemClicked(VideoInfo VideoFormat, VideoFormat videoFormat);
 
-    abstract void onVideoPlayed(String url);
-
-    VideoList(Activity activity, RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo v, VidInfoViewModel viewModel) {
+    VideoList(Activity activity, RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo v) {
         this.activity = activity;
         this.view = view;
         this.imgVideo = imgVideo;
         this.txtTitle = txtTitle;
         this.txtDownload = txtDownload;
-        this.viewModel = viewModel;
         this.bottomSheetDialog = bottomSheetDialog;
         this.videoInfo = v;
         selectedVideo = 0;
@@ -96,7 +76,7 @@ public abstract class VideoList {
                                 if (!all) {
                                     return;
                                 }
-                                 startDownload(viewModel);
+                                onItemClicked(videoInfo,videoFormat);
                             }
 
                             @Override
@@ -109,7 +89,7 @@ public abstract class VideoList {
         });
     }
 
-    void recreateVideoList(RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo videoInfo, VidInfoViewModel viewModel) {
+    void recreateVideoList(RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo videoInfo) {
         this.view = view;
         this.imgVideo = imgVideo;
         this.txtTitle = txtTitle;
@@ -117,7 +97,6 @@ public abstract class VideoList {
         this.bottomSheetDialog = bottomSheetDialog;
         this.videoInfo = videoInfo;
         selectedVideo = 0;
-        this.viewModel = viewModel;
         VideoListAdapter videoListAdapter = new VideoListAdapter();
         view.setAdapter(videoListAdapter);
         view.setLayoutManager(new GridLayoutManager(activity, 3));
@@ -135,7 +114,7 @@ public abstract class VideoList {
                                 if (!all) {
                                     return;
                                 }
-                                startDownload(viewModel);
+                                onItemClicked(videoInfo,videoFormat);
                             }
 
                             @Override
@@ -147,11 +126,6 @@ public abstract class VideoList {
                         });
             }
         });
-    }
-
-
-    int getSize() {
-        return videoInfo.getFormats().size();
     }
 
 
@@ -184,6 +158,9 @@ public abstract class VideoList {
             String sizeFormatted = Formatter.formatShortFileSize(activity, Long.parseLong(String.valueOf(videoInfo.getFormats().get(position).getFileSizeApproximate())));
             holder.videoFoundSize.setText(sizeFormatted);
             holder.name.setText(videoInfo.getFulltitle());
+            videoFormat = videoInfo.getFormats().get(selectedVideo);
+
+
 
             try {
                 holder.txtQuality.setText(BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormatId()));
@@ -243,19 +220,6 @@ public abstract class VideoList {
                     selectedVideo = getAdapterPosition();
                     notifyDataSetChanged();
                 }
-                /*if (v == download) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        new DownloadPermissionHandler(activity) {
-                            @Override
-                            public void onPermissionGranted() {
-                                startDownload();
-                            }
-                        }.checkPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                PermissionRequestCodes.DOWNLOADS);
-                    } else {
-                        startDownload();
-                    }
-                }*/
             }
 
 
@@ -263,7 +227,6 @@ public abstract class VideoList {
     }
 
     public void startDownload(VidInfoViewModel model) {
-        VideoFormat video = videoInfo.getFormats().get(selectedVideo);
         VideoInfo mVideoInfo = videoInfo;
         SharedPreferences prefs = activity.getSharedPreferences("settings", 0);
         String strDownloadLocation = prefs.getString("downloadLocation", "/storage/emulated/0/Download/Videodownloader");
@@ -271,7 +234,7 @@ public abstract class VideoList {
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        model.startDownload(mVideoInfo,video,strDownloadLocation,activity);
+        model.startDownload(mVideoInfo,videoFormat,strDownloadLocation,activity);
         LayoutInflater inflater = activity.getLayoutInflater();
         View layout = inflater.inflate(R.layout.toast_download, (ViewGroup) activity.findViewById(R.id.toast_layout_root));
         Toast toast = new Toast(activity);
@@ -282,29 +245,6 @@ public abstract class VideoList {
         ((MainActivity) activity).downloadCount = (((MainActivity) activity).downloadCount + 1);
         ((MainActivity) activity).badgeDownload.setNumber(((MainActivity) activity).downloadCount);
         bottomSheetDialog.dismiss();
-
     }
 
-    private String getValidName(String name, String type) {
-        name = name.replaceAll("[^\\w ()'!\\[\\]\\-]", "");
-        name = name.trim();
-        if (name.length() > 127) {//allowed filename length is 127
-            name = name.substring(0, 127);
-        } else if (name.equals("")) {
-            name = "video";
-        }
-        File file = new File(Environment.getExternalStoragePublicDirectory(MyApp.getInstance().getApplicationContext().getString(R.string.app_name)), name + "." + type);
-        StringBuilder nameBuilder = new StringBuilder(name);
-        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        String time = sdf1.format(timestamp);
-        nameBuilder = new StringBuilder(name);
-        nameBuilder.append(time);
-        file = new File(Environment.getExternalStoragePublicDirectory(MyApp.getInstance().getApplicationContext().getString(R.string.app_name)), nameBuilder + "." + type);
-        return nameBuilder.toString();
-    }
-
-    //void clear(){
-    //videos.clear();
-    // }
 }

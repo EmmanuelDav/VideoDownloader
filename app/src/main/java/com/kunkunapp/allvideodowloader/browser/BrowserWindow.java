@@ -9,6 +9,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -18,6 +20,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,7 +40,10 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
@@ -67,6 +73,7 @@ import com.kunkunapp.allvideodowloader.utils.VisitedPage;
 import com.kunkunapp.allvideodowloader.viewModel.VidInfoViewModel;
 import com.kunkunapp.allvideodowloader.views.CustomMediaController;
 import com.kunkunapp.allvideodowloader.views.CustomVideoView;
+import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.util.Arrays;
@@ -75,7 +82,7 @@ import java.util.List;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
-public class BrowserWindow extends BaseFragment implements View.OnClickListener, MainActivity.OnBackPressedListener {
+public class BrowserWindow extends BaseFragment implements View.OnClickListener, MainActivity.OnBackPressedListener, DownloadPathDialogFragment.DialogListener {
 
     private static final String TAG = BrowserWindow.class.getCanonicalName();
     private String url;
@@ -107,6 +114,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
 
     private VidInfoViewModel viewModel;
     VideoInfo mVideoInfo;
+
+    private static int OPEN_DIRECTORY_REQUEST_CODE = 42069;
 
 
     public BrowserWindow(Activity activity) {
@@ -201,14 +210,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 dialog.dismiss();
             }
         });
-//        qualities.setAdapter(new VidInfoAdapter(new VidInfoListener(vidFormatItem -> {
-//            viewModel.selectedItem = vidFormatItem;
-//            new DownloadPathDialogFragment().show(
-//                    getChildFragmentManager(),
-//                    "download_location_chooser_dialog"
-//            );
-//            return null;
-//        })));
+
         qualities.setLayoutManager(new GridLayoutManager(activity, 3));
         qualities.setHasFixedSize(true);
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
@@ -218,22 +220,17 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             }
             mVideoInfo = videoInfo;
             if (videoList != null) {
-                videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo, viewModel);
+                videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo );
             } else {
-                videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo,viewModel) {
+                videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo) {
                     @Override
-                    void onItemDeleted() {
-                        dialog.dismiss();
-                        if (mInterstitialAd != null) {
-                            mInterstitialAd.show(getBaseActivity());
-                        }
-                        updateFoundVideosBar();
-                    }
+                    void onItemClicked(VideoInfo videoInfo, VideoFormat videoFormat) {
+                        viewModel.selectedItem = videoInfo;
+                        viewModel.selectedView = videoFormat;
+                        new DownloadPathDialogFragment().show(getChildFragmentManager(),
+                                "download_location_chooser_dialog"
+                        );
 
-                    @Override
-                    void onVideoPlayed(String url) {
-                        dialog.dismiss();
-                        updateVideoPlayer(url);
                     }
                 };
             }
@@ -655,4 +652,46 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         }
         return str2;
     }
+
+    @Override
+    public void onOk(@NonNull DownloadPathDialogFragment dialog) {
+        String path = PreferenceManager.getDefaultSharedPreferences(context).getString(getString(R.string.download_location_key), null);
+        if (path == null) {
+            Toast.makeText(context, R.string.invalid_download_location, Toast.LENGTH_SHORT).show();
+        }
+        viewModel.startDownload(viewModel.selectedItem,viewModel.selectedView, path, activity);
+    }
+
+    @Override
+    public void onFilePicker(@NonNull DownloadPathDialogFragment dialog) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(intent, OPEN_DIRECTORY_REQUEST_CODE);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == OPEN_DIRECTORY_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
+                Uri uri = data.getData();
+                activity.getContentResolver().takePersistableUriPermission(uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                );
+                setDefaultDownloadLocation(uri.toString());
+                viewModel.startDownload(viewModel.selectedItem,viewModel.selectedView, uri.toString(), activity);
+            }
+        }
+    }
+
+    private void setDefaultDownloadLocation(String path) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        if ((prefs.getString(getString(R.string.download_location_key), null) == null)) {
+            prefs.edit().putString(getString(R.string.download_location_key), path).apply();
+        }
+    }
+
+
 }

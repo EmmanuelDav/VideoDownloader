@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.kunkunapp.allvideodowloader.MyApp
 import com.kunkunapp.allvideodowloader.work.DownloadWorker
-import com.kunkunapp.allvideodowloader.model.VidInfoItem
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import com.yausername.youtubedl_android.mapper.VideoInfo
@@ -22,7 +21,8 @@ class VidInfoViewModel : ViewModel() {
     val vidFormats: MutableLiveData<VideoInfo> = MutableLiveData()
     val loadState: MutableLiveData<LoadState> = MutableLiveData(LoadState.INITIAL)
     val thumbnail: MutableLiveData<String> = MutableLiveData()
-    lateinit var selectedItem: VidInfoItem.VidFormatItem
+    lateinit var selectedItem:  VideoInfo
+    lateinit var selectedView:  VideoFormat
 
     private fun submit(vidInfoItems: VideoInfo?) {
         vidFormats.postValue(vidInfoItems)
