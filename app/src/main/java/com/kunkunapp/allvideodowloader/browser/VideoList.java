@@ -86,34 +86,34 @@ public abstract class VideoList {
         this.txtDownload = txtDownload;
         this.bottomSheetDialog = bottomSheetDialog;
         selectedVideo = 0;
-        VideoListAdapter videoListAdapter = new VideoListAdapter();
+       // VideoListAdapter videoListAdapter = new VideoListAdapter();
       //  view.setAdapter(videoListAdapter);
-        view.setLayoutManager(new GridLayoutManager(activity, 3));
-        view.setHasFixedSize(true);
+        //view.setLayoutManager(new GridLayoutManager(activity, 3));
+        //view.setHasFixedSize(true);
         videos = Collections.synchronizedList(new ArrayList<Video>());
-        txtDownload.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                XXPermissions.with(activity)
-                        .permission(Permission.MANAGE_EXTERNAL_STORAGE)
-                        .interceptor(new PermissionInterceptor())
-                        .request(new OnPermissionCallback() {
-                            @Override
-                            public void onGranted(List<String> permissions, boolean all) {
-                                if (!all) {
-                                    return;
-                                }
-                                startDownload(videoListAdapter);
-                            }
-
-                            @Override
-                            public void onDenied(List<String> permissions, boolean never) {
-                                OnPermissionCallback.super.onDenied(permissions, never);
-                                Log.d(TAG, "onDenied: =====");
-                            }
-                        });
-            }
-        });
+//        txtDownload.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                XXPermissions.with(activity)
+//                        .permission(Permission.MANAGE_EXTERNAL_STORAGE)
+//                        .interceptor(new PermissionInterceptor())
+//                        .request(new OnPermissionCallback() {
+//                            @Override
+//                            public void onGranted(List<String> permissions, boolean all) {
+//                                if (!all) {
+//                                    return;
+//                                }
+//                                startDownload(videoListAdapter);
+//                            }
+//
+//                            @Override
+//                            public void onDenied(List<String> permissions, boolean never) {
+//                                OnPermissionCallback.super.onDenied(permissions, never);
+//                                Log.d(TAG, "onDenied: =====");
+//                            }
+//                        });
+//            }
+//        });
     }
 
     void recreateVideoList(RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog) {

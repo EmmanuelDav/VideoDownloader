@@ -2,24 +2,34 @@ package com.kunkunapp.allvideodowloader.adapters
 
 import android.content.Context
 import android.content.Intent
+import android.media.MediaMetadataRetriever
+import android.text.TextUtils
 import android.text.format.Formatter
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.ImageView
 import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.kunkunapp.allvideodowloader.R
+import com.kunkunapp.allvideodowloader.browser.BrowserWindow
 import com.kunkunapp.allvideodowloader.model.VidInfoItem
 import com.kunkunapp.allvideodowloader.utils.NumberUtils
 import com.yausername.youtubedl_android.mapper.VideoInfo
 import kotlinx.android.synthetic.main.vid_format.view.*
 import kotlinx.android.synthetic.main.vid_header.view.*
+import kotlinx.android.synthetic.main.video_found_item_lay.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 private const val ITEM_VIEW_TYPE_HEADER = 0
@@ -29,10 +39,12 @@ class VidInfoAdapter(private val clickListener: VidInfoListener) :
     ListAdapter<VidInfoItem, RecyclerView.ViewHolder>(
         VidInfoDiffCallback()
     ) {
+    private lateinit var mImageView: ImageView
+    private lateinit var tittle: EditText
 
     private val adapterScope = CoroutineScope(Dispatchers.Default)
 
-    fun fill(vidInfo: VideoInfo?) {
+    fun fill(vidInfo: VideoInfo?, imageView: ImageView, title: EditText) {
         adapterScope.launch {
             if (vidInfo == null) {
                 submitList(emptyList())
@@ -55,6 +67,8 @@ class VidInfoAdapter(private val clickListener: VidInfoListener) :
                 submitList(items.toList())
             }
         }
+        mImageView = imageView
+        tittle = title
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -63,20 +77,86 @@ class VidInfoAdapter(private val clickListener: VidInfoListener) :
                 val vidItem = getItem(position) as VidInfoItem.VidFormatItem
                 val vidFormat = vidItem.vidFormat
                 with(holder.itemView) {
-                    format_tv.text = vidFormat.format
-                    ext_tv.text = vidFormat.ext
-                    size_tv.text = Formatter.formatShortFileSize(context, vidFormat.fileSize)
-                    fps_tv.text = context.getString(R.string.fps_value, vidFormat.fps)
-                    abr_tv.text = context.getString(R.string.abr_value, vidFormat.abr)
-                    if (vidFormat.acodec != "none" && vidFormat.vcodec == "none") {
-                        format_ic.setImageResource(R.drawable.ic_baseline_audiotrack_24)
+                    videoFoundName.text = vidFormat.format
+//                    format_tv.text = vidFormat.format
+//                    ext_tv.text = vidFormat.ext
+//                    size_tv.text = Formatter.formatShortFileSize(context, vidFormat.fileSize)
+//                    fps_tv.text = context.getString(R.string.fps_value, vidFormat.fps)
+//                    abr_tv.text = context.getString(R.string.abr_value, vidFormat.abr)
+//                    if (vidFormat.acodec != "none" && vidFormat.vcodec == "none") {
+//                        format_ic.setImageResource(R.drawable.ic_baseline_audiotrack_24)
+//                    } else {
+//                        format_ic.setImageResource(R.drawable.ic_baseline_video_library_24)
+//                    }
+//                    item_share.setOnClickListener {
+//                        shareUrl(vidFormat.url, context)
+//                    }
+//                    setOnClickListener { clickListener.onClick(vidItem) }
+
+                    try {
+                        txtQuality.text = BrowserWindow.convertSolution(vidFormat.format)
+                    } catch (e: IllegalArgumentException) {
+                        e.printStackTrace()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+
+                    if (position == 0) {
+                        mImageView.visibility = View.VISIBLE
+                        if (vidItem.vidInfo.title != null && vidItem.vidInfo.title.isNotEmpty()) {
+                            tittle.visibility = View.VISIBLE
+                            tittle.setText(vidItem.vidInfo.title)
+                        } else {
+                            tittle.visibility = View.INVISIBLE
+                        }
+                        Glide.with(context)
+                            .load(vidItem.vidInfo.url)
+                            .thumbnail(0.5f)
+                            .into(mImageView)
+                    }
+
+                    if (TextUtils.isEmpty(vidItem.vidInfo.fileSize.toString())) {
+                        val sizeFormatted = Formatter.formatShortFileSize(context, vidItem.vidInfo.fileSize)
+                        videoFoundSize.text = sizeFormatted
                     } else {
-                        format_ic.setImageResource(R.drawable.ic_baseline_video_library_24)
+                        videoFoundSize.text = " "
                     }
-                    item_share.setOnClickListener {
-                        shareUrl(vidFormat.url, context)
-                    }
-                    setOnClickListener { clickListener.onClick(vidItem) }
+
+                    Log.d("TAG", "onBindViewHolder: "+vidFormat.format)
+
+//                    if (selectedVideo == position) {
+//                        imgSelected.visibility = View.VISIBLE
+//                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+//                            llMain.setBackgroundDrawable(
+//                                ContextCompat.getDrawable(
+//                                    context,
+//                                    R.drawable.bg_round_quality_select
+//                                )
+//                            )
+//                        } else {
+//                            llMain.setBackground(
+//                                ContextCompat.getDrawable(
+//                                    context,
+//                                    R.drawable.bg_round_quality_select
+//                                )
+//                            )
+//                        }
+//                    } else {
+//                        imgSelected.setVisibility(View.GONE)
+//                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+//                            llMain.setBackgroundDrawable(
+//                                ContextCompat.getDrawable(
+//                                    context,
+//                                    R.drawable.bg_round_quality_unselect
+//                                )
+//                            )
+//                        } else {
+//                            llMain.background = ContextCompat.getDrawable(
+//                                context,
+//                                R.drawable.bg_round_quality_unselect
+//                            )
+//                        }
+//                    }
                 }
             }
             else -> {
@@ -151,7 +231,7 @@ class VidInfoAdapter(private val clickListener: VidInfoListener) :
         companion object {
             fun from(parent: ViewGroup): ViewHolder {
                 val layoutInflater = LayoutInflater.from(parent.context)
-                val view = layoutInflater.inflate(R.layout.vid_format, parent, false)
+                val view = layoutInflater.inflate(R.layout.video_found_item_lay, parent, false)
                 return ViewHolder(view)
             }
         }

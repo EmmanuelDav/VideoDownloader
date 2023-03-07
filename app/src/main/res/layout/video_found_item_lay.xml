@@ -24,7 +24,6 @@
             android:layout_gravity="center"
             android:ellipsize="end"
             android:singleLine="true"
-            android:text="unknown"
             android:textColor="@color/text_1"
             android:textSize="@dimen/_18sdp"
             android:textStyle="bold"

@@ -201,7 +201,6 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 dialog.dismiss();
             }
         });
-        qualities.setLayoutManager(new LinearLayoutManager(activity));
         qualities.setAdapter(new VidInfoAdapter(new VidInfoListener(vidFormatItem -> {
             viewModel.selectedItem = vidFormatItem;
             new DownloadPathDialogFragment().show(
@@ -210,6 +209,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             );
             return null;
         })));
+        qualities.setLayoutManager(new GridLayoutManager(activity, 3));
+        qualities.setHasFixedSize(true);
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
         if (videoList != null) {
             //videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog);
@@ -233,7 +234,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         }
         viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
             mVideoInfo = videoInfo;
-            ((VidInfoAdapter) qualities.getAdapter()).fill(videoInfo);
+            ((VidInfoAdapter) qualities.getAdapter()).fill(videoInfo, imgVideo, txtTitle);
         });
         viewModel.getLoadState().observe(getViewLifecycleOwner(), loadState -> {
             switch (loadState) {
