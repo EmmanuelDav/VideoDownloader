@@ -57,6 +57,7 @@ import com.kunkunapp.allvideodowloader.adapters.SuggestionAdapter;
 import com.kunkunapp.allvideodowloader.browser.BrowserManager;
 import com.kunkunapp.allvideodowloader.database.AppDatabase;
 import com.kunkunapp.allvideodowloader.database.AppExecutors;
+import com.kunkunapp.allvideodowloader.database.ShortcutAppDatabase;
 import com.kunkunapp.allvideodowloader.database.ShortcutTable;
 import com.kunkunapp.allvideodowloader.fragments.AllDownloadFragment;
 import com.kunkunapp.allvideodowloader.fragments.DownloadsCompFragment;
@@ -234,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 AppExecutors.getInstance().diskIO().execute(new Runnable() {
                     @Override
                     public void run() {
-                        AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().delete(shortcutTable);
+                        ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().delete(shortcutTable);
                     }
                 });
             }
@@ -418,7 +419,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 AppExecutors.getInstance().diskIO().execute(new Runnable() {
                     @Override
                     public void run() {
-                        AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_default, strName, finalStrURL));
+                        ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_default, strName, finalStrURL));
                     }
                 });
             }
@@ -430,25 +431,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_add_shortcut, getString(R.string.add_shortcut), ""));
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_facebook, getString(R.string.facebook), "https://www.facebook.com/"));
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_instagram_, getString(R.string.instagram), "https://www.instagram.com/"));
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_linkedin, getString(R.string.linkedin), "https://www.linkedin.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_add_shortcut, getString(R.string.add_shortcut), ""));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_facebook, getString(R.string.facebook), "https://www.facebook.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_instagram_, getString(R.string.instagram), "https://www.instagram.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_linkedin, getString(R.string.linkedin), "https://www.linkedin.com/"));
 
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_pinterest, getString(R.string.pinterest), "https://in.pinterest.com/"));
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_tiktok, getString(R.string.tiktok), "https://www.tiktok.com/"));
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_dailymotion, getString(R.string.dailymotion), "https://www.dailymotion.com/"));
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_vimeo, getString(R.string.vimeo), "https://vimeo.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_pinterest, getString(R.string.pinterest), "https://in.pinterest.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_tiktok, getString(R.string.tiktok), "https://www.tiktok.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_dailymotion, getString(R.string.dailymotion), "https://www.dailymotion.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_vimeo, getString(R.string.vimeo), "https://vimeo.com/"));
 
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_buzz_video, getString(R.string.buzz_video), "https://www.buzzvideo.com/"));
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_imdb, getString(R.string.imdb), "https://www.imdb.com/"));
-                AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_vlive, getString(R.string.vlive), "https://www.vlive.tv/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_buzz_video, getString(R.string.buzz_video), "https://www.buzzvideo.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_imdb, getString(R.string.imdb), "https://www.imdb.com/"));
+                ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().insert(new ShortcutTable(R.drawable.ic_vlive, getString(R.string.vlive), "https://www.vlive.tv/"));
             }
         });
     }
 
     private void fetchShortcut() {
-        AppDatabase.Companion.getDatabase(this).shortcutDao().getAllShortcut().observe(this, new Observer<List<ShortcutTable>>() {
+        ShortcutAppDatabase.getInstance(this).shortcutDao().getAllShortcut().observe(this, new Observer<List<ShortcutTable>>() {
             @Override
             public void onChanged(List<ShortcutTable> shortcutTables) {
                 if (isFinishing() || isDestroyed())
@@ -604,7 +605,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {
-                List<ShortcutTable> shortcutTableList = AppDatabase.Companion.getDatabase(MainActivity.this).shortcutDao().getAllShortcutList();
+                List<ShortcutTable> shortcutTableList =  ShortcutAppDatabase.getInstance(MainActivity.this).shortcutDao().getAllShortcutList();
                 if (shortcutTableList != null && shortcutAdapter != null)
                     shortcutAdapter.setShortcutArrayList(shortcutTableList);
             }

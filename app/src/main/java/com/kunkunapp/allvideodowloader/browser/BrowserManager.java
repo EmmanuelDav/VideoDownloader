@@ -38,6 +38,7 @@ import com.kunkunapp.allvideodowloader.activities.IntroActivity;
 import com.kunkunapp.allvideodowloader.adapters.ShortcutAdapter;
 import com.kunkunapp.allvideodowloader.database.AppDatabase;
 import com.kunkunapp.allvideodowloader.database.AppExecutors;
+import com.kunkunapp.allvideodowloader.database.ShortcutAppDatabase;
 import com.kunkunapp.allvideodowloader.database.ShortcutTable;
 import com.kunkunapp.allvideodowloader.fragments.base.BaseFragment;
 import com.kunkunapp.allvideodowloader.helper.WebConnect;
@@ -239,7 +240,7 @@ public class BrowserManager extends BaseFragment {
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {
-                List<ShortcutTable> shortcutTableList = AppDatabase.Companion.getDatabase(getBaseActivity()).shortcutDao().getAllShortcutList();
+                List<ShortcutTable> shortcutTableList =  ShortcutAppDatabase.getInstance(getBaseActivity()).shortcutDao().getAllShortcutList();
                 if (shortcutTableList != null && shortcutAdapter != null)
                     shortcutAdapter.setShortcutArrayList(shortcutTableList);
             }
