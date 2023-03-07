@@ -188,8 +188,12 @@ public abstract class VideoList {
             String sizeFormatted = Formatter.formatShortFileSize(activity, Long.parseLong(String.valueOf(videoInfo.getFormats().get(position).getFileSizeApproximate())));
             holder.videoFoundSize.setText(sizeFormatted);
             holder.name.setText(videoInfo.getFulltitle());
+
+            Log.d(TAG, "onBindViewHolder: "+videoInfo.getFormats().get(position).getFormatId());
+            Log.d(TAG, "bin and Size: "+BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormat()));
+
             try {
-                holder.txtQuality.setText(BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormat()));
+                holder.txtQuality.setText(BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormatId()));
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             }
@@ -217,8 +221,8 @@ public abstract class VideoList {
                 txtTitle.setVisibility(View.GONE);
                 bottomSheetDialog.dismiss();
             }
-            if (videoInfo.getFormats().size() >= 5) {
-                return 5;
+            if (videoInfo.getFormats().size() >= 7) {
+                return 7;
             }
             return videoInfo.getFormats().size();
         }

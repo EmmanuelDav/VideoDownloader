@@ -212,8 +212,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         qualities.setLayoutManager(new GridLayoutManager(activity, 3));
         qualities.setHasFixedSize(true);
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
-        viewModel.getVidFormats().observe(getViewLifecycleOwner(),
-                videoInfo -> {
+        viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
             if (videoInfo == null) {
                 return;
             }
@@ -228,7 +227,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                         if (mInterstitialAd != null) {
                             mInterstitialAd.show(getBaseActivity());
                         }
-                        //updateFoundVideosBar();
+                        updateFoundVideosBar();
                     }
 
                     @Override
@@ -239,62 +238,6 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 };
             }
 
-        });
-        viewModel.getLoadState().observe(getViewLifecycleOwner(), loadState -> {
-            switch (loadState) {
-                case INITIAL:
-
-                case LOADING:
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Glide.with(activity)
-                                    .load(R.drawable.ic_download_dis)
-                                    .into(videosFoundHUD);
-                            if (foundVideosWindow.getVisibility() == View.VISIBLE)
-                                foundVideosWindow.setVisibility(View.GONE);
-                        }
-                    });
-                    break;
-
-                case LOADED:
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            RequestOptions options = new RequestOptions()
-                                    .skipMemoryCache(true)
-                                    .centerInside()
-                                    .placeholder(R.drawable.ic_download_det)
-                                    .transform(new CircleCrop());
-
-                            Glide.with(activity)
-                                    .load(R.drawable.ic_download_det)
-                                    .apply(options)
-                                    .into(videosFoundHUD);
-
-                            ObjectAnimator animY = ObjectAnimator.ofFloat(videosFoundHUD, "translationY", -100f, 0f);
-                            animY.setDuration(1000);
-                            animY.setInterpolator(new BounceInterpolator());
-                            animY.setRepeatCount(2);
-                            animY.addListener(new AnimatorListenerAdapter() {
-                                @Override
-                                public void onAnimationEnd(Animator animation, boolean isReverse) {
-                                    super.onAnimationEnd(animation, isReverse);
-                                    Glide.with(activity)
-                                            .load(R.drawable.ic_download_enable)
-                                            .into(videosFoundHUD);
-                                }
-                            });
-                            animY.start();
-                        }
-                    });
-
-                case FAILED:
-                    Log.d("TAG", "createFoundVideosWindow: Failed ");
-                    updateFoundVideosBar();
-                    break;
-
-            }
         });
     }
 
@@ -375,7 +318,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
 
                 @Override
                 public void onPageStarted(final WebView webview, final String url, Bitmap favicon) {
-                  //  videoList.deleteAllItems();
+                    //  videoList.deleteAllItems();
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
@@ -420,7 +363,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                                 long numericSize = Long.parseLong(size);
                                 if (numericSize > 700000) {
 //                                    videoList.selectedVideo = 0;
-                                 //   videoList.addItem(size, type, link, name, page, chunked, website, audio);
+                                    //   videoList.addItem(size, type, link, name, page, chunked, website, audio);
 
                                     activity.runOnUiThread(new Runnable() {
                                         @Override
@@ -493,7 +436,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 @Override
                 public void onReceivedTitle(WebView view, String title) {
                     super.onReceivedTitle(view, title);
-                  //  videoList.deleteAllItems();
+                    //  videoList.deleteAllItems();
                     updateFoundVideosBar();
 
                     VisitedPage vp = new VisitedPage();
@@ -678,8 +621,11 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         } else {
             if (split.length == 1) {
                 str2 = split[0];
+            } else if (!str.matches(".*\\d.*")) {
+                return str;
+            } else {
+                return "720P";
             }
-            return "720P";
         }
         try {
             long parseLong = Long.parseLong(str2);
