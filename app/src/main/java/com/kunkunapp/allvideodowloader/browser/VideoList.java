@@ -92,7 +92,7 @@ public abstract class VideoList {
                                 if (!all) {
                                     return;
                                 }
-                               // startDownload(videoListAdapter);
+                                // startDownload(videoListAdapter);
                             }
 
                             @Override
@@ -156,7 +156,7 @@ public abstract class VideoList {
         }*/
         //videos.clear();
 //        ((VideoListAdapter) view.getAdapter()).expandedItem = -1;
-   //     view.getAdapter().notifyDataSetChanged();
+        //     view.getAdapter().notifyDataSetChanged();
     }
 
     class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.VideoItem> {
@@ -180,23 +180,19 @@ public abstract class VideoList {
                     txtTitle.setVisibility(View.INVISIBLE);
                 }
                 Glide.with(activity)
-                        .load(videoInfo.getManifestUrl())
+                        .load(videoInfo.getThumbnail())
                         .thumbnail(0.5f)
                         .into(imgVideo);
             }
 
-            if (TextUtils.isEmpty(String.valueOf(videoInfo.getFileSize()))) {
-                String sizeFormatted = Formatter.formatShortFileSize(activity,
-                        Long.parseLong(String.valueOf(videoInfo.getFileSize())));
-                holder.videoFoundSize.setText(sizeFormatted);
-            } else holder.videoFoundSize.setText(" ");
-
+            String sizeFormatted = Formatter.formatShortFileSize(activity, Long.parseLong(String.valueOf(videoInfo.getFormats().get(position).getFileSizeApproximate())));
+            holder.videoFoundSize.setText(sizeFormatted);
             holder.name.setText(videoInfo.getFulltitle());
-                try {
-                    holder.txtQuality.setText(BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormat()));
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                }
+            try {
+                holder.txtQuality.setText(BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormat()));
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
             if (selectedVideo == position) {
                 holder.imgSelected.setVisibility(View.VISIBLE);
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
@@ -396,6 +392,6 @@ public abstract class VideoList {
     }
 
     //void clear(){
-        //videos.clear();
-   // }
+    //videos.clear();
+    // }
 }

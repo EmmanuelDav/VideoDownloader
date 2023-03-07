@@ -212,7 +212,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         qualities.setLayoutManager(new GridLayoutManager(activity, 3));
         qualities.setHasFixedSize(true);
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
-        viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
+        viewModel.getVidFormats().observe(getViewLifecycleOwner(),
+                videoInfo -> {
             if (videoInfo == null) {
                 return;
             }
