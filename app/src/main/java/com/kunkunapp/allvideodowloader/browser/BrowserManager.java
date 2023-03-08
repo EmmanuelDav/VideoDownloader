@@ -36,7 +36,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.activities.IntroActivity;
 import com.kunkunapp.allvideodowloader.adapters.ShortcutAdapter;
-import com.kunkunapp.allvideodowloader.database.AppDatabase;
 import com.kunkunapp.allvideodowloader.database.AppExecutors;
 import com.kunkunapp.allvideodowloader.database.ShortcutAppDatabase;
 import com.kunkunapp.allvideodowloader.database.ShortcutTable;

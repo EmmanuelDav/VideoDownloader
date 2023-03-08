@@ -4,7 +4,7 @@ plugins {
     id 'com.onesignal.androidsdk.onesignal-gradle-plugin'
     id 'kotlin-android-extensions'
     id 'kotlin-kapt'
-    id 'com.google.gms.google-services'// Google Services plugin // Uncomment the plugin to use firebase and obtain the google-services.json file
+    //id 'com.google.gms.google-services'// Google Services plugin // Uncomment the plugin to use firebase and obtain the google-services.json file
 }
 
 
@@ -126,9 +126,9 @@ dependencies {
 
     implementation 'com.google.firebase:firebase-analytics:21.1.1'
     implementation 'com.google.android.play:review:2.0.0'
+    implementation "androidx.recyclerview:recyclerview:1.2.1"
 
 
-    //Cyber Iykes Library
     implementation "com.github.yausername.youtubedl-android:library:3a0252d88b4ae573068c63c3d08fc52c66102d55"
     implementation "com.github.yausername.youtubedl-android:ffmpeg:3a0252d88b4ae573068c63c3d08fc52c66102d55"
 

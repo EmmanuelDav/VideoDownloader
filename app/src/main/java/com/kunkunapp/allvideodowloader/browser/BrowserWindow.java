@@ -1,7 +1,5 @@
 package com.kunkunapp.allvideodowloader.browser;
 
-import static java.util.Collections.emptyList;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
@@ -22,13 +20,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.BounceInterpolator;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -45,10 +42,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
@@ -73,7 +68,7 @@ import com.kunkunapp.allvideodowloader.utils.VisitedPage;
 import com.kunkunapp.allvideodowloader.viewModel.VidInfoViewModel;
 import com.kunkunapp.allvideodowloader.views.CustomMediaController;
 import com.kunkunapp.allvideodowloader.views.CustomVideoView;
-import com.yausername.youtubedl_android.mapper.VideoFormat;
+import com.kunkunapp.allvideodowloader.model.VidInfoItem;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.util.Arrays;
@@ -220,22 +215,20 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             }
             mVideoInfo = videoInfo;
             if (videoList != null) {
-                videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo );
+                videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog, videoInfo);
             } else {
-                videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog, mVideoInfo) {
+                videoList = new VideoList(activity, qualities, imgVideo, txtTitle, txtDownload, dialog, videoInfo) {
                     @Override
-                    void onItemClicked(VideoInfo videoInfo, VideoFormat videoFormat) {
-                        viewModel.selectedItem = videoInfo;
-                        viewModel.selectedView = videoFormat;
+                    public void onItemClicked(VidInfoItem.VidFormatItem vidFormatItem) {
+                        viewModel.selectedItem = vidFormatItem;
                         new DownloadPathDialogFragment().show(getChildFragmentManager(),
                                 "download_location_chooser_dialog"
                         );
-
                     }
                 };
             }
-
         });
+        viewModel.updateYoutubeDL(activity);
     }
 
 
@@ -659,7 +652,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         if (path == null) {
             Toast.makeText(context, R.string.invalid_download_location, Toast.LENGTH_SHORT).show();
         }
-        viewModel.startDownload(viewModel.selectedItem,viewModel.selectedView, path, activity);
+        removeDialog();
+        viewModel.startDownload(viewModel.selectedItem, path, activity);
     }
 
     @Override
@@ -681,7 +675,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 );
                 setDefaultDownloadLocation(uri.toString());
-                viewModel.startDownload(viewModel.selectedItem,viewModel.selectedView, uri.toString(), activity);
+                removeDialog();
+                viewModel.startDownload(viewModel.selectedItem, uri.toString(), activity);
             }
         }
     }
@@ -693,5 +688,16 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         }
     }
 
-
+    private void removeDialog() {
+        LayoutInflater inflater = activity.getLayoutInflater();
+        View layout = inflater.inflate(R.layout.toast_download, (ViewGroup) activity.findViewById(R.id.toast_layout_root));
+        Toast toast = new Toast(activity);
+        toast.setGravity(Gravity.BOTTOM, 0, 250);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(layout);
+        toast.show();
+        ((MainActivity) activity).downloadCount = (((MainActivity) activity).downloadCount + 1);
+        ((MainActivity) activity).badgeDownload.setNumber(((MainActivity) activity).downloadCount);
+        dialog.dismiss();
+    }
 }

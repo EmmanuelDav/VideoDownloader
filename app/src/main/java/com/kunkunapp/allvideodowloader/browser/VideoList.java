@@ -25,13 +25,15 @@ import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
-import com.kunkunapp.allvideodowloader.viewModel.VidInfoViewModel;
+import com.kunkunapp.allvideodowloader.model.VidInfoItem;
 import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.utils.PermissionInterceptor;
 import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -48,8 +50,10 @@ public abstract class VideoList {
     BottomSheetDialog bottomSheetDialog;
     VideoInfo videoInfo;
     private VideoFormat videoFormat;
+    private VidInfoItem.VidFormatItem headerItem;
 
-    abstract  void onItemClicked(VideoInfo VideoFormat, VideoFormat videoFormat);
+
+    abstract void onItemClicked(VidInfoItem.VidFormatItem vidFormatItem);
 
     VideoList(Activity activity, RecyclerView view, ImageView imgVideo, EditText txtTitle, TextView txtDownload, BottomSheetDialog bottomSheetDialog, VideoInfo v) {
         this.activity = activity;
@@ -61,6 +65,7 @@ public abstract class VideoList {
         this.videoInfo = v;
         selectedVideo = 0;
         VideoListAdapter videoListAdapter = new VideoListAdapter();
+        videoListAdapter.fill(videoInfo);
         view.setAdapter(videoListAdapter);
         view.setLayoutManager(new GridLayoutManager(activity, 3));
         view.setHasFixedSize(true);
@@ -76,7 +81,8 @@ public abstract class VideoList {
                                 if (!all) {
                                     return;
                                 }
-                                onItemClicked(videoInfo,videoFormat);
+
+                                onItemClicked(headerItem);
                             }
 
                             @Override
@@ -98,6 +104,7 @@ public abstract class VideoList {
         this.videoInfo = videoInfo;
         selectedVideo = 0;
         VideoListAdapter videoListAdapter = new VideoListAdapter();
+        videoListAdapter.fill(videoInfo);
         view.setAdapter(videoListAdapter);
         view.setLayoutManager(new GridLayoutManager(activity, 3));
         view.setHasFixedSize(true);
@@ -114,7 +121,7 @@ public abstract class VideoList {
                                 if (!all) {
                                     return;
                                 }
-                                onItemClicked(videoInfo,videoFormat);
+                                onItemClicked(headerItem);
                             }
 
                             @Override
@@ -130,7 +137,21 @@ public abstract class VideoList {
 
 
     class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.VideoItem> {
-        int expandedItem = -1;
+        List<VidInfoItem> items = Collections.emptyList();
+        VideoInfo mVideoInfo;
+
+        public void fill(VideoInfo vidInfo) {
+            if (vidInfo == null) {
+                items = Collections.emptyList();
+            } else {
+                List<VidInfoItem> itemList = new ArrayList<>();
+                vidInfo.getFormats().forEach(videoFormat1 -> {
+                    itemList.add(new VidInfoItem.VidFormatItem(vidInfo, videoFormat1.getFormatId()));
+                });
+                items = itemList;
+            }
+            notifyDataSetChanged();
+        }
 
         @Override
         public VideoItem onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -141,45 +162,49 @@ public abstract class VideoList {
 
         @Override
         public void onBindViewHolder(VideoItem holder, int position) {
-            if (position == 0) {
-                imgVideo.setVisibility(View.VISIBLE);
-                if (videoInfo.getTitle() != null && videoInfo.getTitle().length() > 0) {
-                    txtTitle.setVisibility(View.VISIBLE);
-                    txtTitle.setText(videoInfo.getTitle());
-                } else {
-                    txtTitle.setVisibility(View.INVISIBLE);
+            VidInfoItem item = items.get(position);
+            if (item instanceof VidInfoItem.VidFormatItem) {
+                headerItem = (VidInfoItem.VidFormatItem) items.get(selectedVideo);
+                 mVideoInfo = headerItem.getVidInfo();
+                if (position == 0) {
+                    imgVideo.setVisibility(View.VISIBLE);
+                    if (mVideoInfo.getTitle() != null && mVideoInfo.getTitle().length() > 0) {
+                        txtTitle.setVisibility(View.VISIBLE);
+                        txtTitle.setText(mVideoInfo.getTitle());
+                    } else {
+                        txtTitle.setVisibility(View.INVISIBLE);
+                    }
+                    Glide.with(activity)
+                            .load(mVideoInfo.getThumbnail())
+                            .thumbnail(0.5f)
+                            .into(imgVideo);
                 }
-                Glide.with(activity)
-                        .load(videoInfo.getThumbnail())
-                        .thumbnail(0.5f)
-                        .into(imgVideo);
-            }
-
-            String sizeFormatted = Formatter.formatShortFileSize(activity, Long.parseLong(String.valueOf(videoInfo.getFormats().get(position).getFileSizeApproximate())));
-            holder.videoFoundSize.setText(sizeFormatted);
-            holder.name.setText(videoInfo.getFulltitle());
-            videoFormat = videoInfo.getFormats().get(selectedVideo);
 
 
+                String sizeFormatted = Formatter.formatShortFileSize(activity, Long.parseLong(String.valueOf(mVideoInfo.getFormats().get(position).getFileSizeApproximate())));
+                holder.videoFoundSize.setText(sizeFormatted);
+                holder.name.setText(mVideoInfo.getFulltitle());
+                videoFormat = mVideoInfo.getFormats().get(selectedVideo);
 
-            try {
-                holder.txtQuality.setText(BrowserWindow.convertSolution(videoInfo.getFormats().get(position).getFormatId()));
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            }
-            if (selectedVideo == position) {
-                holder.imgSelected.setVisibility(View.VISIBLE);
-                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                    holder.llMain.setBackgroundDrawable(ContextCompat.getDrawable(activity, R.drawable.bg_round_quality_select));
-                } else {
-                    holder.llMain.setBackground(ContextCompat.getDrawable(activity, R.drawable.bg_round_quality_select));
+                try {
+                    holder.txtQuality.setText(BrowserWindow.convertSolution(mVideoInfo.getFormats().get(position).getFormatId()));
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
                 }
-            } else {
-                holder.imgSelected.setVisibility(View.GONE);
-                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                    holder.llMain.setBackgroundDrawable(ContextCompat.getDrawable(activity, R.drawable.bg_round_quality_unselect));
+                if (selectedVideo == position) {
+                    holder.imgSelected.setVisibility(View.VISIBLE);
+                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                        holder.llMain.setBackgroundDrawable(ContextCompat.getDrawable(activity, R.drawable.bg_round_quality_select));
+                    } else {
+                        holder.llMain.setBackground(ContextCompat.getDrawable(activity, R.drawable.bg_round_quality_select));
+                    }
                 } else {
-                    holder.llMain.setBackground(ContextCompat.getDrawable(activity, R.drawable.bg_round_quality_unselect));
+                    holder.imgSelected.setVisibility(View.GONE);
+                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                        holder.llMain.setBackgroundDrawable(ContextCompat.getDrawable(activity, R.drawable.bg_round_quality_unselect));
+                    } else {
+                        holder.llMain.setBackground(ContextCompat.getDrawable(activity, R.drawable.bg_round_quality_unselect));
+                    }
                 }
             }
         }
@@ -221,30 +246,6 @@ public abstract class VideoList {
                     notifyDataSetChanged();
                 }
             }
-
-
         }
     }
-
-    public void startDownload(VidInfoViewModel model) {
-        VideoInfo mVideoInfo = videoInfo;
-        SharedPreferences prefs = activity.getSharedPreferences("settings", 0);
-        String strDownloadLocation = prefs.getString("downloadLocation", "/storage/emulated/0/Download/Videodownloader");
-        File dir = new File(strDownloadLocation);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        model.startDownload(mVideoInfo,videoFormat,strDownloadLocation,activity);
-        LayoutInflater inflater = activity.getLayoutInflater();
-        View layout = inflater.inflate(R.layout.toast_download, (ViewGroup) activity.findViewById(R.id.toast_layout_root));
-        Toast toast = new Toast(activity);
-        toast.setGravity(Gravity.BOTTOM, 0, 250);
-        toast.setDuration(Toast.LENGTH_LONG);
-        toast.setView(layout);
-        toast.show();
-        ((MainActivity) activity).downloadCount = (((MainActivity) activity).downloadCount + 1);
-        ((MainActivity) activity).badgeDownload.setNumber(((MainActivity) activity).downloadCount);
-        bottomSheetDialog.dismiss();
-    }
-
 }
