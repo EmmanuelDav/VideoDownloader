@@ -33,3 +33,7 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
         repository.delete(word)
     }
 }
+
+enum class DownloadState {
+    DOWNLOADING, COMPLETED, CANCELED, FAILED
+}

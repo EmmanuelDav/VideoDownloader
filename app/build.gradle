@@ -128,6 +128,7 @@ dependencies {
     implementation 'com.google.android.play:review:2.0.0'
     implementation "androidx.recyclerview:recyclerview:1.2.1"
 
+    implementation group: 'commons-io', name: 'commons-io', version: "$commonsIoVer"
 
     implementation "com.github.yausername.youtubedl-android:library:3a0252d88b4ae573068c63c3d08fc52c66102d55"
     implementation "com.github.yausername.youtubedl-android:ffmpeg:3a0252d88b4ae573068c63c3d08fc52c66102d55"

@@ -12,8 +12,8 @@ import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
+import org.apache.commons.io.IOUtils
 import androidx.work.WorkerParameters
-import com.google.android.gms.common.util.IOUtils
 import com.kunkunapp.allvideodowloader.R
 import com.kunkunapp.allvideodowloader.database.AppDatabase
 import com.kunkunapp.allvideodowloader.database.Download
@@ -90,7 +90,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
                 )
                 val ins = it.inputStream()
                 val ops = applicationContext.contentResolver.openOutputStream(destUri!!)
-               // IOUtils.copy(ins, ops)
+                IOUtils.copy(ins, ops)
                 IOUtils.closeQuietly(ops)
                 IOUtils.closeQuietly(ins)
             }
