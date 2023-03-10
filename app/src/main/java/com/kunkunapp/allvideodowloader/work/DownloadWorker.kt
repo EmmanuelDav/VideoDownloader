@@ -1,5 +1,6 @@
 package com.kunkunapp.allvideodowloader.work;
 
+import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -19,14 +20,16 @@ import com.kunkunapp.allvideodowloader.database.AppDatabase
 import com.kunkunapp.allvideodowloader.database.Download
 import com.kunkunapp.allvideodowloader.database.DownloadsRepository
 import com.kunkunapp.allvideodowloader.utils.FileNameUtils
+import com.kunkunapp.allvideodowloader.viewModel.DownloadState
+import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import java.io.File
 import java.util.*
 
 private const val TAG = "DownloadWorker"
-class DownloadWorker(appContext: Context, params: WorkerParameters) :
-    CoroutineWorker(appContext, params) {
+class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
+    var downloadsViewModel = DownloadsViewModel(appContext as Application)
 
     private val notificationManager =
         appContext.getSystemService(Context.NOTIFICATION_SERVICE) as
@@ -34,7 +37,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
 
 
     override suspend fun doWork(): Result {
-
         val url = inputData.getString(urlKey)!!
         val name = FileNameUtils.createFilename(inputData.getString(nameKey)!!)
         val formatId = inputData.getString(formatIdKey)!!
@@ -43,6 +45,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         val downloadDir = inputData.getString(downloadDirKey)!!
         val size = inputData.getLong(sizeKey, 0L)
         val taskId = inputData.getString(taskIdKey)!!
+        downloadsViewModel.updateLoading(DownloadState.INIT)
 
         createNotificationChannel()
         val notificationId = id.hashCode()
@@ -54,12 +57,13 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
             .setContentTitle(name)
             .setContentText(applicationContext.getString(R.string.download_start))
             .build()
+        downloadsViewModel.updateLoading(DownloadState.DOWNLOADING)
 
         val foregroundInfo = ForegroundInfo(notificationId, notification)
         setForeground(foregroundInfo)
 
         val request = YoutubeDLRequest(url)
-        val tmpFile = File.createTempFile("dvd", null, applicationContext.externalCacheDir)
+        val tmpFile = File.createTempFile("Video_DL", null, applicationContext.externalCacheDir)
         tmpFile.delete()
         tmpFile.mkdir()
         tmpFile.deleteOnExit()
@@ -72,6 +76,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         }
 
         var destUri: Uri? = null
+
         try {
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
                     showProgress(id.hashCode(), taskId, name, progress.toInt(), line, tmpFile)
@@ -109,7 +114,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         download.downloadedPercent = 100.00
         download.downloadedSize = size
         download.mediaType = if (vcodec == "none" && acodec != "none") "audio" else "video"
-
         repository.insert(download)
 
         return Result.success()

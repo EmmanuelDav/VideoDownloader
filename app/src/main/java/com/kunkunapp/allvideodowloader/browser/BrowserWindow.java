@@ -213,6 +213,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             if (videoInfo == null) {
                 return;
             }
+            videoInfo.getFormats().removeIf(it -> !it.getExt().contains("mp4") || it.getFormat().contains("v-1"));
+
             mVideoInfo = videoInfo;
             if (videoList != null) {
                 videoList.recreateVideoList(qualities, imgVideo, txtTitle, txtDownload, dialog, videoInfo);
@@ -228,7 +230,6 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 };
             }
         });
-        viewModel.updateYoutubeDL(activity);
     }
 
 

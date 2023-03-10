@@ -1,5 +1,6 @@
 package com.kunkunapp.allvideodowloader.work;
 
+import android.app.Application
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
@@ -8,13 +9,16 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kunkunapp.allvideodowloader.database.AppDatabase
 import com.kunkunapp.allvideodowloader.database.DownloadsRepository
+import com.kunkunapp.allvideodowloader.viewModel.DownloadState
+import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class DeleteWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params) {
-    override suspend fun doWork(): Result {
+    var downloadsViewModel = DownloadsViewModel(appContext as Application)
 
+    override suspend fun doWork(): Result {
         val fileId = inputData.getLong(fileIdKey, 0)
 
         val downloadsDao = AppDatabase.getDatabase(applicationContext).downloadsDao()
@@ -34,6 +38,7 @@ class DeleteWorker(appContext: Context, params: WorkerParameters) :
                     .show()
             }
         }
+        downloadsViewModel.updateLoading(DownloadState.CANCELED)
 
         return Result.success()
     }

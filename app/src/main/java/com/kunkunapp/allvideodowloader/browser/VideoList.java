@@ -143,7 +143,7 @@ public abstract class VideoList {
         public void fill(VideoInfo vidInfo) {
             if (vidInfo == null) {
                 items = Collections.emptyList();
-            } else {
+            }else {
                 List<VidInfoItem> itemList = new ArrayList<>();
                 vidInfo.getFormats().forEach(videoFormat1 -> {
                     itemList.add(new VidInfoItem.VidFormatItem(vidInfo, videoFormat1.getFormatId()));

@@ -1,6 +1,7 @@
 package com.kunkunapp.allvideodowloader.viewModel
 
 import android.app.Activity
+import android.content.Context
 import android.util.Log
 import android.view.Gravity
 import android.view.View
@@ -13,6 +14,7 @@ import androidx.work.*
 import com.kunkunapp.allvideodowloader.MyApp
 import com.kunkunapp.allvideodowloader.activities.MainActivity
 import com.kunkunapp.allvideodowloader.model.VidInfoItem
+import com.kunkunapp.allvideodowloader.work.DeleteWorker
 import com.kunkunapp.allvideodowloader.work.DownloadWorker
 import com.kunkunapp.allvideodowloader.work.YoutubeDLUpdateWorker
 import com.kunkunapp.allvideodowloader.work.YoutubeDLUpdateWorker.Companion.workTag
@@ -106,39 +108,6 @@ class VidInfoViewModel : ViewModel() {
             Toast.LENGTH_LONG
         ).show()
     }
-
-     fun updateYoutubeDL(activity:Activity) {
-        val workManager = WorkManager.getInstance(activity)
-        val state =
-            workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
-        val running = state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED
-        if (running) {
-            Toast.makeText(
-                activity,
-                "Already updated",
-                Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
-        val workRequest = OneTimeWorkRequestBuilder<YoutubeDLUpdateWorker>()
-            .addTag(workTag)
-            .build()
-
-        workManager.enqueueUniqueWork(
-            workTag,
-            ExistingWorkPolicy.KEEP,
-            workRequest
-        )
-
-        Toast.makeText(
-            activity,
-            "update quied",
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-
-
-
 }
 
 enum class LoadState {

@@ -13,7 +13,7 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
-        private const val name = "dvd_db"
+        private const val name = "Video_DL"
 
         fun getDatabase(context: Context): AppDatabase {
             val tempInstance = INSTANCE
