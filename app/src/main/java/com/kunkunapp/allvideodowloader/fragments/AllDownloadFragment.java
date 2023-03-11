@@ -583,7 +583,7 @@ public class AllDownloadFragment extends Fragment {
 //            holder.imgCancel.setVisibility(View.GONE);
 //            holder.imgPause.setVisibility(View.GONE);
 //            holder.imgResume.setVisibility(View.GONE);
-        //      holder.txtDuration.setVisibility(View.GONE);
+              holder.txtDuration.setVisibility(View.GONE);
 //            holder.imgMore.setVisibility(View.GONE);
            holder.imgSelect.setVisibility(View.GONE);
 //            holder.downloadProgressBar.setVisibility(View.VISIBLE);

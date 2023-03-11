@@ -72,7 +72,12 @@ import com.kunkunapp.allvideodowloader.model.VidInfoItem;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
@@ -213,7 +218,9 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             if (videoInfo == null) {
                 return;
             }
-            videoInfo.getFormats().removeIf(it -> !it.getExt().contains("mp4") || it.getFormat().contains("v-1"));
+            videoInfo.getFormats().removeIf(it -> !it.getExt().contains("mp4") || it.getFormat().contains("audio"));
+            Set<String> namesAlreadySeen = new HashSet<>();
+            videoInfo.getFormats().removeIf(p -> !namesAlreadySeen.add(convertSolution(p.getFormat())));
 
             mVideoInfo = videoInfo;
             if (videoList != null) {
@@ -229,6 +236,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                     }
                 };
             }
+            updateFoundVideosBar();
         });
     }
 
@@ -267,7 +275,6 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             createVideosFoundHUD();
             createVideosFoundTV();
             createFoundVideosWindow();
-            updateFoundVideosBar();
             webViewLightDark();
         }
 

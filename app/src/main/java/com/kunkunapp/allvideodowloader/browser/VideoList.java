@@ -179,10 +179,8 @@ public abstract class VideoList {
                             .thumbnail(0.5f)
                             .into(imgVideo);
                 }
-
-
                 String sizeFormatted = Formatter.formatShortFileSize(activity, Long.parseLong(String.valueOf(mVideoInfo.getFormats().get(position).getFileSizeApproximate())));
-                holder.videoFoundSize.setText(sizeFormatted);
+                holder.videoFoundSize.setText(sizeFormatted.equals("0 B") ? "N/A" : sizeFormatted);
                 holder.name.setText(mVideoInfo.getFulltitle());
                 videoFormat = mVideoInfo.getFormats().get(selectedVideo);
 
@@ -216,9 +214,9 @@ public abstract class VideoList {
                 txtTitle.setVisibility(View.GONE);
                 bottomSheetDialog.dismiss();
             }
-            if (videoInfo.getFormats().size() >= 7) {
-                return 7;
-            }
+//            if (videoInfo.getFormats().size() >= 7) {
+//                return 7;
+//            }
             return videoInfo.getFormats().size();
         }
 
