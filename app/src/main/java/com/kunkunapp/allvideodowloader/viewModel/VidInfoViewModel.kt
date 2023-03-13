@@ -13,6 +13,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.kunkunapp.allvideodowloader.MyApp
 import com.kunkunapp.allvideodowloader.activities.MainActivity
+import com.kunkunapp.allvideodowloader.database.AppDatabase
+import com.kunkunapp.allvideodowloader.database.Download
+import com.kunkunapp.allvideodowloader.database.DownloadsRepository
 import com.kunkunapp.allvideodowloader.model.VidInfoItem
 import com.kunkunapp.allvideodowloader.work.DeleteWorker
 import com.kunkunapp.allvideodowloader.work.DownloadWorker
@@ -70,9 +73,9 @@ class VidInfoViewModel : ViewModel() {
         val vidInfo = vidFormatItem.vidInfo
         val vidFormat = vidFormatItem.vidFormat
         val workTag = vidInfo.id
-        val workManager = WorkManager.getInstance(activity?.applicationContext!!)
-        val state =
-            workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
+        val workManager = WorkManager.getInstance(activity.applicationContext!!)
+        val state = workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
+
         val running = state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED
         if (running) {
             Toast.makeText(
@@ -92,6 +95,12 @@ class VidInfoViewModel : ViewModel() {
             DownloadWorker.sizeKey to vidFormat.fileSize,
             DownloadWorker.taskIdKey to vidInfo.id
         )
+
+
+//        val downloadsDao = AppDatabase.getDatabase(activity).downloadsDao()
+//        val repository = DownloadsRepository(downloadsDao)
+//        repository.insert(Download(vidInfo.title,vidInfo.duration.toLong(),vidInfo.fileSizeApproximate))
+
         val workRequest = OneTimeWorkRequestBuilder<DownloadWorker>()
             .addTag(workTag)
             .setInputData(workData)

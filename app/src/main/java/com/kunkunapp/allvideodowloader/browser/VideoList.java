@@ -214,9 +214,9 @@ public abstract class VideoList {
                 txtTitle.setVisibility(View.GONE);
                 bottomSheetDialog.dismiss();
             }
-//            if (videoInfo.getFormats().size() >= 7) {
-//                return 7;
-//            }
+            if (videoInfo.getFormats().size() >= 7) {
+                return 7;
+            }
             return videoInfo.getFormats().size();
         }
 

@@ -37,6 +37,8 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
 
 
     override suspend fun doWork(): Result {
+
+
         val url = inputData.getString(urlKey)!!
         val name = FileNameUtils.createFilename(inputData.getString(nameKey)!!)
         val formatId = inputData.getString(formatIdKey)!!
@@ -45,7 +47,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         val downloadDir = inputData.getString(downloadDirKey)!!
         val size = inputData.getLong(sizeKey, 0L)
         val taskId = inputData.getString(taskIdKey)!!
-        downloadsViewModel.updateLoading(DownloadState.INIT)
 
         createNotificationChannel()
         val notificationId = id.hashCode()
@@ -57,7 +58,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
             .setContentTitle(name)
             .setContentText(applicationContext.getString(R.string.download_start))
             .build()
-        downloadsViewModel.updateLoading(DownloadState.DOWNLOADING)
 
         val foregroundInfo = ForegroundInfo(notificationId, notification)
         setForeground(foregroundInfo)

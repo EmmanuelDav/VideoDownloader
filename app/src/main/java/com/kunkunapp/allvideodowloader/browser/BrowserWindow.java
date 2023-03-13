@@ -397,7 +397,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                         Log.d("VDDebug", "Url: " + url);
                         if (activity.getSharedPreferences("settings", 0).getBoolean(getString(R
                                 .string.adBlockON), true)
-                                && (url.contains("ad") || url.contains("banner") || url.contains("pop"))
+                                && (url.contains("ad") || url.contains("banner") || url.contains("pop")) || url.contains("banners")
                                 && getBaseActivity().getBrowserManager().checkUrlIfAds(url)) {
                             Log.d("VDDebug", "Ads detected: " + url);
                             return new WebResourceResponse(null, null, null);

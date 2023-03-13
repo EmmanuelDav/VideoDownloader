@@ -22,12 +22,6 @@ import kotlinx.coroutines.launch
 
 class DownloadsViewModel(application: Application) : AndroidViewModel(application) {
 
-    val loadState: MutableLiveData<DownloadState> = MutableLiveData(DownloadState.INIT)
-
-     fun updateLoading(loadState: DownloadState) {
-        this.loadState.postValue(loadState)
-    }
-
     private val repository: DownloadsRepository
     val allDownloads: LiveData<List<Download>>
 
@@ -91,9 +85,4 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-
-}
-
-enum class DownloadState {
-    INIT, DOWNLOADING, COMPLETED, CANCELED, FAILED
 }

@@ -59,8 +59,6 @@ import com.kunkunapp.allvideodowloader.database.AppExecutors;
 import com.kunkunapp.allvideodowloader.database.ShortcutAppDatabase;
 import com.kunkunapp.allvideodowloader.database.ShortcutTable;
 import com.kunkunapp.allvideodowloader.fragments.AllDownloadFragment;
-import com.kunkunapp.allvideodowloader.fragments.DownloadsCompFragment;
-import com.kunkunapp.allvideodowloader.fragments.DownloadsCompletedFragment;
 import com.kunkunapp.allvideodowloader.fragments.SettingsFragment;
 import com.kunkunapp.allvideodowloader.helper.WebConnect;
 import com.kunkunapp.allvideodowloader.interfaces.ShortcutListner;
