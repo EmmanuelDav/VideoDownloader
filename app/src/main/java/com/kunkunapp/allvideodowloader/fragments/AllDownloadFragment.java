@@ -95,7 +95,6 @@ public class AllDownloadFragment extends Fragment {
         downloadsList = view.findViewById(R.id.downloadsList);
         downloadsList.setLayoutManager(new LinearLayoutManager(getActivity()));
         downloadsList.setAdapter(downloadAdapter);
-
         llSelectAll = view.findViewById(R.id.llSelectAll);
         llDeleteSelected = view.findViewById(R.id.llDeleteSelected);
         imgCancel = view.findViewById(R.id.imgCancel);
@@ -259,85 +258,73 @@ public class AllDownloadFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             DownloadData downloadData = downloads.get(position);
-            DocumentFile documentFile =  DocumentFile.fromSingleUri(getContext(), Uri.parse(downloadData.download.downloadedPath));
+            DocumentFile documentFile = DocumentFile.fromSingleUri(getContext(), Uri.parse(downloadData.download.downloadedPath));
             File tempFile = new File(downloadData.download.getDownloadedPath());
             File file = tempFile;
-//            downloadsViewModel.getLoadState().observe(getViewLifecycleOwner(), downloadState -> {
-//                switch (downloadState) {
-//                    case INIT:
-//                        downloaded = true;
-//                        holder.imgCancel.setVisibility(View.VISIBLE);
-//                        holder.imgPause.setVisibility(View.VISIBLE);
-//                        holder.imgResume.setVisibility(View.GONE);
-//
-//                        holder.imgCancel.setVisibility(View.GONE);
-//                        holder.imgPause.setVisibility(View.GONE);
-//                        holder.imgResume.setVisibility(View.GONE);
-//                        holder.downloadProgressBar.setVisibility(View.GONE);
-//                        holder.txtDuration.setVisibility(View.VISIBLE);
-//                        holder.imgMore.setVisibility(View.VISIBLE);
-//
-//                        String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getTimestamp()));
-//                        String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize()) + "  " + dateString;
-//                        holder.downloadProgressText.setText(strDescComplete);
-//
-//                        if (documentFile.exists()) {
-//                            String duration = null;
-//                            try {
-//                                duration = Utils.Companion.convertSecondsToHMmSs(getFileDuration(downloadData.download.downloadedPath,getContext()));
-//                            } catch (IOException e) {
-//                                e.printStackTrace();
-//                            }
-//                            if (duration != null)
-//                                holder.txtDuration.setText(duration);
-//                        }
-//                        break;
-//                    case CANCELED:
-//                        String strDesc2 = "Cancelled " + downloadData.download.getDownloadedPercent() + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
-//                        holder.downloadProgressText.setText(strDesc2);
-//                        holder.imgCancel.setVisibility(View.GONE);
-//                        holder.imgPause.setVisibility(View.GONE);
-//                        holder.imgResume.setVisibility(View.VISIBLE);
-//                        break;
-//
-//                    case COMPLETED:
-////                        holder.imgCancel.setVisibility(View.GONE);
-////                        holder.imgPause.setVisibility(View.GONE);
-////                        holder.imgResume.setVisibility(View.GONE);
-////                        holder.downloadProgressBar.setVisibility(View.GONE);
-////                        holder.txtDuration.setVisibility(View.VISIBLE);
-////                        holder.imgMore.setVisibility(View.VISIBLE);
-////
-////                        String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getTimestamp()));
-////                        String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize()) + "  " + dateString;
-////                        holder.downloadProgressText.setText(strDescComplete);
-////
-////                        if (file.exists()) {
-////                            String duration = null;
-////                            try {
-////                                duration = getFileDuration(file);
-////                            } catch (IOException e) {
-////                                e.printStackTrace();
-////                            }
-////                            if (duration != null)
-////                                holder.txtDuration.setText(duration);
-////                        }
-//
-//                        break;
-//                    case DOWNLOADING:
-//
-//                    case FAILED:
-//
-//                        holder.imgCancel.setVisibility(View.VISIBLE);
-//                        holder.imgPause.setVisibility(View.GONE);
-//                        holder.imgResume.setVisibility(View.VISIBLE);
-//                        String strDescFailed = "Failed " + downloadData.download.getDownloadedPercent() + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
-//                        holder.downloadProgressText.setText(strDescFailed);
-//                        break;
-//
-//                }
-//
-//            });
+            downloadsViewModel.getLoadState().observe(getViewLifecycleOwner(), state -> {
+                switch (state) {
+                    case FAILED: {
+                        holder.imgCancel.setVisibility(View.VISIBLE);
+                        holder.imgPause.setVisibility(View.GONE);
+                        holder.imgResume.setVisibility(View.VISIBLE);
+                        String strDescFailed = "Failed " + downloadData.download.getDownloadedPercent() + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
+                        holder.downloadProgressText.setText(strDescFailed);
+                        break;
+                    }
+                    case RUNNING:
+
+                        return;
+                    case ENQUEUED: {
+                        holder.imgCancel.setVisibility(View.VISIBLE);
+                        holder.imgPause.setVisibility(View.VISIBLE);
+                        holder.imgResume.setVisibility(View.GONE);
+                        break;
+                    }
+
+                    case SUCCEEDED: {
+                        holder.imgCancel.setVisibility(View.VISIBLE);
+                        holder.imgPause.setVisibility(View.VISIBLE);
+                        holder.imgResume.setVisibility(View.GONE);
+                        holder.imgCancel.setVisibility(View.GONE);
+                        holder.imgPause.setVisibility(View.GONE);
+                        holder.imgResume.setVisibility(View.GONE);
+                        holder.downloadProgressBar.setVisibility(View.GONE);
+                        holder.txtDuration.setVisibility(View.VISIBLE);
+                        holder.imgMore.setVisibility(View.VISIBLE);
+                        String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getTimestamp()));
+                        String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize()) + "  " + dateString;
+                        holder.downloadProgressText.setText(strDescComplete);
+                        if (documentFile.exists()) {
+                            String duration = null;
+                            try {
+                                duration = Utils.Companion.convertSecondsToHMmSs(getFileDuration(downloadData.download.downloadedPath, getContext()));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            if (duration != null)
+                                holder.txtDuration.setText(duration);
+                        }
+                        break;
+                    }
+
+                    case CANCELLED: {
+                        String strDesc2 = "Cancelled " + downloadData.download.getDownloadedPercent() + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
+                        holder.downloadProgressText.setText(strDesc2);
+                        holder.imgCancel.setVisibility(View.GONE);
+                        holder.imgPause.setVisibility(View.GONE);
+                        holder.imgResume.setVisibility(View.VISIBLE);
+                        break;
+                    }
+
+                    case BLOCKED:
+                        return;
+
+                    default: {
+                        break;
+                    }
+                }
+            });
+
             Glide.with(getActivity())
                     .load(downloadData.download.getDownloadedPath())
                     .into(holder.imgVideo);
@@ -503,7 +490,7 @@ public class AllDownloadFragment extends Fragment {
                                     shareFile(downloadData.download.downloadedPath);
                                     break;
                                 case R.id.menu_rename:
-                                     renameFile(downloadData, documentFile);
+                                    renameFile(downloadData, documentFile);
                                     break;
                                 case R.id.menu_edit_video:
 
@@ -557,9 +544,9 @@ public class AllDownloadFragment extends Fragment {
                                     txtOK.setOnClickListener(new View.OnClickListener() {
                                         @Override
                                         public void onClick(View v) {
-                                           downloadsViewModel.startDelete(downloads.get(position).id,dialog.getContext());
-                                           dialog.dismiss();
-                                           onResume();
+                                            downloadsViewModel.startDelete(downloads.get(position).id, dialog.getContext());
+                                            dialog.dismiss();
+                                            onResume();
                                         }
                                     });
                                     dialog.show();
@@ -576,23 +563,23 @@ public class AllDownloadFragment extends Fragment {
                     popup.show();
                 }
             });
-//            holder.imgCancel.setVisibility(View.GONE);
-//            holder.imgPause.setVisibility(View.GONE);
-//            holder.imgResume.setVisibility(View.GONE);
-              holder.txtDuration.setVisibility(View.GONE);
-//            holder.imgMore.setVisibility(View.GONE);
-           holder.imgSelect.setVisibility(View.GONE);
-//            holder.downloadProgressBar.setVisibility(View.VISIBLE);
-
+            holder.imgCancel.setVisibility(View.GONE);
+            holder.imgPause.setVisibility(View.GONE);
+            holder.imgResume.setVisibility(View.GONE);
+            holder.txtDuration.setVisibility(View.GONE);
+            holder.imgMore.setVisibility(View.GONE);
+            holder.imgSelect.setVisibility(View.GONE);
+            holder.downloadProgressBar.setVisibility(View.VISIBLE);
+//
 //            switch (status) {
 //                case CANCELLED: {
-
+//
 //                }
 //                case COMPLETED: {
-
+//
 //                }
 //                case FAILED: {
-
+//
 //                }
 //                case PAUSED: {
 //                    String strDesc2 = "Paused " + progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
@@ -709,7 +696,7 @@ public class AllDownloadFragment extends Fragment {
                     OutputStream os = getContext().getContentResolver().openOutputStream(file.getUri());
                     os.write(edtName.getText().toString().getBytes());
                     os.close();
-                }catch (Exception exception){
+                } catch (Exception exception) {
 
                 }
                 onResume();
@@ -765,7 +752,7 @@ public class AllDownloadFragment extends Fragment {
     }
 
     private void shareFile(final String file) {
-      DocumentFile fileUri = DocumentFile.fromSingleUri(getContext(), Uri.parse(file));
+        DocumentFile fileUri = DocumentFile.fromSingleUri(getContext(), Uri.parse(file));
         StringBuilder msg = new StringBuilder();
         msg.append(getResources().getString(R.string.share_message));
         msg.append("\n");
@@ -795,7 +782,7 @@ public class AllDownloadFragment extends Fragment {
             retriever = new MediaMetadataRetriever();
             retriever.setDataSource(context, Uri.parse(file));
             String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            result = Long.parseLong(time );
+            result = Long.parseLong(time);
             retriever.release();
 
         } catch (FileNotFoundException e) {

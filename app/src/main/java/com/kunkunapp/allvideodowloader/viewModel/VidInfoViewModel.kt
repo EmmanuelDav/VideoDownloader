@@ -1,14 +1,17 @@
 package com.kunkunapp.allvideodowloader.viewModel
 
 import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.kunkunapp.allvideodowloader.MyApp
@@ -27,11 +30,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class VidInfoViewModel : ViewModel() {
+class VidInfoViewModel(context: Application) : AndroidViewModel(context) {
 
     val vidFormats: MutableLiveData<VideoInfo> = MutableLiveData()
     val loadState: MutableLiveData<LoadState> = MutableLiveData(LoadState.INITIAL)
     val thumbnail: MutableLiveData<String> = MutableLiveData()
+
     lateinit var selectedItem: VidInfoItem.VidFormatItem
 
     private fun submit(vidInfoItems: VideoInfo?) {

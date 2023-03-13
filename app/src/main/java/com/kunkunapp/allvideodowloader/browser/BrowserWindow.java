@@ -65,6 +65,7 @@ import com.kunkunapp.allvideodowloader.utils.HistorySQLite;
 import com.kunkunapp.allvideodowloader.utils.PermissionInterceptor;
 import com.kunkunapp.allvideodowloader.utils.Utils;
 import com.kunkunapp.allvideodowloader.utils.VisitedPage;
+import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel;
 import com.kunkunapp.allvideodowloader.viewModel.VidInfoViewModel;
 import com.kunkunapp.allvideodowloader.views.CustomMediaController;
 import com.kunkunapp.allvideodowloader.views.CustomVideoView;
@@ -115,6 +116,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
     private boolean isVisible = false;
 
     private VidInfoViewModel viewModel;
+    private DownloadsViewModel downloadsViewModel;
     VideoInfo mVideoInfo;
 
     private static int OPEN_DIRECTORY_REQUEST_CODE = 42069;
@@ -255,6 +257,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             }
             view = inflater.inflate(R.layout.browser_lay, container, false);
             viewModel = new ViewModelProvider(this).get(VidInfoViewModel.class);
+            downloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
 
             view.setVisibility(visibility);
             if (page == null) {
@@ -671,6 +674,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         }
         removeDialog();
         viewModel.startDownload(viewModel.selectedItem, path, activity);
+        downloadsViewModel.getId(viewModel.selectedItem.getId());
     }
 
     @Override

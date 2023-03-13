@@ -20,7 +20,6 @@ import com.kunkunapp.allvideodowloader.database.AppDatabase
 import com.kunkunapp.allvideodowloader.database.Download
 import com.kunkunapp.allvideodowloader.database.DownloadsRepository
 import com.kunkunapp.allvideodowloader.utils.FileNameUtils
-import com.kunkunapp.allvideodowloader.viewModel.DownloadState
 import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest

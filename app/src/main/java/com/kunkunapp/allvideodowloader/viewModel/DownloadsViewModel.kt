@@ -10,7 +10,6 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.kunkunapp.allvideodowloader.database.AppDatabase
@@ -21,14 +20,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class DownloadsViewModel(application: Application) : AndroidViewModel(application) {
-
     private val repository: DownloadsRepository
     val allDownloads: LiveData<List<Download>>
+    val loadState: MutableLiveData<WorkInfo.State> = MutableLiveData(WorkInfo.State.SUCCEEDED)
+
 
     init {
         val downloadsDao = AppDatabase.getDatabase(application).downloadsDao()
         repository = DownloadsRepository(downloadsDao)
         allDownloads = repository.allDownloads
+    }
+
+    fun getId(id: String){
+        val workManager = WorkManager.getInstance()
+        val state = workManager.getWorkInfosByTag(id).get()?.getOrNull(0)?.state
+        loadState.postValue(state)
     }
 
     fun insert(word: Download) = viewModelScope.launch(Dispatchers.IO) {
@@ -51,7 +57,6 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
         if (state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED) {
             return
         }
-
         val workData = workDataOf(
             DeleteWorker.fileIdKey to id
         )
