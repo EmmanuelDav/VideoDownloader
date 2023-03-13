@@ -382,11 +382,7 @@ public class AllDownloadFragment extends Fragment {
                     if (downloaded) {
                         MediaScannerConnection.scanFile(getActivity(),
                                 new String[]{documentFile.toString()}, null,
-                                new MediaScannerConnection.OnScanCompletedListener() {
-                                    public void onScanCompleted(String path, Uri uri) {
-                                        downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext());
-                                    }
-                                });
+                                (path, uri) -> downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext()));
                     }
                 }
             });

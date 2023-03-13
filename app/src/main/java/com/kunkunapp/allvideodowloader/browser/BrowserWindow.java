@@ -73,9 +73,11 @@ import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -215,9 +217,11 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         qualities.setHasFixedSize(true);
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
         viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
-            if (videoInfo == null) {
+
+            if (videoInfo == null || videoInfo.getFormats() == null)  {
                 return;
             }
+
             videoInfo.getFormats().removeIf(it -> !it.getExt().contains("mp4") || it.getFormat().contains("audio"));
             Set<String> namesAlreadySeen = new HashSet<>();
             videoInfo.getFormats().removeIf(p -> !namesAlreadySeen.add(convertSolution(p.getFormat())));
@@ -360,8 +364,12 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                             if (size != null && isNumber(size)) {
                                 long numericSize = Long.parseLong(size);
                                 if (numericSize > 700000) {
-//                                    videoList.selectedVideo = 0;
-                                    //   videoList.addItem(size, type, link, name, page, chunked, website, audio);
+                                    if (link.contains("mp4")) {
+                                        SortedSet<String> hashMap = new TreeSet<>();
+                                        hashMap.add(link);
+                                        viewModel.fetchInfo(hashMap.last());
+                                    }
+                                    Log.d(TAG, "onVideoFound: link > "+link+"  website >"+website +" page >"+page +" size >"+size + " name >"+name);
 
                                     activity.runOnUiThread(new Runnable() {
                                         @Override
@@ -407,6 +415,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                                 (R.string.adBlockON), true)
                                 && (request.getUrl().toString().contains("ad") ||
                                 request.getUrl().toString().contains("banner") ||
+                                request.getUrl().toString().contains("banners") ||
                                 request.getUrl().toString().contains("pop"))
                                 && getBaseActivity().getBrowserManager().checkUrlIfAds(request.getUrl()
                                 .toString())) {
