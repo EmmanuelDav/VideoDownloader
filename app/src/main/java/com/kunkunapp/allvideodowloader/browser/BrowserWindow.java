@@ -446,9 +446,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 @Override
                 public void onReceivedTitle(WebView view, String title) {
                     super.onReceivedTitle(view, title);
-                    //  videoList.deleteAllItems();
                     updateFoundVideosBar();
-
                     VisitedPage vp = new VisitedPage();
                     vp.title = title;
                     vp.link = view.getUrl();

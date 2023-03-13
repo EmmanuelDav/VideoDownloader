@@ -24,7 +24,6 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
     val allDownloads: LiveData<List<Download>>
     val loadState: MutableLiveData<WorkInfo.State> = MutableLiveData(WorkInfo.State.SUCCEEDED)
 
-
     init {
         val downloadsDao = AppDatabase.getDatabase(application).downloadsDao()
         repository = DownloadsRepository(downloadsDao)
