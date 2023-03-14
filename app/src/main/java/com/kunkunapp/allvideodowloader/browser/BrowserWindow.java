@@ -219,11 +219,9 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         qualities.setHasFixedSize(true);
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
         viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
-
             if (videoInfo == null || videoInfo.getFormats() == null)  {
                 return;
             }
-
             videoInfo.getFormats().removeIf(it -> !it.getExt().contains("mp4") || it.getFormat().contains("audio"));
             Set<String> namesAlreadySeen = new HashSet<>();
             videoInfo.getFormats().removeIf(p -> !namesAlreadySeen.add(convertSolution(p.getFormat())));
@@ -273,12 +271,10 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             loadingPageProgress = view.findViewById(R.id.loadingPageProgress);
             loadingPageProgress.setVisibility(View.GONE);
             imgDetacting = view.findViewById(R.id.imgDetacting);
-
             ObjectAnimator rotate = new ObjectAnimator().ofFloat(imgDetacting, "rotation", 0f, 360f);
             rotate.setDuration(1000);
             rotate.setRepeatCount(999999999);
             rotate.start();
-
             createVideosFoundHUD();
             createVideosFoundTV();
             createFoundVideosWindow();
@@ -327,6 +323,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
+                            mVideoInfo = null;
                             EditText urlBox = getBaseActivity().findViewById(R.id.inputURLText);
                             getBaseActivity().isEnableSuggetion = false;
                             urlBox.setText(url);
@@ -368,12 +365,12 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                                 long numericSize = Long.parseLong(size);
                                 if (numericSize > 700000) {
                                     if (link.contains("mp4")) {
+                                        mVideoInfo = null;
                                         SortedSet<String> hashMap = new TreeSet<>();
                                         hashMap.add(link);
-                                        viewModel.fetchInfo(hashMap.last());
+                                        viewModel.fetchInfo(hashMap.first());
+                                        hashMap.clear();
                                     }
-                                    Log.d(TAG, "onVideoFound: link > "+link+"  website >"+website +" page >"+page +" size >"+size + " name >"+name);
-
                                     activity.runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {

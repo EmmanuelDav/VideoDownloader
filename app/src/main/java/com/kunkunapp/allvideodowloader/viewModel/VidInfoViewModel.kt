@@ -26,13 +26,14 @@ import com.kunkunapp.allvideodowloader.work.YoutubeDLUpdateWorker
 import com.kunkunapp.allvideodowloader.work.YoutubeDLUpdateWorker.Companion.workTag
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.mapper.VideoInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class VidInfoViewModel(context: Application) : AndroidViewModel(context) {
 
-    val vidFormats: MutableLiveData<VideoInfo> = MutableLiveData()
+    val vidFormats: MutableLiveData<VideoInfo?> = MutableLiveData()
     val loadState: MutableLiveData<LoadState> = MutableLiveData(LoadState.INITIAL)
     val thumbnail: MutableLiveData<String> = MutableLiveData()
 
@@ -73,7 +74,7 @@ class VidInfoViewModel(context: Application) : AndroidViewModel(context) {
     }
 
 
-    fun startDownload(vidFormatItem: VidInfoItem.VidFormatItem, downloadDir: String, activity:Activity) {
+     fun startDownload(vidFormatItem: VidInfoItem.VidFormatItem, downloadDir: String, activity:Activity) {
         val vidInfo = vidFormatItem.vidInfo
         val vidFormat = vidFormatItem.vidFormat
         val workTag = vidInfo.id
@@ -100,10 +101,16 @@ class VidInfoViewModel(context: Application) : AndroidViewModel(context) {
             DownloadWorker.taskIdKey to vidInfo.id
         )
 
-
-//        val downloadsDao = AppDatabase.getDatabase(activity).downloadsDao()
-//        val repository = DownloadsRepository(downloadsDao)
-//        repository.insert(Download(vidInfo.title,vidInfo.duration.toLong(),vidInfo.fileSizeApproximate))
+//         CoroutineScope(Dispatchers.IO).launch {
+//             val downloadsDao = AppDatabase.getDatabase(activity).downloadsDao()
+//             val repository = DownloadsRepository(downloadsDao)
+//             val download = Download(vidInfo.title,vidInfo.duration.toLong(),vidInfo.fileSizeApproximate)
+//             download.downloadedPath = downloadDir
+//             download.id = vidInfo.id.toLong()
+//             download.mediaType= if (vidFormat.vcodec == "none" && vidFormat.acodec != "none") "audio" else "video"
+//             download.downloadedPercent = 0.0
+//             repository.insert(download)
+//         }
 
         val workRequest = OneTimeWorkRequestBuilder<DownloadWorker>()
             .addTag(workTag)

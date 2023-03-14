@@ -63,6 +63,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import wseemann.media.FFmpegMediaMetadataRetriever;
+
 
 public class AllDownloadFragment extends Fragment {
     private static final String TAG = AllDownloadFragment.class.getCanonicalName();
@@ -545,7 +547,7 @@ public class AllDownloadFragment extends Fragment {
                         if (documentFile.exists()) {
                             String duration = null;
                             try {
-                                duration = Utils.Companion.convertSecondsToHMmSs(getFileDuration(downloadData.download.downloadedPath, getContext()));
+                                duration = Utils.Companion.convertSecondsToHMmSs(getFileDuration(downloadData.download.getDownloadedPath(), getContext()));
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -743,33 +745,15 @@ public class AllDownloadFragment extends Fragment {
 
     long getFileDuration(String file, Context context) throws IOException {
         long result = 0;
-        MediaMetadataRetriever retriever = null;
-        FileInputStream inputStream = null;
-
+        FFmpegMediaMetadataRetriever mFFmpegMediaMetadataRetrieve = null;
         try {
-            retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(context, Uri.parse(file));
-            String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            result = Long.parseLong(time);
-            retriever.release();
+            mFFmpegMediaMetadataRetrieve = new FFmpegMediaMetadataRetriever();
+            mFFmpegMediaMetadataRetrieve.setDataSource(file);
+            String mVideoDuration = mFFmpegMediaMetadataRetrieve.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_DURATION);
+            result = Long.parseLong(mVideoDuration);
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (RuntimeException e) {
             e.printStackTrace();
-        } finally {
-            if (retriever != null) {
-                retriever.release();
-            }
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
         return result;
     }

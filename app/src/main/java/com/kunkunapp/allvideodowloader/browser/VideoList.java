@@ -175,7 +175,7 @@ public abstract class VideoList {
                         txtTitle.setVisibility(View.INVISIBLE);
                     }
                     Glide.with(activity)
-                            .load(mVideoInfo.getThumbnail())
+                            .load(mVideoInfo.getThumbnail() == null ? videoInfo.getUrl() :videoInfo.getThumbnail())
                             .thumbnail(0.5f)
                             .into(imgVideo);
                 }
