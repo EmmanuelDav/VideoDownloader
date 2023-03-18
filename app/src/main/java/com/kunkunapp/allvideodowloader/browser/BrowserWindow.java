@@ -72,6 +72,7 @@ import com.kunkunapp.allvideodowloader.views.CustomVideoView;
 import com.kunkunapp.allvideodowloader.model.VidInfoItem;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -84,6 +85,8 @@ import java.util.stream.Collectors;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
+
+import wseemann.media.FFmpegMediaMetadataRetriever;
 
 public class BrowserWindow extends BaseFragment implements View.OnClickListener, MainActivity.OnBackPressedListener, DownloadPathDialogFragment.DialogListener {
 
@@ -254,7 +257,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 visibility = view.getVisibility();
             }
             view = inflater.inflate(R.layout.browser_lay, container, false);
-            viewModel = new ViewModelProvider(this).get(VidInfoViewModel.class);
+            viewModel = new ViewModelProvider(this ).get(VidInfoViewModel.class);
             downloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
 
             view.setVisibility(visibility);
@@ -319,7 +322,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
 
                 @Override
                 public void onPageStarted(final WebView webview, final String url, Bitmap favicon) {
-                    //  videoList.deleteAllItems();
+                    mVideoInfo = null;
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
@@ -364,8 +367,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                             if (size != null && isNumber(size)) {
                                 long numericSize = Long.parseLong(size);
                                 if (numericSize > 700000) {
-                                    if (link.contains("mp4")) {
-                                        mVideoInfo = null;
+                                    if (link.contains("mp4") && mVideoInfo == null) {
                                         SortedSet<String> hashMap = new TreeSet<>();
                                         hashMap.add(link);
                                         viewModel.fetchInfo(hashMap.first());
@@ -668,8 +670,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             Toast.makeText(context, R.string.invalid_download_location, Toast.LENGTH_SHORT).show();
         }
         removeDialog();
-        viewModel.startDownload(viewModel.selectedItem, path, activity);
-        downloadsViewModel.getId(viewModel.selectedItem.getId());
+        viewModel.startDownload(viewModel.selectedItem, path, activity,getViewLifecycleOwner());
+       // downloadsViewModel.getId(viewModel.selectedItem.getId(), activity);
     }
 
     @Override
@@ -692,7 +694,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 );
                 setDefaultDownloadLocation(uri.toString());
                 removeDialog();
-                viewModel.startDownload(viewModel.selectedItem, uri.toString(), activity);
+                viewModel.startDownload(viewModel.selectedItem, uri.toString(), activity, getViewLifecycleOwner());
             }
         }
     }
@@ -716,4 +718,20 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         ((MainActivity) activity).badgeDownload.setNumber(((MainActivity) activity).downloadCount);
         dialog.dismiss();
     }
+
+  public static long getFileDuration(String file, Context context) throws IOException {
+        long result = 0;
+        FFmpegMediaMetadataRetriever mFFmpegMediaMetadataRetrieve = null;
+        try {
+            mFFmpegMediaMetadataRetrieve = new FFmpegMediaMetadataRetriever();
+            mFFmpegMediaMetadataRetrieve.setDataSource(file);
+            String mVideoDuration = mFFmpegMediaMetadataRetrieve.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_DURATION);
+            result = Long.parseLong(mVideoDuration);
+
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
 }

@@ -1,6 +1,5 @@
-package com.kunkunapp.allvideodowloader.work;
+package com.kunkunapp.allvideodowloader.work
 
-import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,35 +8,33 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
+import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationCompat
-import androidx.work.CoroutineWorker
-import androidx.work.ForegroundInfo
-import org.apache.commons.io.IOUtils
-import androidx.work.WorkerParameters
+import androidx.work.*
+import com.kunkunapp.allvideodowloader.MyApp
 import com.kunkunapp.allvideodowloader.R
 import com.kunkunapp.allvideodowloader.database.AppDatabase
 import com.kunkunapp.allvideodowloader.database.Download
 import com.kunkunapp.allvideodowloader.database.DownloadsRepository
 import com.kunkunapp.allvideodowloader.utils.FileNameUtils
-import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import org.apache.commons.io.IOUtils
 import java.io.File
 import java.util.*
 
-private const val TAG = "DownloadWorker"
-class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
-    var downloadsViewModel = DownloadsViewModel(appContext as Application)
 
+class DownloadWorker(appContext: Context, params: WorkerParameters) :
+    CoroutineWorker(appContext, params) {
     private val notificationManager =
-        appContext.getSystemService(Context.NOTIFICATION_SERVICE) as
-                NotificationManager?
+        appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
 
 
     override suspend fun doWork(): Result {
-
-
         val url = inputData.getString(urlKey)!!
         val name = FileNameUtils.createFilename(inputData.getString(nameKey)!!)
         val formatId = inputData.getString(formatIdKey)!!
@@ -49,18 +46,14 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
 
         createNotificationChannel()
         val notificationId = id.hashCode()
+        var p =0
         val notification = NotificationCompat.Builder(
-            applicationContext,
-            channelId
-        )
-            .setSmallIcon(R.mipmap.ic_logo)
-            .setContentTitle(name)
-            .setContentText(applicationContext.getString(R.string.download_start))
-            .build()
+            applicationContext, channelId
+        ).setSmallIcon(R.mipmap.ic_logo).setContentTitle(name)
+            .setContentText(applicationContext.getString(R.string.download_start)).build()
 
         val foregroundInfo = ForegroundInfo(notificationId, notification)
         setForeground(foregroundInfo)
-
         val request = YoutubeDLRequest(url)
         val tmpFile = File.createTempFile("Video_DL", null, applicationContext.externalCacheDir)
         tmpFile.delete()
@@ -78,8 +71,14 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
 
         try {
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
-                    showProgress(id.hashCode(), taskId, name, progress.toInt(), line, tmpFile)
+                p = progress.toInt()
+                CoroutineScope(Dispatchers.Main).launch {
+                        setProgress(workDataOf("progress" to p))
                 }
+                val outputData = workDataOf("progress" to progress)
+                setOutputData(outputData)
+                showProgress(id.hashCode(), taskId, name, progress.toInt(), line, tmpFile)
+            }
             val treeUri = Uri.parse(downloadDir)
             val docId = DocumentsContract.getTreeDocumentId(treeUri)
             val destDir = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId)
@@ -87,10 +86,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
                 val mimeType =
                     MimeTypeMap.getSingleton().getMimeTypeFromExtension(it.extension) ?: "*/*"
                 destUri = DocumentsContract.createDocument(
-                    applicationContext.contentResolver,
-                    destDir,
-                    mimeType,
-                    it.name
+                    applicationContext.contentResolver, destDir, mimeType, it.name
                 )
                 val ins = it.inputStream()
                 val ops = applicationContext.contentResolver.openOutputStream(destUri!!)
@@ -102,13 +98,14 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
             tmpFile.deleteRecursively()
         }
 
+
+
+        delay(3000)
         val downloadsDao = AppDatabase.getDatabase(
             applicationContext
         ).downloadsDao()
-        val repository =
-            DownloadsRepository(downloadsDao)
-        val download =
-            Download(name, Date().time, size)
+        val repository = DownloadsRepository(downloadsDao)
+        val download = Download(name, Date().time, size)
         download.downloadedPath = destUri.toString()
         download.downloadedPercent = 100.00
         download.downloadedSize = size
@@ -118,53 +115,48 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         return Result.success()
     }
 
+    private fun setOutputData(outputData: Data) {
+        Data.Builder().apply {
+            putAll(outputData)
+        }.build()
+    }
+
     private fun showProgress(
-        id: Int,
-        taskId: String,
-        name: String,
-        progress: Int,
-        line: String,
-        tmpFile: File
+        id: Int, taskId: String, name: String, progress: Int, line: String, tmpFile: File
     ) {
         val text = line.replace(tmpFile.toString(), "")
-        val intent = Intent(applicationContext, CancelReceiver::class.java)
-            .putExtra("taskId", taskId)
-            .putExtra("notificationId", id)
+        val intent =
+            Intent(applicationContext, CancelReceiver::class.java).putExtra("taskId", taskId)
+                .putExtra("notificationId", id)
 
-        val pendingIntent = PendingIntent.getBroadcast(applicationContext, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE )
-        val notification = NotificationCompat.Builder(
+        val pendingIntent = PendingIntent.getBroadcast(
             applicationContext,
-            channelId
+            0,
+            intent,
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setSmallIcon(R.mipmap.ic_logo)
-            .setContentTitle(name)
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(text)
-            )
-            .setProgress(100, progress, progress == -1)
-            .addAction(
+        val notification = NotificationCompat.Builder(
+            applicationContext, channelId
+        ).setPriority(NotificationCompat.PRIORITY_LOW).setSmallIcon(R.mipmap.ic_logo)
+            .setContentTitle(name).setStyle(
+                NotificationCompat.BigTextStyle().bigText(text)
+            ).setProgress(100, progress, progress == -1).addAction(
                 R.drawable.ic_baseline_stop_24,
                 applicationContext.getString(R.string.cancel_download),
                 pendingIntent
-            )
-            .build()
+            ).build()
         notificationManager?.notify(id, notification)
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            var notificationChannel =
-                notificationManager?.getNotificationChannel(channelId)
+            var notificationChannel = notificationManager?.getNotificationChannel(channelId)
             if (notificationChannel == null) {
                 val channelName = applicationContext.getString(R.string.download_noti_channel_name)
                 notificationChannel = NotificationChannel(
-                    channelId,
-                    channelName, NotificationManager.IMPORTANCE_LOW
+                    channelId, channelName, NotificationManager.IMPORTANCE_LOW
                 )
-                notificationChannel.description =
-                    channelName
+                notificationChannel.description = channelName
                 notificationManager?.createNotificationChannel(notificationChannel)
             }
         }

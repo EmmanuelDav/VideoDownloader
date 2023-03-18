@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
@@ -18,6 +19,7 @@ import com.kunkunapp.allvideodowloader.database.DownloadsRepository
 import com.kunkunapp.allvideodowloader.work.DeleteWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.math.log
 
 class DownloadsViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: DownloadsRepository
@@ -28,12 +30,6 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
         val downloadsDao = AppDatabase.getDatabase(application).downloadsDao()
         repository = DownloadsRepository(downloadsDao)
         allDownloads = repository.allDownloads
-    }
-
-    fun getId(id: String){
-        val workManager = WorkManager.getInstance()
-        val state = workManager.getWorkInfosByTag(id).get()?.getOrNull(0)?.state
-        loadState.postValue(state)
     }
 
     fun insert(word: Download) = viewModelScope.launch(Dispatchers.IO) {
@@ -52,6 +48,7 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
         val workTag = "tag_$id"
         val workManager = WorkManager.getInstance(context.applicationContext!!)
         val state = workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
+         Log.d("TAG", "getId: "+state)
 
         if (state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED) {
             return

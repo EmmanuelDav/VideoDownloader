@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -24,7 +23,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -42,6 +41,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.kunkunapp.allvideodowloader.MyApp;
 import com.kunkunapp.allvideodowloader.database.Download;
 import com.kunkunapp.allvideodowloader.helper.RenameVideoPref;
 import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel;
@@ -51,11 +51,10 @@ import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
 import com.kunkunapp.allvideodowloader.helper.WebConnect;
 import com.kunkunapp.allvideodowloader.utils.Utils;
+import com.kunkunapp.allvideodowloader.viewModel.VidInfoViewModel;
 
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
@@ -73,7 +72,7 @@ public class AllDownloadFragment extends Fragment {
     RecyclerView downloadsList;
     DownloadAdapter downloadAdapter;
     DownloadsViewModel downloadsViewModel;
-
+    VidInfoViewModel sharedViewModel;
     private static final long UNKNOWN_REMAINING_TIME = -1;
     private static final long UNKNOWN_DOWNLOADED_BYTES_PER_SECOND = 0;
     public ArrayList<DownloadData> selectedList = new ArrayList<>();
@@ -87,11 +86,11 @@ public class AllDownloadFragment extends Fragment {
     RenameVideoPref renameVideoPref;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_all_download, container, false);
         downloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
+        sharedViewModel = new ViewModelProvider(this).get(VidInfoViewModel.class);
         renameVideoPref = new RenameVideoPref(getActivity());
         downloadAdapter = new DownloadAdapter();
         downloadsList = view.findViewById(R.id.downloadsList);
@@ -194,11 +193,14 @@ public class AllDownloadFragment extends Fragment {
                 }
             }
         });
+        sharedViewModel.getDownloadProgress().observe(this, integer -> {
+            Log.d("Video_Downloader", " Progress" +integer);
+        });
     }
 
 
     private class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.ViewHolder> {
-        private List<DownloadData> downloads = new ArrayList<>();
+        private final List<DownloadData> downloads = new ArrayList<>();
         boolean downloaded = false;
 
         public void addDownload(@NonNull final Download download) {
@@ -264,14 +266,15 @@ public class AllDownloadFragment extends Fragment {
             File tempFile = new File(downloadData.download.getDownloadedPath());
             File file = tempFile;
 
-            Glide.with(getActivity())
-                    .load(downloadData.download.getDownloadedPath())
-                    .into(holder.imgVideo);
+            Glide.with(getActivity()).load(downloadData.download.getDownloadedPath()).into(holder.imgVideo);
 
-            int progress = (int) downloadData.download.getDownloadedPercent();
-            if (progress == -1) { // Download progress is undermined at the moment.
-                progress = 0;
-            }
+//            sharedViewModel.getDownloadProgress().observe(getViewLifecycleOwner(), integer -> {
+//                holder.downloadVideoName.setText(file.getName());
+//                String strDesc = "progress" + "% " + integer;
+//                holder.downloadProgressText.setText(strDesc);
+//                holder.downloadProgressBar.setProgress(integer);
+//                Log.d("Video_Downloader", "onBindViewHolder: "+ integer);
+//            });
 
             String strRename = renameVideoPref.getString(String.valueOf(downloadData.download.getId()), "");
             if (strRename.length() > 0) {
@@ -280,11 +283,7 @@ public class AllDownloadFragment extends Fragment {
                     tempFile = desFile;
                 }
             }
-            holder.downloadVideoName.setText(downloadData.download.getName());
-            String strDesc = progress + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
-            holder.downloadProgressText.setText(strDesc);
-            holder.downloadProgressBar.setProgress(progress);
-            holder.edtSearch.setText(downloadData.download.getName());
+
             holder.imgVideo.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -306,9 +305,7 @@ public class AllDownloadFragment extends Fragment {
                         return;
                     }
                     if (downloaded) {
-                        MediaScannerConnection.scanFile(getActivity(),
-                                new String[]{documentFile.toString()}, null,
-                                (path, uri) -> downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext()));
+                        MediaScannerConnection.scanFile(getActivity(), new String[]{documentFile.toString()}, null, (path, uri) -> downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext()));
                     }
                 }
             });
@@ -384,13 +381,11 @@ public class AllDownloadFragment extends Fragment {
                         return;
                     }
                     if (downloaded) {
-                        MediaScannerConnection.scanFile(getActivity(),
-                                new String[]{documentFile.toString()}, null,
-                                new MediaScannerConnection.OnScanCompletedListener() {
-                                    public void onScanCompleted(String path, Uri uri) {
-                                        downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext());
-                                    }
-                                });
+                        MediaScannerConnection.scanFile(getActivity(), new String[]{documentFile.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
+                            public void onScanCompleted(String path, Uri uri) {
+                                downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext());
+                            }
+                        });
                     }
                 }
             });
@@ -511,6 +506,7 @@ public class AllDownloadFragment extends Fragment {
             holder.downloadProgressBar.setVisibility(View.VISIBLE);
 
             downloadsViewModel.getLoadState().observe(getViewLifecycleOwner(), state -> {
+                Log.d(TAG, "onBindViewHolder: " + state);
                 switch (state) {
                     case FAILED: {
                         holder.imgCancel.setVisibility(View.VISIBLE);
@@ -551,8 +547,7 @@ public class AllDownloadFragment extends Fragment {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            if (duration != null)
-                                holder.txtDuration.setText(duration);
+                            if (duration != null) holder.txtDuration.setText(duration);
                         }
                         break;
                     }
@@ -590,13 +585,9 @@ public class AllDownloadFragment extends Fragment {
                     }
                 }
                 if (isContain) {
-                    Glide.with(getActivity())
-                            .load(R.drawable.ic_box_selected)
-                            .into(holder.imgSelect);
+                    Glide.with(getActivity()).load(R.drawable.ic_box_selected).into(holder.imgSelect);
                 } else {
-                    Glide.with(getActivity())
-                            .load(R.drawable.ic_box_unselect)
-                            .into(holder.imgSelect);
+                    Glide.with(getActivity()).load(R.drawable.ic_box_unselect).into(holder.imgSelect);
                 }
             }
         }
@@ -605,6 +596,7 @@ public class AllDownloadFragment extends Fragment {
         public int getItemCount() {
             return downloads.size();
         }
+
 
         class ViewHolder extends RecyclerView.ViewHolder {
             TextView downloadVideoName;
@@ -764,10 +756,8 @@ public class AllDownloadFragment extends Fragment {
             ContentResolver cr = getActivity().getContentResolver();
             mimeType = cr.getType(uri);
         } else {
-            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri
-                    .toString());
-            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-                    fileExtension.toLowerCase());
+            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
         }
         return mimeType;
     }
