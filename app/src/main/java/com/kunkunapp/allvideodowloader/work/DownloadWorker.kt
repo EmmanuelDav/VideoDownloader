@@ -112,10 +112,8 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         id: Int, taskId: String, name: String, progress: Int, line: String, tmpFile: File
     ) {
         val text = line.replace(tmpFile.toString(), "")
-        val intent =
-            Intent(applicationContext, CancelReceiver::class.java).putExtra("taskId", taskId)
+        val intent = Intent(applicationContext, CancelReceiver::class.java).putExtra("taskId", taskId)
                 .putExtra("notificationId", id)
-
         val pendingIntent = PendingIntent.getBroadcast(
             applicationContext,
             0,
@@ -135,6 +133,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         notificationManager?.notify(id, notification)
         val progressIntent = Intent("DOWNLOAD_PROGRESS")
         progressIntent.putExtra("taskId", line)
+        progressIntent.putExtra("name", name)
         progressIntent.putExtra("progress", progress)
         LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(progressIntent)
     }

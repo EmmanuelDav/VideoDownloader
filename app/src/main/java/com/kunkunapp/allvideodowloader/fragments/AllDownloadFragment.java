@@ -170,8 +170,9 @@ public class AllDownloadFragment extends Fragment {
                 public void onReceive(Context context, Intent intent) {
                     if (intent.getAction().equals("DOWNLOAD_PROGRESS")) {
                         String taskId = intent.getStringExtra("taskId");
+                        String name = intent.getStringExtra("name");
                         int progress = intent.getIntExtra("progress", -1);
-                        downloadAdapter.loadProgress(progress, taskId);
+                        downloadAdapter.loadProgress(progress, taskId, name);
                     }
                 }
             };
@@ -225,6 +226,7 @@ public class AllDownloadFragment extends Fragment {
         boolean downloaded = false;
         int progress;
         String text;
+        String name;
 
         private static final int VIEW_TYPE_HEADER = 0;
         private static final int VIEW_TYPE_ITEM = 1;
@@ -234,9 +236,11 @@ public class AllDownloadFragment extends Fragment {
             return position == 0 ? VIEW_TYPE_HEADER : VIEW_TYPE_ITEM;
         }
 
-        public void loadProgress(int progress, String text) {
+        public void loadProgress(int progress, String text,String name) {
             this.progress = progress;
             this.text = text;
+            this.name = name;
+            notifyItemChanged(0);
         }
 
 
@@ -320,6 +324,8 @@ public class AllDownloadFragment extends Fragment {
                         tempFile = desFile;
                     }
                 }
+                holder.downloadVideoName.setText(file.getName());
+
                 holder.imgVideo.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -540,7 +546,6 @@ public class AllDownloadFragment extends Fragment {
                 holder.imgMore.setVisibility(View.GONE);
                 holder.imgSelect.setVisibility(View.GONE);
                 holder.downloadProgressBar.setVisibility(View.VISIBLE);
-
                 downloadsViewModel.getLoadState().observe(getViewLifecycleOwner(), state -> {
                     Log.d(TAG, "onBindViewHolder: " + state);
                     switch (state) {
@@ -630,6 +635,8 @@ public class AllDownloadFragment extends Fragment {
                 ProgressViewHolder headerViewHolder = (ProgressViewHolder) itemHolder;
                 headerViewHolder.downloadProgressText.setText(text);
                 headerViewHolder.downloadProgressBar.setProgress(progress);
+                headerViewHolder.downloadVideoName.setText(name);
+                Log.d(TAG, "onBindViewHolder: "+progress  +" "+name  +"  "+text);
             }
         }
 
@@ -674,10 +681,10 @@ public class AllDownloadFragment extends Fragment {
         }
 
         class ProgressViewHolder extends RecyclerView.ViewHolder {
-            TextView downloadVideoName;
             ProgressBar downloadProgressBar;
             ImageView imgVideo;
             TextView downloadProgressText;
+            TextView downloadVideoName;
 
 
             public ProgressViewHolder(@NonNull View itemView) {

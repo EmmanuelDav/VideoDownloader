@@ -367,7 +367,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                             if (size != null && isNumber(size)) {
                                 long numericSize = Long.parseLong(size);
                                 if (numericSize > 700000) {
-                                    if (link.contains("mp4") && mVideoInfo == null) {
+                                    if (link.contains("mp4") && mVideoInfo == null && !link.contains("banners")) {
                                         SortedSet<String> hashMap = new TreeSet<>();
                                         hashMap.add(link);
                                         viewModel.fetchInfo(hashMap.first());
