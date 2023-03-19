@@ -11,6 +11,7 @@ import android.provider.DocumentsContract
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.*
 import com.kunkunapp.allvideodowloader.MyApp
 import com.kunkunapp.allvideodowloader.R
@@ -71,12 +72,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
 
         try {
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
-                p = progress.toInt()
-                CoroutineScope(Dispatchers.Main).launch {
-                        setProgress(workDataOf("progress" to p))
-                }
-                val outputData = workDataOf("progress" to progress)
-                setOutputData(outputData)
                 showProgress(id.hashCode(), taskId, name, progress.toInt(), line, tmpFile)
             }
             val treeUri = Uri.parse(downloadDir)
@@ -98,8 +93,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
             tmpFile.deleteRecursively()
         }
 
-
-
         delay(3000)
         val downloadsDao = AppDatabase.getDatabase(
             applicationContext
@@ -113,12 +106,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         repository.insert(download)
 
         return Result.success()
-    }
-
-    private fun setOutputData(outputData: Data) {
-        Data.Builder().apply {
-            putAll(outputData)
-        }.build()
     }
 
     private fun showProgress(
@@ -146,6 +133,10 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
                 pendingIntent
             ).build()
         notificationManager?.notify(id, notification)
+        val progressIntent = Intent("DOWNLOAD_PROGRESS")
+        progressIntent.putExtra("taskId", line)
+        progressIntent.putExtra("progress", progress)
+        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(progressIntent)
     }
 
     private fun createNotificationChannel() {

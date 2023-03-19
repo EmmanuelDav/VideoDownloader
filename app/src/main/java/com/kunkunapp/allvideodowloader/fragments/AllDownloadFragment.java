@@ -4,9 +4,11 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.MediaScannerConnection;
@@ -20,6 +22,7 @@ import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -44,6 +47,7 @@ import com.bumptech.glide.Glide;
 import com.kunkunapp.allvideodowloader.MyApp;
 import com.kunkunapp.allvideodowloader.database.Download;
 import com.kunkunapp.allvideodowloader.helper.RenameVideoPref;
+import com.kunkunapp.allvideodowloader.interfaces.DownloadProgressCallback;
 import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel;
 
 import com.kunkunapp.allvideodowloader.BuildConfig;
@@ -72,7 +76,6 @@ public class AllDownloadFragment extends Fragment {
     RecyclerView downloadsList;
     DownloadAdapter downloadAdapter;
     DownloadsViewModel downloadsViewModel;
-    VidInfoViewModel sharedViewModel;
     private static final long UNKNOWN_REMAINING_TIME = -1;
     private static final long UNKNOWN_DOWNLOADED_BYTES_PER_SECOND = 0;
     public ArrayList<DownloadData> selectedList = new ArrayList<>();
@@ -84,16 +87,16 @@ public class AllDownloadFragment extends Fragment {
     LinearLayout llDeleteSelected;
     LinearLayout llSelectAll;
     RenameVideoPref renameVideoPref;
+    BroadcastReceiver progressReceiver;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_all_download, container, false);
         downloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
-        sharedViewModel = new ViewModelProvider(this).get(VidInfoViewModel.class);
         renameVideoPref = new RenameVideoPref(getActivity());
-        downloadAdapter = new DownloadAdapter();
         downloadsList = view.findViewById(R.id.downloadsList);
+        downloadAdapter = new DownloadAdapter();
         downloadsList.setLayoutManager(new LinearLayoutManager(getActivity()));
         downloadsList.setAdapter(downloadAdapter);
         llSelectAll = view.findViewById(R.id.llSelectAll);
@@ -161,8 +164,23 @@ public class AllDownloadFragment extends Fragment {
                 downloadAdapter.notifyDataSetChanged();
             }
         });
+
+            progressReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (intent.getAction().equals("DOWNLOAD_PROGRESS")) {
+                        String taskId = intent.getStringExtra("taskId");
+                        int progress = intent.getIntExtra("progress", -1);
+                        downloadAdapter.loadProgress(progress, taskId);
+                    }
+                }
+            };
+
+
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(progressReceiver, new IntentFilter("DOWNLOAD_PROGRESS"));
         return view;
     }
+
 
     public void unSelectAll() {
         txtSelectedCount.setText("0 selected");
@@ -173,6 +191,12 @@ public class AllDownloadFragment extends Fragment {
         ((MainActivity) getActivity()).navView.setVisibility(View.VISIBLE);
         llBottom.setVisibility(View.GONE);
         rlTopSelected.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(progressReceiver);
     }
 
     @Override
@@ -193,15 +217,28 @@ public class AllDownloadFragment extends Fragment {
                 }
             }
         });
-        sharedViewModel.getDownloadProgress().observe(this, integer -> {
-            Log.d("Video_Downloader", " Progress" +integer);
-        });
     }
 
 
-    private class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.ViewHolder> {
+    private class DownloadAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private final List<DownloadData> downloads = new ArrayList<>();
         boolean downloaded = false;
+        int progress;
+        String text;
+
+        private static final int VIEW_TYPE_HEADER = 0;
+        private static final int VIEW_TYPE_ITEM = 1;
+
+        @Override
+        public int getItemViewType(int position) {
+            return position == 0 ? VIEW_TYPE_HEADER : VIEW_TYPE_ITEM;
+        }
+
+        public void loadProgress(int progress, String text) {
+            this.progress = progress;
+            this.text = text;
+        }
+
 
         public void addDownload(@NonNull final Download download) {
             boolean found = false;
@@ -255,39 +292,94 @@ public class AllDownloadFragment extends Fragment {
 
         @NonNull
         @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_download, parent, false));
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            if (viewType == VIEW_TYPE_HEADER) {
+                View view = inflater.inflate(R.layout.item_download, parent, false);
+                return new ProgressViewHolder(view);
+            } else {
+                View view = inflater.inflate(R.layout.item_download, parent, false);
+                return new ViewHolder(view);
+            }
         }
 
+
         @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            DownloadData downloadData = downloads.get(position);
-            DocumentFile documentFile = DocumentFile.fromSingleUri(getContext(), Uri.parse(downloadData.download.downloadedPath));
-            File tempFile = new File(downloadData.download.getDownloadedPath());
-            File file = tempFile;
-
-            Glide.with(getActivity()).load(downloadData.download.getDownloadedPath()).into(holder.imgVideo);
-
-//            sharedViewModel.getDownloadProgress().observe(getViewLifecycleOwner(), integer -> {
-//                holder.downloadVideoName.setText(file.getName());
-//                String strDesc = "progress" + "% " + integer;
-//                holder.downloadProgressText.setText(strDesc);
-//                holder.downloadProgressBar.setProgress(integer);
-//                Log.d("Video_Downloader", "onBindViewHolder: "+ integer);
-//            });
-
-            String strRename = renameVideoPref.getString(String.valueOf(downloadData.download.getId()), "");
-            if (strRename.length() > 0) {
-                File desFile = new File(strRename);
-                if (desFile.exists()) {
-                    tempFile = desFile;
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder itemHolder, int position) {
+            if (itemHolder instanceof ViewHolder) {
+                ViewHolder holder = (ViewHolder) itemHolder;
+                DownloadData downloadData = downloads.get(position -1);
+                DocumentFile documentFile = DocumentFile.fromSingleUri(getContext(), Uri.parse(downloadData.download.downloadedPath));
+                File tempFile = new File(downloadData.download.getDownloadedPath());
+                File file = tempFile;
+                Glide.with(getActivity()).load(downloadData.download.getDownloadedPath()).into(holder.imgVideo);
+                String strRename = renameVideoPref.getString(String.valueOf(downloadData.download.getId()), "");
+                if (strRename.length() > 0) {
+                    File desFile = new File(strRename);
+                    if (desFile.exists()) {
+                        tempFile = desFile;
+                    }
                 }
-            }
+                holder.imgVideo.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (isSelectedMode) {
+                            boolean isContain = false;
+                            for (DownloadData data : selectedList) {
+                                if (data.download.getId() == downloadData.download.getId()) {
+                                    isContain = true;
+                                }
+                            }
 
-            holder.imgVideo.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (isSelectedMode) {
+                            if (isContain) {
+                                selectedList.remove(downloadData);
+                            } else {
+                                selectedList.add(downloadData);
+                            }
+                            txtSelectedCount.setText(selectedList.size() + " selected");
+                            notifyDataSetChanged();
+                            return;
+                        }
+                        if (downloaded) {
+                            MediaScannerConnection.scanFile(getActivity(), new String[]{documentFile.toString()}, null, (path, uri) -> downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext()));
+                        }
+                    }
+                });
+                holder.imgVideo.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        if (!isSelectedMode) {
+                            selectedList.add(downloadData);
+                            isSelectedMode = true;
+                            txtSelectedCount.setText(selectedList.size() + " selected");
+                            downloadAdapter.notifyDataSetChanged();
+
+                            ((MainActivity) getActivity()).navView.setVisibility(View.GONE);
+                            llBottom.setVisibility(View.VISIBLE);
+                            rlTopSelected.setVisibility(View.VISIBLE);
+                        }
+                        return false;
+                    }
+                });
+                holder.llContent.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        if (!isSelectedMode) {
+                            selectedList.add(downloadData);
+                            isSelectedMode = true;
+                            txtSelectedCount.setText(selectedList.size() + " selected");
+                            downloadAdapter.notifyDataSetChanged();
+
+                            ((MainActivity) getActivity()).navView.setVisibility(View.GONE);
+                            llBottom.setVisibility(View.VISIBLE);
+                            rlTopSelected.setVisibility(View.VISIBLE);
+                        }
+                        return false;
+                    }
+                });
+                holder.imgSelect.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
                         boolean isContain = false;
                         for (DownloadData data : selectedList) {
                             if (data.download.getId() == downloadData.download.getId()) {
@@ -302,299 +394,249 @@ public class AllDownloadFragment extends Fragment {
                         }
                         txtSelectedCount.setText(selectedList.size() + " selected");
                         notifyDataSetChanged();
-                        return;
                     }
-                    if (downloaded) {
-                        MediaScannerConnection.scanFile(getActivity(), new String[]{documentFile.toString()}, null, (path, uri) -> downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext()));
-                    }
-                }
-            });
-            holder.imgVideo.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    if (!isSelectedMode) {
-                        selectedList.add(downloadData);
-                        isSelectedMode = true;
-                        txtSelectedCount.setText(selectedList.size() + " selected");
-                        downloadAdapter.notifyDataSetChanged();
+                });
+                holder.llContent.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (isSelectedMode) {
+                            boolean isContain = false;
+                            for (DownloadData data : selectedList) {
+                                if (data.download.getId() == downloadData.download.getId()) {
+                                    isContain = true;
+                                }
+                            }
 
-                        ((MainActivity) getActivity()).navView.setVisibility(View.GONE);
-                        llBottom.setVisibility(View.VISIBLE);
-                        rlTopSelected.setVisibility(View.VISIBLE);
+                            if (isContain) {
+                                selectedList.remove(downloadData);
+                            } else {
+                                selectedList.add(downloadData);
+                            }
+                            txtSelectedCount.setText(selectedList.size() + " selected");
+                            notifyDataSetChanged();
+                            return;
+                        }
+                        if (downloaded) {
+                            MediaScannerConnection.scanFile(getActivity(), new String[]{documentFile.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
+                                public void onScanCompleted(String path, Uri uri) {
+                                    downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext());
+                                }
+                            });
+                        }
                     }
-                    return false;
-                }
-            });
-            holder.llContent.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    if (!isSelectedMode) {
-                        selectedList.add(downloadData);
-                        isSelectedMode = true;
-                        txtSelectedCount.setText(selectedList.size() + " selected");
-                        downloadAdapter.notifyDataSetChanged();
+                });
+                holder.imgCancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //  fetch.remove(downloadData.download.getId());
+                    }
+                });
+                holder.imgResume.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+//                    if (status == Status.FAILED || status == Status.CANCELLED) {
+//                        //fetch.retry(downloadData.download.getId());
+//                    } else {
+//                      //  fetch.resume(downloadData.download.getId());
+//                    }
+                    }
+                });
+                holder.imgPause.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //fetch.pause((int) downloadData.download.getId());
+                    }
+                });
+                holder.imgMore.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        PopupMenu popup = new PopupMenu(getActivity(), holder.imgMore);
+                        popup.getMenuInflater().inflate(R.menu.menu_download, popup.getMenu());
 
-                        ((MainActivity) getActivity()).navView.setVisibility(View.GONE);
-                        llBottom.setVisibility(View.VISIBLE);
-                        rlTopSelected.setVisibility(View.VISIBLE);
+                        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                            public boolean onMenuItemClick(MenuItem item) {
+                                switch (item.getItemId()) {
+                                    case R.id.menu_share:
+                                        shareFile(downloadData.download.downloadedPath);
+                                        break;
+                                    case R.id.menu_rename:
+                                        renameFile(downloadData, documentFile);
+                                        break;
+                                    case R.id.menu_edit_video:
+
+                                        Uri videoURI = FileProvider.getUriForFile(getActivity(), BuildConfig.APPLICATION_ID + ".fileprovider", file);
+                                        Intent intent = new Intent(Intent.ACTION_EDIT);
+                                        //intent.setDataAndType(videoURI, "video/*");
+                                        intent.setDataAndType(videoURI, getMimeType(videoURI));
+                                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                                        intent.addFlags(FLAG_ACTIVITY_CLEAR_TOP);
+                                        try {
+                                            Intent choose = Intent.createChooser(intent, "Edit with");
+                                            startActivityForResult(choose, 1005);
+                                        } catch (ActivityNotFoundException e) {
+                                            try {
+                                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.kunkun.videoeditor.videomaker")));
+                                            } catch (ActivityNotFoundException exception) {
+                                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.kunkun.videoeditor.videomaker")));
+                                            }
+                                        } catch (Exception e) {
+                                            try {
+                                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.kunkun.videoeditor.videomaker")));
+                                            } catch (ActivityNotFoundException exception) {
+                                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.kunkun.videoeditor.videomaker")));
+                                            }
+                                        }
+                                        break;
+                                    case R.id.menu_open_link:
+                                        getActivity().onBackPressed();
+                                        ((MainActivity) getActivity()).isEnableSuggetion = false;
+                                        ((MainActivity) getActivity()).navView.setSelectedItemId(R.id.navHome);
+                                        new WebConnect(holder.edtSearch, ((MainActivity) getActivity())).connect();
+                                        break;
+                                    case R.id.menu_delete:
+                                        Dialog dialog = new Dialog(getActivity());
+                                        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                                        dialog.setContentView(R.layout.dialog_confirmation);
+
+                                        TextView txtTitle = dialog.findViewById(R.id.txtTitle);
+                                        TextView txtDesc = dialog.findViewById(R.id.txtDesc);
+                                        txtTitle.setText("Confirm");
+                                        txtDesc.setText("Are you sure you want to delete this video?");
+                                        TextView txtNO = dialog.findViewById(R.id.txtNO);
+                                        TextView txtOK = dialog.findViewById(R.id.txtOK);
+                                        txtNO.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                dialog.dismiss();
+                                            }
+                                        });
+                                        txtOK.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                downloadsViewModel.startDelete(downloads.get(position).id, dialog.getContext());
+                                                dialog.dismiss();
+                                                onResume();
+                                            }
+                                        });
+                                        dialog.show();
+                                        dialog.getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+                                        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                                        break;
+                                }
+                                return true;
+                            }
+                        });
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            popup.setForceShowIcon(true);
+                        }
+                        popup.show();
                     }
-                    return false;
-                }
-            });
-            holder.imgSelect.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+                });
+                holder.imgCancel.setVisibility(View.GONE);
+                holder.imgPause.setVisibility(View.GONE);
+                holder.imgResume.setVisibility(View.GONE);
+                holder.txtDuration.setVisibility(View.GONE);
+                holder.imgMore.setVisibility(View.GONE);
+                holder.imgSelect.setVisibility(View.GONE);
+                holder.downloadProgressBar.setVisibility(View.VISIBLE);
+
+                downloadsViewModel.getLoadState().observe(getViewLifecycleOwner(), state -> {
+                    Log.d(TAG, "onBindViewHolder: " + state);
+                    switch (state) {
+                        case FAILED: {
+                            holder.imgCancel.setVisibility(View.VISIBLE);
+                            holder.imgPause.setVisibility(View.GONE);
+                            holder.imgResume.setVisibility(View.VISIBLE);
+                            String strDescFailed = "Failed " + downloadData.download.getDownloadedPercent() + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
+                            holder.downloadProgressText.setText(strDescFailed);
+                            break;
+                        }
+                        case RUNNING:
+
+                            return;
+                        case ENQUEUED: {
+                            holder.imgCancel.setVisibility(View.VISIBLE);
+                            holder.imgPause.setVisibility(View.VISIBLE);
+                            holder.imgResume.setVisibility(View.GONE);
+                            break;
+                        }
+
+                        case SUCCEEDED: {
+                            downloaded = true;
+                            holder.imgCancel.setVisibility(View.VISIBLE);
+                            holder.imgPause.setVisibility(View.VISIBLE);
+                            holder.imgResume.setVisibility(View.GONE);
+                            holder.imgCancel.setVisibility(View.GONE);
+                            holder.imgPause.setVisibility(View.GONE);
+                            holder.imgResume.setVisibility(View.GONE);
+                            holder.downloadProgressBar.setVisibility(View.GONE);
+                            holder.txtDuration.setVisibility(View.VISIBLE);
+                            holder.imgMore.setVisibility(View.VISIBLE);
+                            String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getTimestamp()));
+                            String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize()) + "  " + dateString;
+                            holder.downloadProgressText.setText(strDescComplete);
+                            if (documentFile.exists()) {
+                                String duration = null;
+                                try {
+                                    duration = Utils.Companion.convertSecondsToHMmSs(getFileDuration(downloadData.download.getDownloadedPath(), getContext()));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                if (duration != null) holder.txtDuration.setText(duration);
+                            }
+                            break;
+                        }
+
+                        case CANCELLED: {
+                            String strDesc2 = "Cancelled " + downloadData.download.getDownloadedPercent() + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
+                            holder.downloadProgressText.setText(strDesc2);
+                            holder.imgCancel.setVisibility(View.GONE);
+                            holder.imgPause.setVisibility(View.GONE);
+                            holder.imgResume.setVisibility(View.VISIBLE);
+                            break;
+                        }
+
+                        case BLOCKED:
+                            return;
+
+                        default: {
+                            break;
+                        }
+                    }
+                });
+
+                if (isSelectedMode) {
+                    holder.imgCancel.setVisibility(View.GONE);
+                    holder.imgPause.setVisibility(View.GONE);
+                    holder.imgResume.setVisibility(View.GONE);
+                    holder.imgMore.setVisibility(View.GONE);
+
+                    holder.imgSelect.setVisibility(View.VISIBLE);
+
                     boolean isContain = false;
                     for (DownloadData data : selectedList) {
                         if (data.download.getId() == downloadData.download.getId()) {
                             isContain = true;
                         }
                     }
-
                     if (isContain) {
-                        selectedList.remove(downloadData);
+                        Glide.with(getActivity()).load(R.drawable.ic_box_selected).into(holder.imgSelect);
                     } else {
-                        selectedList.add(downloadData);
-                    }
-                    txtSelectedCount.setText(selectedList.size() + " selected");
-                    notifyDataSetChanged();
-                }
-            });
-            holder.llContent.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (isSelectedMode) {
-                        boolean isContain = false;
-                        for (DownloadData data : selectedList) {
-                            if (data.download.getId() == downloadData.download.getId()) {
-                                isContain = true;
-                            }
-                        }
-
-                        if (isContain) {
-                            selectedList.remove(downloadData);
-                        } else {
-                            selectedList.add(downloadData);
-                        }
-                        txtSelectedCount.setText(selectedList.size() + " selected");
-                        notifyDataSetChanged();
-                        return;
-                    }
-                    if (downloaded) {
-                        MediaScannerConnection.scanFile(getActivity(), new String[]{documentFile.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                            public void onScanCompleted(String path, Uri uri) {
-                                downloadsViewModel.viewContent(downloadData.download.downloadedPath, getContext());
-                            }
-                        });
+                        Glide.with(getActivity()).load(R.drawable.ic_box_unselect).into(holder.imgSelect);
                     }
                 }
-            });
-            holder.imgCancel.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //  fetch.remove(downloadData.download.getId());
-                }
-            });
-            holder.imgResume.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-//                    if (status == Status.FAILED || status == Status.CANCELLED) {
-//                        //fetch.retry(downloadData.download.getId());
-//                    } else {
-//                      //  fetch.resume(downloadData.download.getId());
-//                    }
-                }
-            });
-            holder.imgPause.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //fetch.pause((int) downloadData.download.getId());
-                }
-            });
-            holder.imgMore.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    PopupMenu popup = new PopupMenu(getActivity(), holder.imgMore);
-                    popup.getMenuInflater().inflate(R.menu.menu_download, popup.getMenu());
-
-                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        public boolean onMenuItemClick(MenuItem item) {
-                            switch (item.getItemId()) {
-                                case R.id.menu_share:
-                                    shareFile(downloadData.download.downloadedPath);
-                                    break;
-                                case R.id.menu_rename:
-                                    renameFile(downloadData, documentFile);
-                                    break;
-                                case R.id.menu_edit_video:
-
-                                    Uri videoURI = FileProvider.getUriForFile(getActivity(), BuildConfig.APPLICATION_ID + ".fileprovider", file);
-                                    Intent intent = new Intent(Intent.ACTION_EDIT);
-                                    //intent.setDataAndType(videoURI, "video/*");
-                                    intent.setDataAndType(videoURI, getMimeType(videoURI));
-                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                    intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                                    intent.addFlags(FLAG_ACTIVITY_CLEAR_TOP);
-                                    try {
-                                        Intent choose = Intent.createChooser(intent, "Edit with");
-                                        startActivityForResult(choose, 1005);
-                                    } catch (ActivityNotFoundException e) {
-                                        try {
-                                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.kunkun.videoeditor.videomaker")));
-                                        } catch (ActivityNotFoundException exception) {
-                                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.kunkun.videoeditor.videomaker")));
-                                        }
-                                    } catch (Exception e) {
-                                        try {
-                                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.kunkun.videoeditor.videomaker")));
-                                        } catch (ActivityNotFoundException exception) {
-                                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.kunkun.videoeditor.videomaker")));
-                                        }
-                                    }
-                                    break;
-                                case R.id.menu_open_link:
-                                    getActivity().onBackPressed();
-                                    ((MainActivity) getActivity()).isEnableSuggetion = false;
-                                    ((MainActivity) getActivity()).navView.setSelectedItemId(R.id.navHome);
-                                    new WebConnect(holder.edtSearch, ((MainActivity) getActivity())).connect();
-                                    break;
-                                case R.id.menu_delete:
-                                    Dialog dialog = new Dialog(getActivity());
-                                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                                    dialog.setContentView(R.layout.dialog_confirmation);
-
-                                    TextView txtTitle = dialog.findViewById(R.id.txtTitle);
-                                    TextView txtDesc = dialog.findViewById(R.id.txtDesc);
-                                    txtTitle.setText("Confirm");
-                                    txtDesc.setText("Are you sure you want to delete this video?");
-                                    TextView txtNO = dialog.findViewById(R.id.txtNO);
-                                    TextView txtOK = dialog.findViewById(R.id.txtOK);
-                                    txtNO.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View v) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                                    txtOK.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View v) {
-                                            downloadsViewModel.startDelete(downloads.get(position).id, dialog.getContext());
-                                            dialog.dismiss();
-                                            onResume();
-                                        }
-                                    });
-                                    dialog.show();
-                                    dialog.getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-                                    dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                                    break;
-                            }
-                            return true;
-                        }
-                    });
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        popup.setForceShowIcon(true);
-                    }
-                    popup.show();
-                }
-            });
-            holder.imgCancel.setVisibility(View.GONE);
-            holder.imgPause.setVisibility(View.GONE);
-            holder.imgResume.setVisibility(View.GONE);
-            holder.txtDuration.setVisibility(View.GONE);
-            holder.imgMore.setVisibility(View.GONE);
-            holder.imgSelect.setVisibility(View.GONE);
-            holder.downloadProgressBar.setVisibility(View.VISIBLE);
-
-            downloadsViewModel.getLoadState().observe(getViewLifecycleOwner(), state -> {
-                Log.d(TAG, "onBindViewHolder: " + state);
-                switch (state) {
-                    case FAILED: {
-                        holder.imgCancel.setVisibility(View.VISIBLE);
-                        holder.imgPause.setVisibility(View.GONE);
-                        holder.imgResume.setVisibility(View.VISIBLE);
-                        String strDescFailed = "Failed " + downloadData.download.getDownloadedPercent() + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
-                        holder.downloadProgressText.setText(strDescFailed);
-                        break;
-                    }
-                    case RUNNING:
-
-                        return;
-                    case ENQUEUED: {
-                        holder.imgCancel.setVisibility(View.VISIBLE);
-                        holder.imgPause.setVisibility(View.VISIBLE);
-                        holder.imgResume.setVisibility(View.GONE);
-                        break;
-                    }
-
-                    case SUCCEEDED: {
-                        downloaded = true;
-                        holder.imgCancel.setVisibility(View.VISIBLE);
-                        holder.imgPause.setVisibility(View.VISIBLE);
-                        holder.imgResume.setVisibility(View.GONE);
-                        holder.imgCancel.setVisibility(View.GONE);
-                        holder.imgPause.setVisibility(View.GONE);
-                        holder.imgResume.setVisibility(View.GONE);
-                        holder.downloadProgressBar.setVisibility(View.GONE);
-                        holder.txtDuration.setVisibility(View.VISIBLE);
-                        holder.imgMore.setVisibility(View.VISIBLE);
-                        String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getTimestamp()));
-                        String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize()) + "  " + dateString;
-                        holder.downloadProgressText.setText(strDescComplete);
-                        if (documentFile.exists()) {
-                            String duration = null;
-                            try {
-                                duration = Utils.Companion.convertSecondsToHMmSs(getFileDuration(downloadData.download.getDownloadedPath(), getContext()));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            if (duration != null) holder.txtDuration.setText(duration);
-                        }
-                        break;
-                    }
-
-                    case CANCELLED: {
-                        String strDesc2 = "Cancelled " + downloadData.download.getDownloadedPercent() + "% " + Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "/" + Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize());
-                        holder.downloadProgressText.setText(strDesc2);
-                        holder.imgCancel.setVisibility(View.GONE);
-                        holder.imgPause.setVisibility(View.GONE);
-                        holder.imgResume.setVisibility(View.VISIBLE);
-                        break;
-                    }
-
-                    case BLOCKED:
-                        return;
-
-                    default: {
-                        break;
-                    }
-                }
-            });
-
-            if (isSelectedMode) {
-                holder.imgCancel.setVisibility(View.GONE);
-                holder.imgPause.setVisibility(View.GONE);
-                holder.imgResume.setVisibility(View.GONE);
-                holder.imgMore.setVisibility(View.GONE);
-
-                holder.imgSelect.setVisibility(View.VISIBLE);
-
-                boolean isContain = false;
-                for (DownloadData data : selectedList) {
-                    if (data.download.getId() == downloadData.download.getId()) {
-                        isContain = true;
-                    }
-                }
-                if (isContain) {
-                    Glide.with(getActivity()).load(R.drawable.ic_box_selected).into(holder.imgSelect);
-                } else {
-                    Glide.with(getActivity()).load(R.drawable.ic_box_unselect).into(holder.imgSelect);
-                }
+            } else if (itemHolder instanceof ProgressViewHolder) {
+                ProgressViewHolder headerViewHolder = (ProgressViewHolder) itemHolder;
+                headerViewHolder.downloadProgressText.setText(text);
+                headerViewHolder.downloadProgressBar.setProgress(progress);
             }
         }
 
+
         @Override
         public int getItemCount() {
-            return downloads.size();
+            return downloads.size() + 1;
         }
 
 
@@ -630,6 +672,24 @@ public class AllDownloadFragment extends Fragment {
                 downloadProgressBar = itemView.findViewById(R.id.downloadProgressBar);
             }
         }
+
+        class ProgressViewHolder extends RecyclerView.ViewHolder {
+            TextView downloadVideoName;
+            ProgressBar downloadProgressBar;
+            ImageView imgVideo;
+            TextView downloadProgressText;
+
+
+            public ProgressViewHolder(@NonNull View itemView) {
+                super(itemView);
+                imgCancel = itemView.findViewById(R.id.imgCancel);
+                downloadProgressText = itemView.findViewById(R.id.downloadProgressText);
+                imgVideo = itemView.findViewById(R.id.imgVideo);
+                downloadVideoName = itemView.findViewById(R.id.downloadVideoName);
+                downloadProgressBar = itemView.findViewById(R.id.downloadProgressBar);
+            }
+        }
+
     }
 
     public void renameFile(DownloadData downloadData, DocumentFile file) {

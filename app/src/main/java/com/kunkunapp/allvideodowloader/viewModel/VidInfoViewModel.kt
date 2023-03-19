@@ -6,10 +6,12 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.kunkunapp.allvideodowloader.MyApp
+import com.kunkunapp.allvideodowloader.interfaces.DownloadProgressCallback
 import com.kunkunapp.allvideodowloader.model.VidInfoItem
 import com.kunkunapp.allvideodowloader.work.DownloadWorker
 import com.yausername.youtubedl_android.YoutubeDL
@@ -19,7 +21,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
-    val downloadProgress : MutableLiveData<Int> = MutableLiveData()
     val vidFormats: MutableLiveData<VideoInfo?> = MutableLiveData()
     val loadState: MutableLiveData<LoadState> = MutableLiveData(LoadState.INITIAL)
     val thumbnail: MutableLiveData<String> = MutableLiveData()
@@ -99,10 +100,7 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
         workManager.enqueueUniqueWork(
             workTag, ExistingWorkPolicy.KEEP, workRequest
         )
-        workManager.getWorkInfoByIdLiveData(workRequest.id).observe(livecycle) { workInfo ->
-            val progress = workInfo.progress.getInt("progress", 0)
-            downloadProgress.postValue(progress)
-        }
+
         Toast.makeText(
             activity, "download_queued", Toast.LENGTH_LONG
         ).show()
