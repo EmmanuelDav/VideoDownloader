@@ -6,12 +6,10 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.kunkunapp.allvideodowloader.MyApp
-import com.kunkunapp.allvideodowloader.interfaces.DownloadProgressCallback
 import com.kunkunapp.allvideodowloader.model.VidInfoItem
 import com.kunkunapp.allvideodowloader.work.DownloadWorker
 import com.yausername.youtubedl_android.YoutubeDL

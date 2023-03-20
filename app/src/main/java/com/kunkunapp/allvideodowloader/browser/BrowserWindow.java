@@ -13,6 +13,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -332,6 +333,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                             urlBox.setText(url);
                             BrowserWindow.this.url = url;
                             viewModel.fetchInfo(url);
+                            updateFoundVideosBar();
                         }
                     });
                     view.findViewById(R.id.loadingProgress).setVisibility(View.GONE);
@@ -720,18 +722,24 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
     }
 
   public static long getFileDuration(String file, Context context) throws IOException {
-        long result = 0;
-        FFmpegMediaMetadataRetriever mFFmpegMediaMetadataRetrieve = null;
-        try {
-            mFFmpegMediaMetadataRetrieve = new FFmpegMediaMetadataRetriever();
-            mFFmpegMediaMetadataRetrieve.setDataSource(file);
-            String mVideoDuration = mFFmpegMediaMetadataRetrieve.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_DURATION);
-            result = Long.parseLong(mVideoDuration);
+      final int[] result = {0};
+      try {
+          MediaPlayer mp = new MediaPlayer();
+          mp.setDataSource(file);
+          mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+              @Override
+              public void onPrepared(MediaPlayer mp) {
+                  int duration = mp.getDuration();
+                  result[0] = duration;
+                  mp.release(); // release the media player once we're done
+              }
+          });
+          mp.prepareAsync();
+      } catch (IOException e) {
+          e.printStackTrace();
+      }
 
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        }
-        return result;
+      return result[0];
     }
 
 }

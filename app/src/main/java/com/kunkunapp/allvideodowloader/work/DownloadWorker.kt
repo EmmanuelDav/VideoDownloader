@@ -67,7 +67,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         } else {
             request.addOption("-f", formatId)
         }
-
         var destUri: Uri? = null
 
         try {
@@ -92,8 +91,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         } finally {
             tmpFile.deleteRecursively()
         }
-
-        delay(3000)
         val downloadsDao = AppDatabase.getDatabase(
             applicationContext
         ).downloadsDao()
@@ -104,7 +101,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         download.downloadedSize = size
         download.mediaType = if (vcodec == "none" && acodec != "none") "audio" else "video"
         repository.insert(download)
-
         return Result.success()
     }
 

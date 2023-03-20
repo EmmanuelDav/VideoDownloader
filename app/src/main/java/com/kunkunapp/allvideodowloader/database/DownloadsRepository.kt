@@ -6,6 +6,7 @@ class DownloadsRepository(private val downloadsDao: DownloadsDao) {
 
     val allDownloads: LiveData<List<Download>> = downloadsDao.getAllDownloads()
 
+
     suspend fun insert(download: Download) {
         downloadsDao.insert(download)
     }
