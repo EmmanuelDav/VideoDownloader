@@ -18,6 +18,7 @@ import com.kunkunapp.allvideodowloader.R
 import com.kunkunapp.allvideodowloader.database.AppDatabase
 import com.kunkunapp.allvideodowloader.database.Download
 import com.kunkunapp.allvideodowloader.database.DownloadsRepository
+import com.kunkunapp.allvideodowloader.model.DownloadInfo
 import com.kunkunapp.allvideodowloader.utils.FileNameUtils
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -27,6 +28,7 @@ import kotlinx.coroutines.sync.withLock
 import org.apache.commons.io.IOUtils
 import java.io.File
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class DownloadWorker(appContext: Context, params: WorkerParameters) :
@@ -107,6 +109,11 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
     private fun showProgress(
         id: Int, taskId: String, name: String, progress: Int, line: String, tmpFile: File
     ) {
+
+        val downloadList = ArrayList<DownloadInfo>()
+        val downloadInfo =  DownloadInfo(taskId, name, progress, line)
+        downloadList.add(downloadInfo)
+
         val text = line.replace(tmpFile.toString(), "")
         val intent = Intent(applicationContext, CancelReceiver::class.java).putExtra("taskId", taskId)
                 .putExtra("notificationId", id)
@@ -128,11 +135,10 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
             ).build()
         notificationManager?.notify(id, notification)
         val progressIntent = Intent("DOWNLOAD_PROGRESS")
-        progressIntent.putExtra("taskId", line)
-        progressIntent.putExtra("name", name)
-        progressIntent.putExtra("progress", progress)
+        progressIntent.putExtra("downloadList", downloadList)
         LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(progressIntent)
     }
+
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

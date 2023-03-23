@@ -32,6 +32,7 @@ import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -180,7 +181,7 @@ public abstract class VideoList {
                             .into(imgVideo);
                 }
                 String sizeFormatted = Formatter.formatShortFileSize(activity, Long.parseLong(String.valueOf(mVideoInfo.getFormats().get(position).getFileSizeApproximate())));
-                holder.videoFoundSize.setText(sizeFormatted.equals("0 B") ? "N/A" : sizeFormatted);
+                holder.videoFoundSize.setText(sizeFormatted.equals("0 B") ? "Unknown" : sizeFormatted);
                 holder.name.setText(mVideoInfo.getFulltitle());
                 videoFormat = mVideoInfo.getFormats().get(selectedVideo);
 

@@ -89,7 +89,7 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             DownloadWorker.acodecKey to vidFormat.acodec,
             DownloadWorker.vcodecKey to vidFormat.vcodec,
             DownloadWorker.downloadDirKey to downloadDir,
-            DownloadWorker.sizeKey to vidFormat.fileSize,
+            DownloadWorker.sizeKey to vidFormat.fileSizeApproximate,
             DownloadWorker.taskIdKey to vidInfo.id
         )
 

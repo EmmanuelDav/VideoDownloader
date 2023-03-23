@@ -27,7 +27,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
-import android.text.TextUtils;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -49,6 +49,7 @@ import com.bumptech.glide.Glide;
 import com.kunkunapp.allvideodowloader.database.Download;
 import com.kunkunapp.allvideodowloader.helper.RenameVideoPref;
 import com.kunkunapp.allvideodowloader.interfaces.DownloadInterface;
+import com.kunkunapp.allvideodowloader.model.DownloadInfo;
 import com.kunkunapp.allvideodowloader.viewModel.DownloadsViewModel;
 
 import com.kunkunapp.allvideodowloader.BuildConfig;
@@ -56,6 +57,7 @@ import com.kunkunapp.allvideodowloader.R;
 import com.kunkunapp.allvideodowloader.activities.MainActivity;
 import com.kunkunapp.allvideodowloader.helper.WebConnect;
 import com.kunkunapp.allvideodowloader.utils.Utils;
+import com.kunkunapp.allvideodowloader.work.DownloadWorker;
 
 
 import java.io.File;
@@ -174,15 +176,14 @@ public class AllDownloadFragment extends Fragment {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().equals("DOWNLOAD_PROGRESS")) {
-                    String taskId = intent.getStringExtra("taskId");
-                    String name = intent.getStringExtra("name");
-                    int progress = intent.getIntExtra("progress", -1);
-                    downloadAdapter.loadProgress(progress, taskId, name);
-                    downloadInterface.loading();
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        ArrayList<DownloadInfo> downloadInfoArrayList = intent.getParcelableArrayListExtra("downloadList", DownloadInfo.class);
+                        downloadAdapter.loadProgress(downloadInfoArrayList);
+                    }
+                    // downloadInterface.loading();
                 }
             }
         };
-
 
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(progressReceiver, new IntentFilter("DOWNLOAD_PROGRESS"));
         return view;
@@ -223,39 +224,28 @@ public class AllDownloadFragment extends Fragment {
                 }
                 downloadAdapter.notifyDataSetChanged();
             }
-            downloadInterface.notLoading();
+            // downloadInterface.notLoading();
         });
     }
 
 
     private class DownloadAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements DownloadInterface {
         private final List<DownloadData> downloads = new ArrayList<>();
+        private List<DownloadInfo> downloadList = new ArrayList<>();
         boolean downloaded = false;
-        int progress;
-        String progressData;
-        String name;
         int originalHeight;
-        private Handler handler = new Handler();
-
-        private static final int VIEW_TYPE_HEADER = 0;
+        private static final int VIEW_TYPE_DOWNLOAD = 0;
         private static final int VIEW_TYPE_ITEM = 1;
-        private ProgressViewHolder headerViewHolder;
+        ProgressViewHolder headerViewHolder;
 
-        @Override
-        public int getItemViewType(int position) {
-            return position == 0 ? VIEW_TYPE_HEADER : VIEW_TYPE_ITEM;
-        }
 
-        public void loadProgress(int progress, String text, String name) {
-            this.progress = progress;
-            this.progressData = text;
-            this.name = name;
+        public void loadProgress(List<DownloadInfo> downloadDataList) {
+            this.downloadList = downloadDataList;
             notifyDataSetChanged();
         }
 
-
         public void addDownload(@NonNull final Download download) {
-            downloadInterface = (DownloadInterface) this;
+            downloadInterface = this;
             boolean found = false;
             DownloadData data = null;
             int dataPosition = -1;
@@ -290,7 +280,7 @@ public class AllDownloadFragment extends Fragment {
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-            if (viewType == VIEW_TYPE_HEADER) {
+            if (viewType == VIEW_TYPE_DOWNLOAD) {
                 View view = inflater.inflate(R.layout.item_download, parent, false);
                 return new ProgressViewHolder(view);
             } else {
@@ -299,12 +289,21 @@ public class AllDownloadFragment extends Fragment {
             }
         }
 
+        @Override
+        public int getItemViewType(int position) {
+            if (position < downloadList.size()) {
+                return VIEW_TYPE_DOWNLOAD;
+            } else {
+                return VIEW_TYPE_ITEM;
+            }
+        }
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder itemHolder, int position) {
             if (itemHolder instanceof ViewHolder) {
+                DownloadData downloadData;
                 ViewHolder holder = (ViewHolder) itemHolder;
-                DownloadData downloadData = downloads.get(position - 1);
+                downloadData = downloads.get(position - downloadList.size());
                 DocumentFile documentFile = DocumentFile.fromSingleUri(getContext(), Uri.parse(downloadData.download.downloadedPath));
                 File tempFile = new File(downloadData.download.getDownloadedPath());
                 File file = tempFile;
@@ -316,7 +315,7 @@ public class AllDownloadFragment extends Fragment {
                         tempFile = desFile;
                     }
                 }
-                holder.downloadVideoName.setText(file.getName());
+                holder.downloadVideoName.setText(downloadData.download.getName());
                 holder.imgVideo.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -570,7 +569,7 @@ public class AllDownloadFragment extends Fragment {
                             holder.txtDuration.setVisibility(View.VISIBLE);
                             holder.imgMore.setVisibility(View.VISIBLE);
                             String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getTimestamp()));
-                            String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getTotalSize()) + "  " + dateString;
+                            String strDescComplete = downloadData.download.getDownloadedSize() + "  " + dateString;
                             holder.downloadProgressText.setText(strDescComplete);
                             if (documentFile.exists()) {
                                 String duration = null;
@@ -622,18 +621,19 @@ public class AllDownloadFragment extends Fragment {
                 }
             } else if (itemHolder instanceof ProgressViewHolder) {
                 headerViewHolder = (ProgressViewHolder) itemHolder;
-                headerViewHolder.downloadProgressBar.setProgress(progress);
-                headerViewHolder.downloadProgressText.setText(progressData);
-                headerViewHolder.downloadVideoName.setText(name);
+                DownloadInfo downloadInfo = downloadList.get(position);
+                headerViewHolder.downloadProgressBar.setProgress(downloadInfo.getProgress());
+                headerViewHolder.downloadProgressText.setText(downloadInfo.getLine());
+                headerViewHolder.imgSelect.setVisibility(View.GONE);
+                headerViewHolder.downloadVideoName.setText(downloadInfo.getName());
                 originalHeight = headerViewHolder.itemView.getLayoutParams().height;
             }
         }
 
 
-
         @Override
         public int getItemCount() {
-            return downloads.size() + 1;
+            return downloads.size() + downloadList.size();
         }
 
         @Override
@@ -641,13 +641,14 @@ public class AllDownloadFragment extends Fragment {
             Log.d(TAG, "loading: loading");
             headerViewHolder.itemView.setVisibility(View.VISIBLE);
             headerViewHolder.itemView.getLayoutParams().height = -2;
+
         }
 
         @Override
         public void notLoading() {
             Log.d(TAG, "loading: not loading");
-            headerViewHolder.itemView.setVisibility(View.GONE);
-            headerViewHolder.itemView.getLayoutParams().height  = 0;
+//                headerViewHolder.itemView.setVisibility(View.GONE);
+//                headerViewHolder.itemView.getLayoutParams().height = 0;
         }
 
 
@@ -690,10 +691,19 @@ public class AllDownloadFragment extends Fragment {
             ImageView imgVideo;
             TextView downloadProgressText;
             TextView downloadVideoName;
+            ImageView imgMore;
+            ImageView imgCancel;
+            ImageView imgPause;
+            ImageView imgSelect;
+
+
 
 
             public ProgressViewHolder(@NonNull View itemView) {
                 super(itemView);
+                imgSelect = itemView.findViewById(R.id.imgSelect);
+                imgPause = itemView.findViewById(R.id.imgPause);
+                imgMore = itemView.findViewById(R.id.imgMore);
                 imgCancel = itemView.findViewById(R.id.imgCancel);
                 downloadProgressText = itemView.findViewById(R.id.downloadProgressText);
                 imgVideo = itemView.findViewById(R.id.imgVideo);
