@@ -569,7 +569,7 @@ public class AllDownloadFragment extends Fragment {
                             holder.txtDuration.setVisibility(View.VISIBLE);
                             holder.imgMore.setVisibility(View.VISIBLE);
                             String dateString = new SimpleDateFormat("MMMM dd yyyy").format(new Date(downloadData.download.getTimestamp()));
-                            String strDescComplete = downloadData.download.getDownloadedSize() + "  " + dateString;
+                            String strDescComplete = Utils.Companion.getStringSizeLengthFile(downloadData.download.getDownloadedSize()) + "  " + dateString;
                             holder.downloadProgressText.setText(strDescComplete);
                             if (documentFile.exists()) {
                                 String duration = null;

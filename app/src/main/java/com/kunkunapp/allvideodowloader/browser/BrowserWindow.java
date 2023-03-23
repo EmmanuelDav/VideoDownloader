@@ -114,7 +114,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
     private List<String> blockedWebsites;
     private BottomSheetDialog dialog;
 
-    private Activity activity;
+    private final Activity activity;
     private InterstitialAd mInterstitialAd;
     private Context context;
     private boolean isVisible = false;
@@ -123,7 +123,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
     private DownloadsViewModel downloadsViewModel;
     VideoInfo mVideoInfo;
 
-    private static int OPEN_DIRECTORY_REQUEST_CODE = 42069;
+    private static final int OPEN_DIRECTORY_REQUEST_CODE = 42069;
 
 
     public BrowserWindow(Activity activity) {
@@ -223,7 +223,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         qualities.setHasFixedSize(true);
         foundVideosWindow = view.findViewById(R.id.foundVideosWindow);
         viewModel.getVidFormats().observe(getViewLifecycleOwner(), videoInfo -> {
-            if (videoInfo == null || videoInfo.getFormats() == null)  {
+            if (videoInfo == null || videoInfo.getFormats() == null) {
                 return;
             }
             videoInfo.getFormats().removeIf(it -> !it.getExt().contains("mp4") || it.getFormat().contains("audio"));
@@ -258,7 +258,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 visibility = view.getVisibility();
             }
             view = inflater.inflate(R.layout.browser_lay, container, false);
-            viewModel = new ViewModelProvider(this ).get(VidInfoViewModel.class);
+            viewModel = new ViewModelProvider(this).get(VidInfoViewModel.class);
             downloadsViewModel = new ViewModelProvider(this).get(DownloadsViewModel.class);
 
             view.setVisibility(visibility);
@@ -291,18 +291,18 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
+        Set<String> fetchedUrls = new HashSet<>();
         if (!loadedFirsTime) {
             page.getSettings().setJavaScriptEnabled(true);
             page.getSettings().setDomStorageEnabled(true);
             page.getSettings().setAllowUniversalAccessFromFileURLs(true);
             page.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
             page.setWebViewClient(new WebViewClient() {//it seems not setting webclient, launches
-                //default browser instead of opening the page in webview
-                @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                    Log.d(TAG, "shouldOverrideUrlLoading: " + request.getUrl().toString());
+
                     if (blockedWebsites.contains(Utils.Companion.getBaseDomain(request.getUrl().toString()))) {
-                        Log.d("vdd", "URL : " + request.getUrl().toString());
                         Dialog dialog = new Dialog(getActivity());
                         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
                         dialog.setContentView(R.layout.dialog_youtube_not_supported);
@@ -328,9 +328,11 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                         @Override
                         public void run() {
                             mVideoInfo = null;
+                            Log.d(TAG, "shouldOverrideUrlLoading: " + url + " " + getUrl());
                             EditText urlBox = getBaseActivity().findViewById(R.id.inputURLText);
                             getBaseActivity().isEnableSuggetion = false;
                             urlBox.setText(url);
+                            urlBox.setSelection(urlBox.getText().length());
                             BrowserWindow.this.url = url;
                             viewModel.fetchInfo(url);
                             updateFoundVideosBar();
@@ -344,6 +346,13 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
+                    mVideoInfo = null;
+                    if (!fetchedUrls.contains(url) || !view.getUrl().equals(url)) {
+                        viewModel.fetchInfo(url);
+                        fetchedUrls.add(url);
+                        updateFoundVideosBar();
+                        Log.d(TAG, "onPageFinished: fetched" + url);
+                    }
                     loadingPageProgress.setVisibility(View.GONE);
                 }
 
@@ -352,7 +361,6 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                     Log.d("fb :", "URL: " + url);
                     final String viewUrl = view.getUrl();
                     final String title = view.getTitle();
-
                     new VideoContentSearch(activity, url, viewUrl, title) {
                         @Override
                         public void onStartInspectingURL() {
@@ -436,6 +444,10 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             page.setWebChromeClient(new WebChromeClient() {
                 @Override
                 public void onProgressChanged(WebView view, int newProgress) {
+                    if (!fetchedUrls.contains(url)) {
+                        viewModel.fetchInfo(url);
+                        fetchedUrls.add(url);
+                    }
                     loadingPageProgress.setProgress(newProgress);
                 }
 
@@ -499,10 +511,7 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
                 break;
 
             default:
-                //
-
         }
-
     }
 
     @Override
@@ -672,8 +681,8 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
             Toast.makeText(context, R.string.invalid_download_location, Toast.LENGTH_SHORT).show();
         }
         removeDialog();
-        viewModel.startDownload(viewModel.selectedItem, path, activity,getViewLifecycleOwner());
-       // downloadsViewModel.getId(viewModel.selectedItem.getId(), activity);
+        viewModel.startDownload(viewModel.selectedItem, path, activity, getViewLifecycleOwner());
+        // downloadsViewModel.getId(viewModel.selectedItem.getId(), activity);
     }
 
     @Override
@@ -721,25 +730,25 @@ public class BrowserWindow extends BaseFragment implements View.OnClickListener,
         dialog.dismiss();
     }
 
-  public static long getFileDuration(String file, Context context) throws IOException {
-      final int[] result = {0};
-      try {
-          MediaPlayer mp = new MediaPlayer();
-          mp.setDataSource(file);
-          mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-              @Override
-              public void onPrepared(MediaPlayer mp) {
-                  int duration = mp.getDuration();
-                  result[0] = duration;
-                  mp.release(); // release the media player once we're done
-              }
-          });
-          mp.prepareAsync();
-      } catch (IOException e) {
-          e.printStackTrace();
-      }
+    public static long getFileDuration(String file, Context context) throws IOException {
+        final int[] result = {0};
+        try {
+            MediaPlayer mp = new MediaPlayer();
+            mp.setDataSource(file);
+            mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    int duration = mp.getDuration();
+                    result[0] = duration;
+                    mp.release(); // release the media player once we're done
+                }
+            });
+            mp.prepareAsync();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-      return result[0];
+        return result[0];
     }
 
 }

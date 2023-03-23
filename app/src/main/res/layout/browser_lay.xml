@@ -11,19 +11,22 @@
         android:layout_centerInParent="true"
         android:visibility="visible" />
 
-    <ProgressBar
-        android:id="@+id/loadingPageProgress"
-        style="@android:style/Widget.ProgressBar.Horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:max="100"
-        android:progressDrawable="@drawable/loading_page_progress" />
 
     <com.kunkunapp.allvideodowloader.browser.TouchableWebView
         android:id="@+id/page"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+
+    <ProgressBar
+        android:id="@+id/loadingPageProgress"
+        android:layout_width="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_height="5dp"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:max="100"
+        android:progressDrawable="@drawable/loading_page_progress"
+        android:layout_centerInParent="true"/>
 
 
     <RelativeLayout
