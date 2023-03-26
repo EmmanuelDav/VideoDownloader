@@ -16,7 +16,6 @@ import android.widget.*
 import android.widget.AdapterView.OnItemClickListener
 import androidx.appcompat.app.AlertDialog
 import com.cyberIyke.allvideodowloader.BuildConfig
-import com.cyberIyke.allvideodowloader.MyApp.setOnBackPressedListener
 import com.cyberIyke.allvideodowloader.R
 import com.cyberIyke.allvideodowloader.activities.IntroActivity
 import com.cyberIyke.allvideodowloader.activities.MainActivity.OnBackPressedListener
@@ -27,7 +26,7 @@ import com.cyberIyke.allvideodowloader.utils.HistorySQLite
 import com.cyberIyke.allvideodowloader.views.SwitchButton
 import java.io.File
 
-class SettingsFragment constructor() : BaseFragment(), OnBackPressedListener, View.OnClickListener {
+class SettingsFragment : BaseFragment(), OnBackPressedListener, View.OnClickListener {
     private var view: View? = null
     private var searchEngine: String? = null
     var txtSelectedSearchEngine: TextView? = null

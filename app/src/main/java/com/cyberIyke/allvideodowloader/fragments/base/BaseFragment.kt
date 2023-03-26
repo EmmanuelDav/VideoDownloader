@@ -5,12 +5,10 @@ import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.activities.MainActivity
 
 open class BaseFragment : Fragment() {
-    val baseActivity: MainActivity?
-        get() {
-            return getActivity() as MainActivity?
+    val baseActivity: MainActivity? get() {
+            return activity as MainActivity?
         }
-    val myApp: MyApp
-        get() {
-            return getActivity()!!.getApplication() as MyApp
+    val myApp: MyApp get() {
+            return requireActivity().application as MyApp
         }
 }
