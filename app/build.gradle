@@ -113,10 +113,10 @@ dependencies {
     implementation 'androidx.palette:palette:1.0.0'
     implementation 'com.romandanylyk:pageindicatorview:1.0.3'
     implementation 'io.github.florent37:shapeofview:1.4.7'
-    implementation "androidx.tonyodev.fetch2:xfetch2:3.1.6"
-    implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.1.6"
     implementation 'com.github.getActivity:XXPermissions:16.2'
     implementation 'com.daimajia.androidanimations:library:2.4'
+    implementation "androidx.tonyodev.fetch2:xfetch2:3.1.6"
+    implementation "androidx.tonyodev.fetch2okhttp:xfetch2okhttp:3.1.6"
 
     implementation 'com.squareup.retrofit2:retrofit:2.5.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
@@ -149,4 +149,6 @@ dependencies {
     implementation "androidx.room:room-runtime:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
+
+
 }
