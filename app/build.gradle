@@ -12,7 +12,7 @@ android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.kunkunapp.allvideodowloader"
+        applicationId "com.cyberIyke.allvideodowloader"
         minSdk 24
         targetSdk 31
         versionCode 1
@@ -53,7 +53,7 @@ android {
             universalApk true
         }
     }
-    namespace 'com.kunkunapp.allvideodowloader'
+    namespace 'com.cyberIyke.allvideodowloader'
 }
 
 dependencies {

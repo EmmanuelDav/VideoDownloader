@@ -31,7 +31,7 @@
             />
     </LinearLayout>
 
-    <com.kunkunapp.allvideodowloader.views.cardstack.CardStackView
+    <com.cyberIyke.allvideodowloader.views.cardstack.CardStackView
         android:id="@+id/cardWindowTab"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

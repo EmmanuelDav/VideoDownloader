@@ -108,7 +108,7 @@
                     android:textColor="@color/text_1"
                     android:textSize="@dimen/_12sdp" />
 
-                <com.kunkunapp.allvideodowloader.views.SwitchButton
+                <com.cyberIyke.allvideodowloader.views.SwitchButton
                     android:id="@+id/wifiSwitch"
                     android:layout_width="@dimen/_42sdp"
                     android:layout_height="@dimen/_24sdp"
@@ -147,7 +147,7 @@
                     android:textColor="@color/text_1"
                     android:textSize="@dimen/_12sdp" />
 
-                <com.kunkunapp.allvideodowloader.views.SwitchButton
+                <com.cyberIyke.allvideodowloader.views.SwitchButton
                     android:id="@+id/adBlockerSwitch"
                     android:layout_width="@dimen/_42sdp"
                     android:layout_height="@dimen/_24sdp"

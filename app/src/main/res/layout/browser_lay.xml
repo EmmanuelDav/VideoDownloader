@@ -12,7 +12,7 @@
         android:visibility="visible" />
 
 
-    <com.kunkunapp.allvideodowloader.browser.TouchableWebView
+    <com.cyberIyke.allvideodowloader.browser.TouchableWebView
         android:id="@+id/page"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
@@ -110,7 +110,7 @@
         android:background="@android:color/black"
         android:visibility="gone">
 
-        <com.kunkunapp.allvideodowloader.views.CustomVideoView
+        <com.cyberIyke.allvideodowloader.views.CustomVideoView
             android:id="@+id/videoFoundView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -118,7 +118,7 @@
             app:uvv_autoRotation="true"
             app:uvv_fitXY="false" />
 
-        <com.kunkunapp.allvideodowloader.views.CustomMediaController
+        <com.cyberIyke.allvideodowloader.views.CustomMediaController
             android:id="@+id/mediaFoundController"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

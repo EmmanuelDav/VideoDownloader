@@ -2,7 +2,7 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <com.kunkunapp.allvideodowloader.views.BadgeRed
+    <com.cyberIyke.allvideodowloader.views.BadgeRed
         android:id="@+id/notifications_nav_badge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

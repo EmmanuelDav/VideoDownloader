@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.kunkunapp.allvideodowloader">
+    package="com.cyberIyke.allvideodowloader">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
 
     <application
-        android:name=".MyApp"
+        android:name="com.cyberIyke.allvideodowloader.MyApp"
         android:allowBackup="true"
         android:fullBackupContent="true"
         android:hardwareAccelerated="true"
@@ -24,18 +24,18 @@
         android:theme="@style/Theme.VideoDownloader"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
         <activity
-            android:name=".activities.IntroActivity"
+            android:name="com.cyberIyke.allvideodowloader.activities.IntroActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".activities.FeedbackActivity"
+            android:name="com.cyberIyke.allvideodowloader.activities.FeedbackActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".activities.HistoryActivity"
+            android:name="com.cyberIyke.allvideodowloader.activities.HistoryActivity"
             android:exported="false" />
         <activity
-            android:name=".activities.SplashActivity"
+            android:name="com.cyberIyke.allvideodowloader.activities.SplashActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -45,7 +45,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.MainActivity"
+            android:name="com.cyberIyke.allvideodowloader.activities.MainActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:screenOrientation="portrait"
@@ -75,7 +75,7 @@
             android:value="@string/admob_app_id" />
 
         <service
-            android:name=".helper.DownloadManager"
+            android:name="com.cyberIyke.allvideodowloader.helper.DownloadManager"
             android:exported="false" />
 
         <provider
@@ -88,7 +88,7 @@
                 android:resource="@xml/provider_path" />
         </provider>
 
-        <receiver android:name=".work.CancelReceiver">
+        <receiver android:name="com.cyberIyke.allvideodowloader.work.CancelReceiver">
         </receiver>
 
     </application>
