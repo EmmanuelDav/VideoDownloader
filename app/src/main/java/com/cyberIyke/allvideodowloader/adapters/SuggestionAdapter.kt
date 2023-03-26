@@ -6,18 +6,11 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.cyberIyke.allvideodowloader.R
 
-class SuggestionAdapter constructor(var suggetionListner: SuggetionListner?) :
-    RecyclerView.Adapter<SuggestionAdapter.ViewHolder>() {
-    var resultList: List<Result>? = ArrayList()
-    fun setResultList(resultList: List<Result>?) {
-        this.resultList = resultList
-        if (this.resultList == null) {
-            this.resultList = ArrayList()
-        }
-        notifyDataSetChanged()
-    }
+private class SuggestionAdapter constructor(var suggetionListner: SuggetionListner?) : RecyclerView.Adapter<SuggestionAdapter.ViewHolder>() {
 
-    public override fun onCreateViewHolder(
+    var resultList: List<Result>? = ArrayList()
+
+    override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
     ): SuggestionAdapter.ViewHolder {
@@ -28,7 +21,7 @@ class SuggestionAdapter constructor(var suggetionListner: SuggetionListner?) :
     }
 
     public override fun onBindViewHolder(holder: SuggestionAdapter.ViewHolder, position: Int) {
-        val result: Result? = resultList!!.get(position)
+        val result: Result = resultList!!.get(position)
         if (result != null && result.getKey() != null) {
             holder.txtTitle.setText(result.getKey())
             val strSubTitle: String = "Search for \"" + result.getKey() + "\""

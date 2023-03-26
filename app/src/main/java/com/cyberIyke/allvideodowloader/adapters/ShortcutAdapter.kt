@@ -11,31 +11,19 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.cyberIyke.allvideodowloader.R
-import com.cyberIyke.allvideodowloader.databaseimport.ShortcutTable
-import com.cyberIyke.allvideodowloader.interfacesimport.ShortcutListner
+import com.cyberIyke.allvideodowloader.database.ShortcutTable
+import com.cyberIyke.allvideodowloader.interfaces.ShortcutListner
 
-class ShortcutAdapter constructor(var context: Context, var shortcutListner: ShortcutListner?) :RecyclerView.Adapter<ShortcutAdapter.ViewHolder>() {
+private class ShortcutAdapter constructor(var context: Context, var shortcutListner: ShortcutListner?) :RecyclerView.Adapter<ShortcutAdapter.ViewHolder>() {
     var shortcutArrayList: List<ShortcutTable> = ArrayList()
-
     var selectionMode: Boolean = false
 
-    fun setShortcutArrayList(shortcutArrayList: List<ShortcutTable>) {
-        this.shortcutArrayList = shortcutArrayList
-        notifyDataSetChanged()
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShortcutAdapter.ViewHolder {
+        val view = LayoutInflater.from(context).inflate(R.layout.item_shortcut, parent, false)
+        return ViewHolder(view)
     }
 
-    public override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): ShortcutAdapter.ViewHolder {
-        return ShortcutAdapter.ViewHolder(
-            LayoutInflater.from(
-                context
-            ).inflate(R.layout.item_shortcut, parent, false)
-        )
-    }
-
-    public override fun onBindViewHolder(holder: ShortcutAdapter.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ShortcutAdapter.ViewHolder, position: Int) {
         val shortcut: ShortcutTable = shortcutArrayList.get(position)
         holder.txtTitle.setText(shortcut.strTitle)
         if (position == 0) {
@@ -142,16 +130,16 @@ class ShortcutAdapter constructor(var context: Context, var shortcutListner: Sho
         var blueBucket: Int = 0
         var alphaBucket: Int = 0
         val hasAlpha: Boolean = bitmap.hasAlpha()
-        val pixelCount: Int = bitmap.getWidth() * bitmap.getHeight()
+        val pixelCount: Int = bitmap.width * bitmap.height
         val pixels: IntArray = IntArray(pixelCount)
-        bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight())
+        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
         var y: Int = 0
-        val h: Int = bitmap.getHeight()
+        val h: Int = bitmap.height
         while (y < h) {
             var x: Int = 0
-            val w: Int = bitmap.getWidth()
+            val w: Int = bitmap.width
             while (x < w) {
-                val color: Int = pixels.get(x + y * w) // x + y * width
+                val color: Int = pixels[x + y * w] // x + y * width
                 redBucket += (color shr 16) and 0xFF // Color.red
                 greenBucket += (color shr 8) and 0xFF // Color.greed
                 blueBucket += (color and 0xFF) // Color.blue

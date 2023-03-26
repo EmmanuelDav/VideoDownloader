@@ -4,7 +4,7 @@ package com.cyberIyke.allvideodowloader.webservice
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 
-class Gossip constructor() {
+class Gossip {
     @SerializedName("qry")
     @Expose
     var qry: String? = null
