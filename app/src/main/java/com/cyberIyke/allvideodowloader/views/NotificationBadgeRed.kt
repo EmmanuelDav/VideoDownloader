@@ -1,6 +1,8 @@
 package com.cyberIyke.allvideodowloader.views
 
 
+import android.view.LayoutInflater
+import android.view.View
 import com.cyberIyke.allvideodowloader.R
 import com.google.android.material.bottomnavigation.BottomNavigationItemView
 import com.google.android.material.bottomnavigation.BottomNavigationMenuView

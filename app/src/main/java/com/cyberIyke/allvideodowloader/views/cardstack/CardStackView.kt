@@ -10,8 +10,6 @@ import android.view.*
 import android.view.View.OnClickListener
 import android.widget.OverScroller
 import com.cyberIyke.allvideodowloader.R
-import com.cyberIyke.allvideodowloader.views.cardstack.ScrollDelegate
-import com.cyberIyke.allvideodowloader.views.cardstackimport.ScrollDelegate
 
 class CardStackView : ViewGroup, ScrollDelegate {
     var totalLength = 0
@@ -209,7 +207,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
     private fun refreshView() {
         removeAllViews()
         mViewHolders!!.clear()
-        for (i in 0 until mStackAdapter.getItemCount()) {
+        for (i in 0 until mStackAdapter!!.itemCount) {
             val holder = getViewHolder(i)
             holder!!.position = i
             holder.onItemExpand(i == mSelectPosition)
@@ -262,7 +260,9 @@ class CardStackView : ViewGroup, ScrollDelegate {
 
     private fun doCardClickAnimation(viewHolder: ViewHolder?, position: Int) {
         checkContentHeightByParent()
-        mAnimatorAdapter!!.itemClick(viewHolder, position)
+        if (viewHolder != null) {
+            mAnimatorAdapter!!.itemClick(viewHolder, position)
+        }
     }
 
     private fun initOrResetVelocityTracker() {

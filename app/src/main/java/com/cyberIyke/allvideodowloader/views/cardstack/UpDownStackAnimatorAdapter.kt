@@ -3,13 +3,13 @@ package com.cyberIyke.allvideodowloader.views.cardstack
 import android.animation.ObjectAnimator
 import android.view.*
 
-class UpDownStackAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(cardStackView) {
+class UpDownStackAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(cardStackView!!) {
     override fun itemExpandAnimatorSet(viewHolder: CardStackView.ViewHolder, position: Int) {
         val itemView = viewHolder.itemView
         itemView!!.clearAnimation()
         val oa =
             ObjectAnimator.ofFloat(itemView, View.Y, itemView.y, mCardStackView.getChildAt(0).y)
-        mSet.play(oa)
+        mSet!!.play(oa)
         var collapseShowItemCount = 0
         for (i in 0 until mCardStackView.childCount) {
             var childTop: Int
@@ -19,12 +19,12 @@ class UpDownStackAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapte
             if (i > mCardStackView.selectPosition && collapseShowItemCount < mCardStackView.numBottomShow) {
                 childTop = mCardStackView.showHeight - getCollapseStartTop(collapseShowItemCount)
                 val oAnim = ObjectAnimator.ofFloat(child, View.Y, child.y, childTop.toFloat())
-                mSet.play(oAnim)
+                mSet!!.play(oAnim)
                 collapseShowItemCount++
             } else if (i < mCardStackView.selectPosition) {
                 val oAnim =
                     ObjectAnimator.ofFloat(child, View.Y, child.y, mCardStackView.getChildAt(0).y)
-                mSet.play(oAnim)
+                mSet!!.play(oAnim)
             } else {
                 val oAnim = ObjectAnimator.ofFloat(
                     child,
@@ -32,7 +32,7 @@ class UpDownStackAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapte
                     child.y,
                     mCardStackView.showHeight.toFloat()
                 )
-                mSet.play(oAnim)
+                mSet!!.play(oAnim)
             }
         }
     }
@@ -47,14 +47,14 @@ class UpDownStackAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapte
             if (i != 0) {
                 childTop -= mCardStackView.overlapGaps * 2
             }
-            val oAnim: ObjectAnimator = ObjectAnimator.ofFloat<View>(
+            val oAnim: ObjectAnimator = ObjectAnimator.ofFloat(
                 child, View.Y, child.y,
-                if (childTop - mCardStackView.scrollDelegate.viewScrollY < mCardStackView.getChildAt(
+                if (childTop - mCardStackView.scrollDelegate!!.viewScrollY < mCardStackView.getChildAt(
                         0
                     ).y
-                ) mCardStackView.getChildAt(0).y else childTop - mCardStackView.scrollDelegate.viewScrollY
+                ) mCardStackView.getChildAt(0).y else childTop - mCardStackView.scrollDelegate!!.viewScrollY
             )
-            mSet.play(oAnim)
+            mSet!!.play(oAnim)
             childTop += lp.mHeaderHeight
         }
     }

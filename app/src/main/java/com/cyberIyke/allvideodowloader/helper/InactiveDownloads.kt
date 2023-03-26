@@ -19,11 +19,11 @@ class InactiveDownloads constructor() : Serializable {
         try {
             val file: File = File(context.getFilesDir(), "inactive.dat")
             val fileOutputStream: FileOutputStream = FileOutputStream(file)
-            ObjectOutputStream(fileOutputStream).use({ objectOutputStream ->
+            ObjectOutputStream(fileOutputStream).use { objectOutputStream ->
                 objectOutputStream.writeObject(
                     this
                 )
-            })
+            }
             fileOutputStream.close()
         } catch (e: IOException) {
             e.printStackTrace()

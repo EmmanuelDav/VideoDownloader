@@ -3,7 +3,7 @@ package com.cyberIyke.allvideodowloader.views.cardstack
 import android.animation.ObjectAnimator
 import android.view.View
 
-class UpDownAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(cardStackView) {
+class UpDownAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(cardStackView!!) {
     override fun itemExpandAnimatorSet(viewHolder: CardStackView.ViewHolder, position: Int) {
         val itemView = viewHolder.itemView
         itemView!!.clearAnimation()
@@ -11,9 +11,9 @@ class UpDownAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(car
             itemView,
             View.Y,
             itemView.y,
-            (mCardStackView.scrollY + mCardStackView.paddingTop).toFloat()
+            (mCardStackView!!.scrollY + mCardStackView.paddingTop).toFloat()
         )
-        mSet.play(oa)
+        mSet!!.play(oa)
         var collapseShowItemCount = 0
         for (i in 0 until mCardStackView.childCount) {
             var childTop: Int
@@ -24,7 +24,7 @@ class UpDownAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(car
                 childTop =
                     mCardStackView.showHeight - getCollapseStartTop(collapseShowItemCount) + mCardStackView.scrollY
                 val oAnim = ObjectAnimator.ofFloat(child, View.Y, child.y, childTop.toFloat())
-                mSet.play(oAnim)
+                mSet!!.play(oAnim)
                 collapseShowItemCount++
             } else if (i < mCardStackView.selectPosition) {
                 val oAnim = ObjectAnimator.ofFloat(
@@ -33,7 +33,7 @@ class UpDownAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(car
                     child.y,
                     (mCardStackView.scrollY - child.height).toFloat()
                 )
-                mSet.play(oAnim)
+                mSet!!.play(oAnim)
             } else {
                 val oAnim = ObjectAnimator.ofFloat(
                     child,
@@ -41,7 +41,7 @@ class UpDownAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(car
                     child.y,
                     (mCardStackView.showHeight + mCardStackView.scrollY).toFloat()
                 )
-                mSet.play(oAnim)
+                mSet!!.play(oAnim)
             }
         }
     }
@@ -56,10 +56,10 @@ class UpDownAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(car
             if (i != 0) {
                 childTop -= mCardStackView.overlapGaps * 2
                 val oAnim = ObjectAnimator.ofFloat(child, View.Y, child.y, childTop.toFloat())
-                mSet.play(oAnim)
+                mSet!!.play(oAnim)
             } else {
                 val oAnim = ObjectAnimator.ofFloat(child, View.Y, child.y, childTop.toFloat())
-                mSet.play(oAnim)
+                mSet!!.play(oAnim)
             }
             childTop += lp.mHeaderHeight
         }

@@ -4,17 +4,10 @@ import android.content.*
 import android.os.Environment
 import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.R
-import com.cyberIyke.allvideodowloader.database.Download.name
-import com.cyberIyke.allvideodowloader.helper.DownloadVideo
-import com.cyberIyke.allvideodowloader.model.DownloadInfo.name
 import java.io.*
 
 class DownloadQueues : Serializable {
-    val list: List<DownloadVideo>
-
-    init {
-        list = ArrayList()
-    }
+    val list: ArrayList<DownloadVideo> = ArrayList()
 
     fun save(context: Context) {
         try {
@@ -95,7 +88,7 @@ class DownloadQueues : Serializable {
         }
 
     fun deleteTopVideo(context: Context) {
-        if (!list.isEmpty()) {
+        if (list.isNotEmpty()) {
             list.removeAt(0)
             save(context)
         }
@@ -110,7 +103,7 @@ class DownloadQueues : Serializable {
 
     fun renameItem(index: Int, newName: String) {
         if (list[index].name != newName) {
-            list[index].name = getValidName(newName, list[index].type)
+            list[index].name = list[index].type?.let { getValidName(newName, it) }
         }
     }
 

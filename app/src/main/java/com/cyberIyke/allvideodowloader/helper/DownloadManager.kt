@@ -8,12 +8,7 @@ import android.os.Environment
 import android.util.Log
 import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.R
-import com.cyberIyke.allvideodowloader.database.Download.name
-import com.cyberIyke.allvideodowloader.helper.CompletedVideos
-import com.cyberIyke.allvideodowloader.helper.DownloadQueues
-import com.cyberIyke.allvideodowloader.helper.DownloadVideo
-import com.cyberIyke.allvideodowloader.helper.InactiveDownloads
-import com.cyberIyke.allvideodowloader.model.DownloadInfo.name
+import com.cyberIyke.allvideodowloader.helperimport.CompletedVideos
 import java.io.*
 import java.net.URL
 import java.net.URLConnection
@@ -23,13 +18,13 @@ import java.nio.channels.FileChannel
 
 class DownloadManager() : IntentService("DownloadManager") {
     override fun onHandleIntent(intent: Intent?) {
-        DownloadManager.Companion.stop = false
-        DownloadManager.Companion.downloadThread = Thread.currentThread()
+        stop = false
+        downloadThread = Thread.currentThread()
         if (intent != null) {
             DownloadManager.Companion.chunked =
-                intent.getBooleanExtra(DownloadManager.Companion.CHUNCKED, false)
-            if (DownloadManager.Companion.chunked) {
-                DownloadManager.Companion.downloadFile = null
+                intent.getBooleanExtra(CHUNCKED, false)
+            if (chunked) {
+                downloadFile = null
                 DownloadManager.Companion.prevDownloaded = 0
                 DownloadManager.Companion.downloadSpeed = 0
                 DownloadManager.Companion.totalSize = 0
@@ -55,12 +50,12 @@ class DownloadManager() : IntentService("DownloadManager") {
                         )
                         if (connection != null) {
                             var out: FileOutputStream? = null
-                            if (DownloadManager.Companion.downloadFile.exists()) {
+                            if (DownloadManager.Companion.downloadFile!!.exists()) {
                                 DownloadManager.Companion.prevDownloaded =
-                                    DownloadManager.Companion.downloadFile.length()
+                                    DownloadManager.Companion.downloadFile!!.length()
                                 connection.setRequestProperty(
                                     "Range",
-                                    "bytes=" + DownloadManager.Companion.downloadFile.length() + "-"
+                                    "bytes=" + DownloadManager.Companion.downloadFile!!.length() + "-"
                                 )
                                 connection.connect()
                                 out = FileOutputStream(
@@ -69,20 +64,20 @@ class DownloadManager() : IntentService("DownloadManager") {
                                 )
                             } else {
                                 connection.connect()
-                                if (DownloadManager.Companion.downloadFile.createNewFile()) {
+                                if (DownloadManager.Companion.downloadFile!!.createNewFile()) {
                                     out = FileOutputStream(
-                                        DownloadManager.Companion.downloadFile.getAbsolutePath(),
+                                        DownloadManager.Companion.downloadFile!!.getAbsolutePath(),
                                         true
                                     )
                                 }
                             }
-                            if (out != null && DownloadManager.Companion.downloadFile.exists()) {
+                            if (out != null && DownloadManager.Companion.downloadFile!!.exists()) {
                                 val `in` = connection.getInputStream()
                                 var fileChannel: FileChannel
                                 Channels.newChannel(`in`).use { readableByteChannel ->
                                     fileChannel = out.getChannel()
-                                    while (DownloadManager.Companion.downloadFile.length() < DownloadManager.Companion.totalSize) {
-                                        if (DownloadManager.Companion.stop) return
+                                    while (DownloadManager.Companion.downloadFile!!.length() < DownloadManager.Companion.totalSize) {
+                                        if (stop) return
                                         fileChannel.transferFrom(readableByteChannel, 0, 1024)
                                     }
                                 }
@@ -105,14 +100,14 @@ class DownloadManager() : IntentService("DownloadManager") {
 
     private fun downloadFinished(filename: String) {
         if (DownloadManager.Companion.onDownloadFinishedListener != null) {
-            DownloadManager.Companion.onDownloadFinishedListener.onDownloadFinished()
+            DownloadManager.Companion.onDownloadFinishedListener!!.onDownloadFinished()
         } else {
-            val queues: DownloadQueues = DownloadQueues.Companion.load(applicationContext)
-            queues.deleteTopVideo(applicationContext)
-            val completedVideos: CompletedVideos = CompletedVideos.Companion.load(
+            val queues: DownloadQueues? = DownloadQueues.Companion.load(applicationContext)
+            queues!!.deleteTopVideo(applicationContext)
+            val completedVideos: CompletedVideos? = CompletedVideos.Companion.load(
                 applicationContext
             )
-            completedVideos.addVideo(applicationContext, filename)
+            completedVideos!!.addVideo(applicationContext, filename)
             val topVideo = queues.topVideo
             if (topVideo != null) {
                 val downloadService = MyApp.getInstance()!!.getDownloadService()
@@ -121,7 +116,7 @@ class DownloadManager() : IntentService("DownloadManager") {
                 downloadService.putExtra("type", topVideo.type)
                 downloadService.putExtra("size", topVideo.size)
                 downloadService.putExtra("page", topVideo.page)
-                downloadService.putExtra(DownloadManager.Companion.CHUNCKED, topVideo.chunked)
+                downloadService.putExtra(CHUNCKED, topVideo.chunked)
                 downloadService.putExtra(DownloadManager.Companion.WEBSITE, topVideo.website)
                 onHandleIntent(downloadService)
             }
@@ -130,10 +125,10 @@ class DownloadManager() : IntentService("DownloadManager") {
 
     private fun linkNotFound(intent: Intent) {
         if (DownloadManager.Companion.onLinkNotFoundListener != null) {
-            DownloadManager.Companion.onLinkNotFoundListener.onLinkNotFound()
+            DownloadManager.Companion.onLinkNotFoundListener!!.onLinkNotFound()
         } else {
-            val queues: DownloadQueues = DownloadQueues.Companion.load(applicationContext)
-            queues.deleteTopVideo(applicationContext)
+            val queues: DownloadQueues? = DownloadQueues.load(applicationContext)
+            queues!!.deleteTopVideo(applicationContext)
             val inactiveDownload = DownloadVideo()
             inactiveDownload.name = intent.getStringExtra("name")
             inactiveDownload.link = intent.getStringExtra("link")
@@ -142,12 +137,12 @@ class DownloadManager() : IntentService("DownloadManager") {
             inactiveDownload.page = intent.getStringExtra("page")
             inactiveDownload.website = intent.getStringExtra(DownloadManager.Companion.WEBSITE)
             inactiveDownload.chunked =
-                intent.getBooleanExtra(DownloadManager.Companion.CHUNCKED, false)
-            val inactiveDownloads: InactiveDownloads = InactiveDownloads.Companion.load(
+                intent.getBooleanExtra(CHUNCKED, false)
+            val inactiveDownloads: InactiveDownloads? = InactiveDownloads.Companion.load(
                 applicationContext
             )
-            inactiveDownloads.add(applicationContext, inactiveDownload)
-            val topVideo = queues.topVideo
+            inactiveDownloads!!.add(applicationContext, inactiveDownload)
+            val topVideo = queues!!.topVideo
             if (topVideo != null) {
                 val downloadService = MyApp.getInstance()!!.getDownloadService()
                 downloadService!!.putExtra("link", topVideo.link)
@@ -155,7 +150,7 @@ class DownloadManager() : IntentService("DownloadManager") {
                 downloadService.putExtra("type", topVideo.type)
                 downloadService.putExtra("size", topVideo.size)
                 downloadService.putExtra("page", topVideo.page)
-                downloadService.putExtra(DownloadManager.Companion.CHUNCKED, topVideo.chunked)
+                downloadService.putExtra(CHUNCKED, topVideo.chunked)
                 downloadService.putExtra(DownloadManager.Companion.WEBSITE, topVideo.website)
                 onHandleIntent(downloadService)
             }
@@ -168,8 +163,7 @@ class DownloadManager() : IntentService("DownloadManager") {
             val type = intent.getStringExtra("type")
             val directory =
                 Environment.getExternalStoragePublicDirectory(getString(R.string.app_name))
-            val directotryExists: Boolean
-            directotryExists = directory.exists() || directory.mkdir() || directory
+            val directotryExists: Boolean = directory.exists() || directory.mkdir() || directory
                 .createNewFile()
             if (directotryExists) {
                 val progressFile = File(cacheDir, "$name.dat")
@@ -203,7 +197,7 @@ class DownloadManager() : IntentService("DownloadManager") {
                         if (chunkUrl == null) {
                             downloadFinished("$name.$type")
                         }
-                        DownloadManager.Companion.bytesOfChunk = ByteArrayOutputStream()
+                        DownloadManager.bytesOfChunk = ByteArrayOutputStream()
                         try {
                             val uCon = URL(chunkUrl).openConnection()
                             if (uCon != null) {
@@ -214,7 +208,7 @@ class DownloadManager() : IntentService("DownloadManager") {
                                     ).use { writableByteChannel ->
                                         var read: Int
                                         while (true) {
-                                            if (DownloadManager.Companion.stop) return
+                                            if (stop) return
                                             val buffer: ByteBuffer = ByteBuffer.allocateDirect(1024)
                                             read = readableByteChannel.read(buffer)
                                             if (read != -1) {
@@ -223,7 +217,7 @@ class DownloadManager() : IntentService("DownloadManager") {
                                             } else {
                                                 FileOutputStream(videoFile, true).use { vAddChunk ->
                                                     vAddChunk.write(
-                                                        DownloadManager.Companion.bytesOfChunk.toByteArray()
+                                                        DownloadManager.Companion.bytesOfChunk!!.toByteArray()
                                                     )
                                                 }
                                                 val outputStream: FileOutputStream =
@@ -240,7 +234,7 @@ class DownloadManager() : IntentService("DownloadManager") {
                                     }
                                 }
                                 `in`.close()
-                                DownloadManager.Companion.bytesOfChunk.close()
+                                DownloadManager.Companion.bytesOfChunk!!.close()
                             }
                         } catch (e: FileNotFoundException) {
                             downloadFinished("$name.$type")
@@ -284,8 +278,8 @@ class DownloadManager() : IntentService("DownloadManager") {
             val inReader = InputStreamReader(`in`)
             val buffReader = BufferedReader(inReader)
             while ((buffReader.readLine().also { line = it }) != null) {
-                if (((website == DownloadManager.Companion.TWITTER) || (website == DownloadManager.Companion.MYSPACE)) && line
-                        .endsWith(".ts") || (website == DownloadManager.Companion.METACAFE) && line!!.endsWith(
+                if (((website == TWITTER) || (website == MYSPACE)) && line
+                        !!.endsWith(".ts") || (website == METACAFE) && line!!.endsWith(
                         ".mp4"
                     )
                 ) {
@@ -346,19 +340,19 @@ class DownloadManager() : IntentService("DownloadManager") {
 
     companion object {
         private val CHUNCKED = "chunked"
-        private val downloadFile: File? = null
-        private val prevDownloaded: Long = 0
+        private var downloadFile: File? = null
+        private var prevDownloaded: Long = 0
 
         /**
          * Should be called every second
          *
          * @return download speed in bytes per second
          */
-        val downloadSpeed: Long
+        var downloadSpeed: Long = 0
             get() {
                 if (!DownloadManager.Companion.chunked) {
                     if (DownloadManager.Companion.downloadFile != null) {
-                        val downloaded: Long = DownloadManager.Companion.downloadFile.length()
+                        val downloaded: Long = DownloadManager.Companion.downloadFile!!.length()
                         DownloadManager.Companion.downloadSpeed =
                             downloaded - DownloadManager.Companion.prevDownloaded
                         DownloadManager.Companion.prevDownloaded = downloaded
@@ -368,7 +362,7 @@ class DownloadManager() : IntentService("DownloadManager") {
                 } else {
                     if (DownloadManager.Companion.bytesOfChunk != null) {
                         val downloaded: Long =
-                            DownloadManager.Companion.bytesOfChunk.size().toLong()
+                            DownloadManager.Companion.bytesOfChunk!!.size().toLong()
                         DownloadManager.Companion.downloadSpeed =
                             downloaded - DownloadManager.Companion.prevDownloaded
                         DownloadManager.Companion.prevDownloaded = downloaded
@@ -377,21 +371,21 @@ class DownloadManager() : IntentService("DownloadManager") {
                     return 0
                 }
             }
-        private val totalSize: Long = 0
+        private var totalSize: Long = 0
         private val WEBSITE = "website"
         private val TWITTER = "twitter.com"
         private val METACAFE = "metacafe.com"
         private val MYSPACE = "myspace.com"
-        private val chunked = false
-        private val bytesOfChunk: ByteArrayOutputStream? = null
+        private var chunked = false
+        private var bytesOfChunk: ByteArrayOutputStream? = null
         private var stop = false
         private var downloadThread: Thread? = null
-        private val onDownloadFinishedListener: OnDownloadFinishedListener? = null
+        private var onDownloadFinishedListener: OnDownloadFinishedListener? = null
         fun setOnDownloadFinishedListener(listener: OnDownloadFinishedListener) {
             DownloadManager.Companion.onDownloadFinishedListener = listener
         }
 
-        private val onLinkNotFoundListener: OnLinkNotFoundListener? = null
+        private var onLinkNotFoundListener: OnLinkNotFoundListener? = null
         fun setOnLinkNotFoundListener(listener: OnLinkNotFoundListener) {
             DownloadManager.Companion.onLinkNotFoundListener = listener
         }
@@ -404,11 +398,11 @@ class DownloadManager() : IntentService("DownloadManager") {
         }
 
         fun forceStopIfNecessary() {
-            if (DownloadManager.Companion.downloadThread != null) {
+            if (downloadThread != null) {
                 Log.d("debug", "force: called")
-                DownloadManager.Companion.downloadThread = Thread.currentThread()
-                if (DownloadManager.Companion.downloadThread.isAlive()) {
-                    DownloadManager.Companion.stop = true
+                downloadThread = Thread.currentThread()
+                if (downloadThread!!.isAlive) {
+                    stop = true
                 }
             }
         }

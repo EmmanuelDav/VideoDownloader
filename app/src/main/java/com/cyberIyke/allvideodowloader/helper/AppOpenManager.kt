@@ -64,7 +64,7 @@ class AppOpenManager(private val myApplication: Application) : ActivityLifecycle
                     override fun onAdDismissedFullScreenContent() {
                         // Set the reference to null so isAdAvailable() returns false.
                         appOpenAd = null
-                        AppOpenManager.Companion.isShowingAd = false
+                        isShowingAd = false
                         fetchAd()
                     }
 
@@ -120,6 +120,6 @@ class AppOpenManager(private val myApplication: Application) : ActivityLifecycle
 
     companion object {
         private const val LOG_TAG = "AppOpenManager"
-        private const val isShowingAd = false
+        private var isShowingAd = false
     }
 }

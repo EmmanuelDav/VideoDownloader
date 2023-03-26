@@ -24,16 +24,16 @@ object AdController {
     var gadView: AdView? = null
     fun loadBannerAd(context: Context, adContainer: LinearLayout) {
         AdController.gadView = AdView(context)
-        AdController.gadView.adUnitId = context.getString(R.string.admob_banner_ad_id)
+        AdController.gadView!!.adUnitId = context.getString(R.string.admob_banner_ad_id)
         adContainer.addView(AdController.gadView)
         AdController.loadBanner(context)
     }
 
-    fun loadBanner(context: Context?) {
+    private fun loadBanner(context: Context?) {
         val adRequest = AdRequest.Builder().build()
-        val adSize = AdController.getAdSize(context as Activity?)
-        AdController.gadView.adSize = adSize
-        AdController.gadView.loadAd(adRequest)
+        val adSize = AdController.getAdSize(context as Activity)
+        AdController.gadView!!.adSize = adSize
+        AdController.gadView!!.loadAd(adRequest)
     }
 
     fun getAdSize(context: Activity): AdSize {
@@ -66,26 +66,26 @@ object AdController {
                 override fun onAdLoaded(interstitialAd: InterstitialAd) {
                     // The mInterstitialAd reference will be null until
                     // an ad is loaded.
-                    AdController.mInterstitialAd = interstitialAd
+                    mInterstitialAd = interstitialAd
                 }
 
                 override fun onAdFailedToLoad(loadAdError: LoadAdError) {
                     // Handle the error
-                    AdController.mInterstitialAd = null
+                    mInterstitialAd = null
                 }
             })
     }
 
     fun showInterAd(context: Activity?, intent: Intent?, requstCode: Int) {
-        if (AdController.adCounter == AdController.adDisplayCounter && AdController.mInterstitialAd != null) {
-            AdController.adCounter = 1
-            AdController.mInterstitialAd.fullScreenContentCallback =
+        if (adCounter == adDisplayCounter && mInterstitialAd != null) {
+            adCounter = 1
+            mInterstitialAd!!.fullScreenContentCallback =
                 object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
                         // Called when fullscreen content is dismissed.
 //                    Log.d("TAG", "The ad was dismissed.");
-                        AdController.loadInterAd(context)
-                        AdController.startActivity(context, intent, requstCode)
+                        AdController.loadInterAd(context!!)
+                        startActivity(context, intent, requstCode)
                     }
 
                     override fun onAdFailedToShowFullScreenContent(adError: AdError) {
@@ -97,16 +97,18 @@ object AdController {
                         // Called when fullscreen content is shown.
                         // Make sure to set your reference to null so you don't
                         // show it a second time.
-                        AdController.mInterstitialAd = null
+                        mInterstitialAd = null
                         //                    Log.d("TAG", "The ad was shown.");
                     }
                 }
-            AdController.mInterstitialAd.show(context!!)
+            mInterstitialAd!!.show(context!!)
         } else {
-            if (AdController.adCounter == AdController.adDisplayCounter) {
-                AdController.adCounter = 1
+            if (adCounter == adDisplayCounter) {
+                adCounter = 1
             }
-            AdController.startActivity(context, intent, requstCode)
+            if (context != null) {
+                startActivity(context, intent, requstCode)
+            }
         }
     }
 
@@ -117,15 +119,15 @@ object AdController {
     }
 
     fun showInterAd(context: Fragment, intent: Intent?, requstCode: Int) {
-        if (AdController.adCounter == AdController.adDisplayCounter && AdController.mInterstitialAd != null) {
-            AdController.adCounter = 1
-            AdController.mInterstitialAd.fullScreenContentCallback =
+        if (adCounter == adDisplayCounter && mInterstitialAd != null) {
+            adCounter = 1
+            mInterstitialAd!!.fullScreenContentCallback =
                 object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
                         // Called when fullscreen content is dismissed.
 //                    Log.d("TAG", "The ad was dismissed.");
-                        AdController.loadInterAd(context.activity)
-                        AdController.startActivity(context, intent, requstCode)
+                        context.activity?.let { AdController.loadInterAd(it) }
+                        startActivity(context, intent, requstCode)
                     }
 
                     override fun onAdFailedToShowFullScreenContent(adError: AdError) {
@@ -137,16 +139,16 @@ object AdController {
                         // Called when fullscreen content is shown.
                         // Make sure to set your reference to null so you don't
                         // show it a second time.
-                        AdController.mInterstitialAd = null
+                        mInterstitialAd = null
                         //                    Log.d("TAG", "The ad was shown.");
                     }
                 }
-            AdController.mInterstitialAd.show(context.activity!!)
+            context.activity?.let { mInterstitialAd!!.show(it) }
         } else {
-            if (AdController.adCounter == AdController.adDisplayCounter) {
-                AdController.adCounter = 1
+            if (adCounter == adDisplayCounter) {
+                adCounter = 1
             }
-            AdController.startActivity(context, intent, requstCode)
+            startActivity(context, intent, requstCode)
         }
     }
 

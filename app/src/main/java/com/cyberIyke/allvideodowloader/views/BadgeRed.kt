@@ -1,5 +1,9 @@
 package com.cyberIyke.allvideodowloader.views
 
+import android.content.Context
+import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatTextView
+
 class BadgeRed : AppCompatTextView {
     constructor(context: Context?) : super(context!!) {}
     constructor(context: Context?, attrs: AttributeSet?) : super(

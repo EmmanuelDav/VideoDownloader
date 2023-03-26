@@ -11,7 +11,7 @@ import com.cyberIyke.allvideodowloader.R
 import java.util.*
 
 class CustomMediaController : FrameLayout {
-    private var mPlayer: CustomMediaController.MediaPlayerControl? = null
+    private var mPlayer: MediaPlayerControl? = null
     private var mContext: Context? = null
     private var mProgress: ProgressBar? = null
     private var mEndTime: TextView? = null
@@ -102,7 +102,7 @@ class CustomMediaController : FrameLayout {
         mFormatter = Formatter(mFormatBuilder, Locale.getDefault())
     }
 
-    fun setMediaPlayer(player: CustomMediaController.MediaPlayerControl?) {
+    fun setMediaPlayer(player: MediaPlayerControl?) {
         mPlayer = player
         updatePausePlay()
     }
