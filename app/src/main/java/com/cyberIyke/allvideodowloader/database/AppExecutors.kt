@@ -31,19 +31,19 @@ class AppExecutors private constructor(
 
     companion object {
         private val LOCK: Any = Any()
-        private val sInstance: AppExecutors? = null
-        val instance: AppExecutors
+        private var sInstance: AppExecutors? = null
+        val instance: AppExecutors?
             get() {
-                if (AppExecutors.Companion.sInstance == null) {
-                    synchronized(AppExecutors.Companion.LOCK, {
-                        AppExecutors.Companion.sInstance = AppExecutors(
+                if (sInstance == null) {
+                    synchronized(LOCK, {
+                        sInstance = AppExecutors(
                             Executors.newSingleThreadExecutor(),
                             Executors.newFixedThreadPool(3),
-                            AppExecutors.MainThreadExecutor()
+                            MainThreadExecutor()
                         )
                     })
                 }
-                return AppExecutors.Companion.sInstance
+                return sInstance
             }
     }
 }

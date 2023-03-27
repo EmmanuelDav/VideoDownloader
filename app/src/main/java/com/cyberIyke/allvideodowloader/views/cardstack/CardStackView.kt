@@ -37,6 +37,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
     private var mNestedYOffset = 0
     private var mScrollEnable = true
     var scrollDelegate: ScrollDelegate? = null
+
         private set
     var itemExpendListener: ItemExpendListener? = null
 
@@ -298,7 +299,6 @@ class CardStackView : ViewGroup, ScrollDelegate {
             MotionEvent.ACTION_MOVE -> {
                 val activePointerId = mActivePointerId
                 if (activePointerId == INVALID_POINTER) {
-                    break
                 }
                 val pointerIndex = ev.findPointerIndex(activePointerId)
                 if (pointerIndex == -1) {
@@ -306,7 +306,6 @@ class CardStackView : ViewGroup, ScrollDelegate {
                         TAG, "Invalid pointerId=" + activePointerId
                                 + " in onInterceptTouchEvent"
                     )
-                    break
                 }
                 val y = ev.getY(pointerIndex).toInt()
                 val yDiff = Math.abs(y - mLastMotionY)

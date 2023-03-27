@@ -2,6 +2,7 @@ package com.cyberIyke.allvideodowloader.views.cardstack
 
 import android.content.Context
 import android.view.LayoutInflater
+import com.cyberIyke.allvideodowloader.browser.BrowserWindow
 
 abstract class StackAdapter<T>(val context: Context?) :
     CardStackView.Adapter<CardStackView.ViewHolder?>() {
@@ -18,7 +19,7 @@ abstract class StackAdapter<T>(val context: Context?) :
         notifyDataSetChanged()
     }
 
-    fun setData(data: List<T>?) {
+    fun setData(data: MutableList<BrowserWindow?>?) {
         mData.clear()
         if (data != null) {
             mData.addAll(data)

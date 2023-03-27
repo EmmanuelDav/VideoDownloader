@@ -27,12 +27,14 @@ import com.cyberIyke.allvideodowloader.views.SwitchButton
 import java.io.File
 
 class SettingsFragment : BaseFragment(), OnBackPressedListener, View.OnClickListener {
+
     private var view: View? = null
     private var searchEngine: String? = null
     var txtSelectedSearchEngine: TextView? = null
     var txtDownloadLocation: TextView? = null
     private var strDownloadLocation: String? = null
     var prefs: SharedPreferences? = null
+
     public override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?

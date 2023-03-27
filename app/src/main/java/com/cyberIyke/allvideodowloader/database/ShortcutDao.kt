@@ -5,7 +5,7 @@ import androidx.room.*
 import com.cyberIyke.allvideodowloader.database.ShortcutTable
 
 @Dao
-open interface ShortcutDao {
+interface ShortcutDao {
     @Insert
     fun insert(shortcutTable: ShortcutTable?)
 

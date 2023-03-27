@@ -14,7 +14,7 @@ import com.cyberIyke.allvideodowloader.R
 import com.cyberIyke.allvideodowloader.database.ShortcutTable
 import com.cyberIyke.allvideodowloader.interfaces.ShortcutListner
 
-private class ShortcutAdapter constructor(var context: Context, var shortcutListner: ShortcutListner?) :RecyclerView.Adapter<ShortcutAdapter.ViewHolder>() {
+class ShortcutAdapter constructor(var context: Context, var shortcutListner: ShortcutListner?) :RecyclerView.Adapter<ShortcutAdapter.ViewHolder>() {
     var shortcutArrayList: List<ShortcutTable> = ArrayList()
     var selectionMode: Boolean = false
 
@@ -104,7 +104,7 @@ private class ShortcutAdapter constructor(var context: Context, var shortcutList
         return shortcutArrayList.size
     }
 
-    internal inner class ViewHolder constructor(itemView: View) :
+    inner class ViewHolder constructor(itemView: View) :
         RecyclerView.ViewHolder(itemView) {
         var llSiteLogo: LinearLayout
         var imgLogo: ImageView

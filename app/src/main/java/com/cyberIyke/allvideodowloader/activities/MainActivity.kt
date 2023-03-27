@@ -30,15 +30,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cyberIyke.allvideodowloader.BuildConfig
 import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.R
-import com.cyberIyke.allvideodowloader.adapters.ShortcutAdapter
-import com.cyberIyke.allvideodowloader.adapters.SuggestionAdapter
-import com.cyberIyke.allvideodowloader.adapters.SuggestionAdapter.SuggetionListner
 import com.cyberIyke.allvideodowloader.browser.BrowserManager
 import com.cyberIyke.allvideodowloader.database.AppExecutors
 import com.cyberIyke.allvideodowloader.database.ShortcutTable
-import com.cyberIyke.allvideodowloader.databaseimport.ShortcutAppDatabase
+import com.cyberIyke.allvideodowloader.fragments.AllDownloadFragment
+import com.cyberIyke.allvideodowloader.adapters.ShortcutAdapter
+import com.cyberIyke.allvideodowloader.adapters.SuggestionAdapter
+import com.cyberIyke.allvideodowloader.database.ShortcutAppDatabase
 import com.cyberIyke.allvideodowloader.fragments.SettingsFragment
-import com.cyberIyke.allvideodowloader.fragmentsimport.AllDownloadFragment
 import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.ShortcutListner
 import com.cyberIyke.allvideodowloader.utils.ThemeSettings.Companion.getInstance
@@ -184,8 +183,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
             override fun shortcutRemoveClick(shortcutTable: ShortcutTable?) {
                 AppExecutors.instance.diskIO().execute {
-                    ShortcutAppDatabase.Companion.getInstance(this@MainActivity).shortcutDao()
-                        .delete(shortcutTable)
+                    ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.delete(shortcutTable)
                 }
             }
         })
@@ -307,8 +305,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                 }*/mBottomSheetDialog.dismiss()
                 val finalStrURL: String = strURL
                 AppExecutors.instance.diskIO().execute {
-                    ShortcutAppDatabase.Companion.getInstance(this@MainActivity).shortcutDao()
-                        .insert(ShortcutTable(R.drawable.ic_default, strName, finalStrURL))
+                    ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(ShortcutTable(R.drawable.ic_default, strName, finalStrURL))
                 }
             }
         })
@@ -317,77 +314,77 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
     private fun insertDefaultShortcut() {
         AppExecutors.instance.diskIO().execute {
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_add_shortcut,
                     getString(R.string.add_shortcut),
                     ""
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_facebook,
                     getString(R.string.facebook),
                     "https://www.facebook.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_instagram_,
                     getString(R.string.instagram),
                     "https://www.instagram.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_linkedin,
                     getString(R.string.linkedin),
                     "https://www.linkedin.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_pinterest,
                     getString(R.string.pinterest),
                     "https://in.pinterest.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_tiktok,
                     getString(R.string.tiktok),
                     "https://www.tiktok.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_dailymotion,
                     getString(R.string.dailymotion),
                     "https://www.dailymotion.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_vimeo,
                     getString(R.string.vimeo),
                     "https://vimeo.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_buzz_video,
                     getString(R.string.buzz_video),
                     "https://www.buzzvideo.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_imdb,
                     getString(R.string.imdb),
                     "https://www.imdb.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity).shortcutDao().insert(
+            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_vlive,
                     getString(R.string.vlive),
@@ -398,14 +395,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     }
 
     private fun fetchShortcut() {
-        ShortcutAppDatabase.getInstance(this).shortcutDao().getAllShortcut()
-            .observe(this, object : Observer<List<ShortcutTable?>?> {
+        ShortcutAppDatabase.getInstance(this)!!.shortcutDao().allShortcut!!.observe(this, object : Observer<List<ShortcutTable?>?> {
                 override fun onChanged(shortcutTables: List<ShortcutTable?>?) {
                     if (isFinishing || isDestroyed) return
                     if (shortcutTables != null) {
-                        shortcutAdapter!!.setShortcutArrayList(shortcutTables)
+                        shortcutAdapter!!.shortcutArrayList = shortcutTables as List<ShortcutTable>
                     }
                 }
+
             })
     }
 
@@ -497,11 +494,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
             navView.selectedItemId = R.id.navHome
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 isEnableSuggetion = false
-                suggestionAdapter!!.setResultList(null)
+                suggestionAdapter!!.resultList = null
                 WebConnect(edtSearch, this@MainActivity).connect()
             } else if (actionId == EditorInfo.IME_ACTION_GO) {
                 isEnableSuggetion = false
-                suggestionAdapter!!.setResultList(null)
+                suggestionAdapter!!.resultList = null
                 WebConnect(edtSearch, this@MainActivity).connect()
             }
             false
@@ -532,16 +529,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                 override fun shortcutRemoveClick(shortcutTable: ShortcutTable?) {}
             })
         rvShortcut.adapter = shortcutAdapter
-        AppExecutors.instance.diskIO().execute(object : Runnable {
-            override fun run() {
-                val shortcutTableList: List<ShortcutTable>? =
-                    ShortcutAppDatabase.Companion.getInstance(this@MainActivity).shortcutDao()
-                        .getAllShortcutList()
-                if (shortcutTableList != null && shortcutAdapter != null) shortcutAdapter.setShortcutArrayList(
-                    shortcutTableList
-                )
-            }
-        })
+        AppExecutors.instance.diskIO().execute {
+            val shortcutTableList: List<ShortcutTable?>? =
+                ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao().allShortcutList
+            if (shortcutTableList != null && shortcutAdapter != null) shortcutAdapter.shortcutArrayList = shortcutTableList as List<ShortcutTable>
+        }
         searchBtn.setOnClickListener {
             isDisableOnResume = true
             dialog.dismiss()
@@ -558,7 +550,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
     }
 
-    private fun onPopupButtonChild(button: View?) {
+    fun onPopupButtonChild(button: View?) {
         val popup: PopupMenu = PopupMenu(this, button)
         popup.menuInflater.inflate(R.menu.menu_new_tab, popup.menu)
         popup.setOnMenuItemClickListener { item ->
@@ -612,14 +604,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
     private fun setUPBrowserToolbarView() {
         val rvSuggetion: RecyclerView = findViewById(R.id.rvSuggetion)
-        suggestionAdapter = SuggestionAdapter(object : SuggetionListner {
+        suggestionAdapter = SuggestionAdapter(object : SuggestionAdapter.SuggetionListner {
             override fun onSuggetion(str: String?) {
                 Log.d(MainActivity.Companion.TAG, "onSuggetion: selected: $str")
                 hideSoftKeyboard(this@MainActivity, searchTextBar.windowToken)
                 isEnableSuggetion = false
                 searchTextBar.setText(str)
                 WebConnect(searchTextBar, this@MainActivity).connect()
-                suggestionAdapter!!.setResultList(null)
+                suggestionAdapter!!.resultList = null
             }
         })
         rvSuggetion.layoutManager = LinearLayoutManager(this@MainActivity)
@@ -652,7 +644,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                     }
                     isEnableSuggetion = true
                 } else {
-                    suggestionAdapter!!.setResultList(null)
+                    suggestionAdapter!!.resultList = null
                 }
             }
         }
@@ -666,7 +658,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         if (searchModelCall != null) {
             searchModelCall!!.cancel()
         }
-        suggestionAdapter!!.setResultList(null)
+        suggestionAdapter!!.resultList = null
         Log.d(TAG, "fetchSearchList: $str")
         searchModelCall = RetrofitClient.instance.api.getSearchResult("json", 5, str)
         searchModelCall!!.enqueue(object : Callback<SearchModel?> {
@@ -681,15 +673,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                     val gossip: Gossip? = searchModel!!.gossip
                     val resultList: List<Result>? = gossip!!.results
                     if (searchTextBar.text.toString().trim { it <= ' ' }.isNotEmpty()) {
-                        suggestionAdapter!!.setResultList(resultList)
+                        suggestionAdapter!!.resultList = resultList
                     } else {
-                        suggestionAdapter!!.setResultList(null)
+                        suggestionAdapter!!.resultList = null
                     }
                 }
             }
 
             override fun onFailure(call: Call<SearchModel?>?, t: Throwable?) {
-                suggestionAdapter!!.setResultList(null)
+                suggestionAdapter!!.resultList = null
             }
         })
     }
@@ -734,7 +726,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         when (view.id) {
             R.id.searchBtn -> {
                 isEnableSuggetion = false
-                suggestionAdapter!!.setResultList(null)
+                suggestionAdapter!!.resultList = null
                 WebConnect(searchTextBar, this).connect()
             }
             else -> {}
@@ -749,11 +741,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         val handled: Boolean = false
         if (actionId == EditorInfo.IME_ACTION_SEARCH) {
             isEnableSuggetion = false
-            suggestionAdapter!!.setResultList(null)
+            suggestionAdapter!!.resultList = null
             WebConnect(searchTextBar, this).connect()
         } else if (actionId == EditorInfo.IME_ACTION_GO) {
             isEnableSuggetion = false
-            suggestionAdapter!!.setResultList(null)
+            suggestionAdapter!!.resultList = null
             WebConnect(searchTextBar, this).connect()
         }
         return handled
@@ -795,7 +787,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
     override fun onBackPressed() {
         if (suggestionAdapter!!.itemCount > 0) {
-            suggestionAdapter!!.setResultList(null)
+            suggestionAdapter!!.resultList = null
             return
         }
         if (allDownloadFragment!!.isSelectedMode) {

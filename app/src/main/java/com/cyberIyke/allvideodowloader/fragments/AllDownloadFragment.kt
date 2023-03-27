@@ -1,4 +1,4 @@
-package com.cyberIyke.allvideodowloader.fragmentsimport
+package com.cyberIyke.allvideodowloader.fragments
 
 import android.app.Dialog
 import android.content.*
@@ -59,7 +59,7 @@ class AllDownloadFragment : Fragment() {
     lateinit var llSelectAll: LinearLayout
     lateinit var renameVideoPref: RenameVideoPref
     var progressReceiver: BroadcastReceiver? = null
-    var view = View
+    private var view: View? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -69,11 +69,11 @@ class AllDownloadFragment : Fragment() {
         view = inflater.inflate(R.layout.fragment_all_download, container, false)
         downloadsViewModel = ViewModelProvider(this)[DownloadsViewModel::class.java]
         renameVideoPref = RenameVideoPref(requireActivity())
-        downloadsList = view.findViewById(R.id.downloadsList)
+        downloadsList = view!!.findViewById(R.id.downloadsList)
         downloadAdapter = DownloadAdapter()
         downloadsList.layoutManager = LinearLayoutManager(activity)
         downloadsList.adapter = downloadAdapter
-        llSelectAll = view.findViewById(R.id.llSelectAll)
+        llSelectAll = view!!.findViewById(R.id.llSelectAll)
         llDeleteSelected = view.findViewById(R.id.llDeleteSelected)
         imgCancel = view.findViewById(R.id.imgCancel)
         txtSelectedCount = view.findViewById(R.id.txtSelectedCount)
@@ -728,11 +728,6 @@ class AllDownloadFragment : Fragment() {
                 downloadProgressBar = itemView.findViewById(R.id.downloadProgressBar)
             }
         }
-
-        companion object {
-            private val VIEW_TYPE_DOWNLOAD: Int = 0
-            private val VIEW_TYPE_ITEM: Int = 1
-        }
     }
 
     fun renameFile(downloadData: DownloadData, file: DocumentFile?) {
@@ -743,14 +738,10 @@ class AllDownloadFragment : Fragment() {
         edtName.setText(downloadData.download!!.name)
         val txtNO: TextView = dialog.findViewById(R.id.txtNO)
         val txtOK: TextView = dialog.findViewById(R.id.txtOK)
-        txtNO.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                dialog.dismiss()
-            }
-        })
+        txtNO.setOnClickListener { dialog.dismiss() }
         txtOK.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View?) {
-                val strName: String = edtName.text.toString().trim({ it <= ' ' })
+                val strName: String = edtName.text.toString().trim { it <= ' ' }
                     .replace("[^\\w ()'!\\[\\]\\-]".toRegex(), "")
                 if (strName.isEmpty() || strName.length == 0) {
                     Toast.makeText(activity, "Please enter video name", Toast.LENGTH_SHORT)
@@ -868,5 +859,7 @@ class AllDownloadFragment : Fragment() {
 
     companion object {
         private val TAG: String = AllDownloadFragment::class.java.canonicalName
+        const val VIEW_TYPE_DOWNLOAD: Int = 0
+        const val VIEW_TYPE_ITEM: Int = 1
     }
 }
