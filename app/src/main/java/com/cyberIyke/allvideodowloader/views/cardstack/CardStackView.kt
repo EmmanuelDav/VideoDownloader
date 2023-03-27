@@ -1,7 +1,7 @@
-package com.cyberIyke.allvideodowloader.views.cardstack
+package com.kunkunapp.allvideodowloader.views.cardstack
 
 import android.annotation.TargetApi
-import android.content.*
+import android.content.Context
 import android.database.Observable
 import android.os.Build
 import android.util.AttributeSet
@@ -10,6 +10,8 @@ import android.view.*
 import android.view.View.OnClickListener
 import android.widget.OverScroller
 import com.cyberIyke.allvideodowloader.R
+import com.cyberIyke.allvideodowloader.views.cardstack.*
+import com.kunkunapp.allvideodowloader.R
 
 class CardStackView : ViewGroup, ScrollDelegate {
     var totalLength = 0
@@ -17,12 +19,12 @@ class CardStackView : ViewGroup, ScrollDelegate {
     var overlapGaps = 0
     var overlapGapsCollapse = 0
     var numBottomShow = 0
-    private var mStackAdapter: StackAdapter<*>? = null
-    private val mObserver = ViewDataObserver()
+    private var mStackAdapter: StackAdapter? = null
+    private val mObserver: ViewDataObserver = ViewDataObserver()
     private var mSelectPosition = DEFAULT_SELECT_POSITION
     var showHeight = 0
         private set
-    private var mViewHolders: MutableList<ViewHolder?>? = null
+    private var mViewHolders: MutableList<ViewHolder>? = null
     private var mAnimatorAdapter: AnimatorAdapter? = null
     private var mDuration = 0
     private var mScroller: OverScroller? = null
@@ -36,9 +38,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
     private val mScrollOffset = IntArray(2)
     private var mNestedYOffset = 0
     private var mScrollEnable = true
-    var scrollDelegate: ScrollDelegate? = null
-
-        private set
+    private var mScrollDelegate: ScrollDelegate? = null
     var itemExpendListener: ItemExpendListener? = null
 
     @JvmOverloads
@@ -75,7 +75,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
         )
         duration = array.getInt(
             R.styleable.CardStackView_stackDuration,
-            AnimatorAdapter.Companion.ANIMATION_DURATION
+            AnimatorAdapter.ANIMATION_DURATION
         )
         setAnimationType(array.getInt(R.styleable.CardStackView_stackAnimationType, UP_DOWN_STACK))
         numBottomShow = array.getInt(R.styleable.CardStackView_stackNumBottomShow, 3)
@@ -175,22 +175,22 @@ class CardStackView : ViewGroup, ScrollDelegate {
         if (mSelectPosition != DEFAULT_SELECT_POSITION) {
             clearSelectPosition()
         }
-        if (scrollDelegate != null) scrollDelegate!!.viewScrollY = 0
+        if (mScrollDelegate != null) mScrollDelegate!!.viewScrollX=(0)
         requestLayout()
     }
 
-    fun setAdapter(stackAdapter: StackAdapter<*>?) {
+    fun setAdapter(stackAdapter: StackAdapter) {
         mStackAdapter = stackAdapter
-        mStackAdapter!!.registerObserver(mObserver)
+        mStackAdapter.registerObserver(mObserver)
         refreshView()
     }
 
     fun setAnimationType(type: Int) {
         val animatorAdapter: AnimatorAdapter
-        animatorAdapter = when (type) {
-            ALL_DOWN -> AllMoveDownAnimatorAdapter(this)
-            UP_DOWN -> UpDownAnimatorAdapter(this)
-            else -> UpDownStackAnimatorAdapter(this)
+        when (type) {
+            ALL_DOWN -> animatorAdapter = AllMoveDownAnimatorAdapter(this)
+            UP_DOWN -> animatorAdapter = UpDownAnimatorAdapter(this)
+            else -> animatorAdapter = UpDownStackAnimatorAdapter(this)
         }
         setAnimatorAdapter(animatorAdapter)
     }
@@ -199,34 +199,34 @@ class CardStackView : ViewGroup, ScrollDelegate {
         clearScrollYAndTranslation()
         mAnimatorAdapter = animatorAdapter
         if (mAnimatorAdapter is UpDownStackAnimatorAdapter) {
-            scrollDelegate = StackScrollDelegateImpl(this)
+            mScrollDelegate = StackScrollDelegateImpl(this)
         } else {
-            scrollDelegate = this
+            mScrollDelegate = this
         }
     }
 
     private fun refreshView() {
         removeAllViews()
         mViewHolders!!.clear()
-        for (i in 0 until mStackAdapter!!.itemCount) {
+        for (i in 0 until mStackAdapter.getItemCount()) {
             val holder = getViewHolder(i)
             holder!!.position = i
             holder.onItemExpand(i == mSelectPosition)
             addView(holder.itemView)
             setClickAnimator(holder, i)
-            mStackAdapter!!.bindViewHolder(holder, i)
+            mStackAdapter.bindViewHolder(holder, i)
         }
         requestLayout()
     }
 
     fun getViewHolder(i: Int): ViewHolder? {
         if (i == DEFAULT_SELECT_POSITION) return null
-        val viewHolder: ViewHolder?
-        if (mViewHolders!!.size <= i || mViewHolders!![i]!!.mItemViewType != mStackAdapter!!.getItemViewType(
+        val viewHolder: ViewHolder
+        if (mViewHolders!!.size <= i || mViewHolders!![i].mItemViewType != mStackAdapter.getItemViewType(
                 i
             )
         ) {
-            viewHolder = mStackAdapter!!.createView(this, mStackAdapter!!.getItemViewType(i))
+            viewHolder = mStackAdapter.createView(this, mStackAdapter.getItemViewType(i))
             mViewHolders!!.add(viewHolder)
         } else {
             viewHolder = mViewHolders!![i]
@@ -261,9 +261,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
 
     private fun doCardClickAnimation(viewHolder: ViewHolder?, position: Int) {
         checkContentHeightByParent()
-        if (viewHolder != null) {
-            mAnimatorAdapter!!.itemClick(viewHolder, position)
-        }
+        mAnimatorAdapter.itemClick(viewHolder, position)
     }
 
     private fun initOrResetVelocityTracker() {
@@ -299,6 +297,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
             MotionEvent.ACTION_MOVE -> {
                 val activePointerId = mActivePointerId
                 if (activePointerId == INVALID_POINTER) {
+                    break
                 }
                 val pointerIndex = ev.findPointerIndex(activePointerId)
                 if (pointerIndex == -1) {
@@ -306,6 +305,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
                         TAG, "Invalid pointerId=" + activePointerId
                                 + " in onInterceptTouchEvent"
                     )
+                    break
                 }
                 val y = ev.getY(pointerIndex).toInt()
                 val yDiff = Math.abs(y - mLastMotionY)
@@ -375,7 +375,10 @@ class CardStackView : ViewGroup, ScrollDelegate {
             MotionEvent.ACTION_MOVE -> {
                 val activePointerIndex = ev.findPointerIndex(mActivePointerId)
                 if (activePointerIndex == -1) {
-                    Log.e(TAG, "Invalid pointerId=$mActivePointerId in onTouchEvent")
+                    Log.e(
+                        TAG,
+                        "Invalid pointerId=$mActivePointerId in onTouchEvent"
+                    )
                     break
                 }
                 val y = ev.getY(activePointerIndex).toInt()
@@ -393,8 +396,8 @@ class CardStackView : ViewGroup, ScrollDelegate {
                 if (mIsBeingDragged) {
                     mLastMotionY = y - mScrollOffset[1]
                     val range = scrollRange
-                    if (scrollDelegate is StackScrollDelegateImpl) {
-                        scrollDelegate.scrollViewTo(0, deltaY + scrollDelegate.getViewScrollY())
+                    if (mScrollDelegate is StackScrollDelegateImpl) {
+                        mScrollDelegate!!.scrollViewTo(0, deltaY + mScrollDelegate!!.viewScrollX)
                     } else {
                         if (overScrollBy(
                                 0, deltaY, 0, viewScrollY,
@@ -416,7 +419,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
                             fling(-initialVelocity)
                         } else {
                             if (mScroller!!.springBack(
-                                    viewScrollX, scrollDelegate!!.viewScrollY, 0, 0, 0,
+                                    viewScrollX, mScrollDelegate!!.viewScrollY, 0, 0, 0,
                                     scrollRange
                                 )
                             ) {
@@ -431,11 +434,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
             MotionEvent.ACTION_CANCEL -> {
                 if (mIsBeingDragged && childCount > 0) {
                     if (mScroller!!.springBack(
-                            viewScrollX,
-                            scrollDelegate!!.viewScrollY,
-                            0,
-                            0,
-                            0,
+                            viewScrollX, mScrollDelegate!!.viewScrollY, 0, 0, 0,
                             scrollRange
                         )
                     ) {
@@ -495,7 +494,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
             return contentHeight
         }
         var scrollRange = totalLength
-        val scrollY = scrollDelegate!!.viewScrollY
+        val scrollY: Int = mScrollDelegate!!.viewScrollY
         val overscrollBottom = Math.max(0, scrollRange - contentHeight)
         if (scrollY < 0) {
             scrollRange -= scrollY
@@ -510,18 +509,19 @@ class CardStackView : ViewGroup, ScrollDelegate {
         clampedX: Boolean, clampedY: Boolean
     ) {
         if (!mScroller!!.isFinished) {
-            val oldX = scrollDelegate!!.viewScrollX
-            val oldY = scrollDelegate!!.viewScrollY
-            scrollDelegate!!.viewScrollX = scrollX
-            scrollDelegate!!.viewScrollY = scrollY
-            onScrollChanged(scrollDelegate!!.viewScrollX, scrollDelegate!!.viewScrollY, oldX, oldY)
+            val oldX: Int = mScrollDelegate!!.viewScrollX
+            val oldY: Int = mScrollDelegate!!.viewScrollY
+            mScrollDelegate!!.viewScrollX = (scrollX)
+            mScrollDelegate!!.viewScrollY = (scrollY)
+            onScrollChanged(
+                mScrollDelegate!!.viewScrollX,
+                mScrollDelegate!!.viewScrollY,
+                oldX,
+                oldY
+            )
             if (clampedY) {
                 mScroller!!.springBack(
-                    scrollDelegate!!.viewScrollX,
-                    scrollDelegate!!.viewScrollY,
-                    0,
-                    0,
-                    0,
+                    mScrollDelegate!!.viewScrollX, mScrollDelegate!!.viewScrollY, 0, 0, 0,
                     scrollRange
                 )
             }
@@ -536,7 +536,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
 
     override fun computeScroll() {
         if (mScroller!!.computeScrollOffset()) {
-            scrollDelegate!!.scrollViewTo(0, mScroller!!.currY)
+            mScrollDelegate!!.scrollViewTo(0, mScroller!!.currY)
             postInvalidate()
         }
     }
@@ -546,8 +546,16 @@ class CardStackView : ViewGroup, ScrollDelegate {
             val height = showHeight
             val bottom = totalLength
             mScroller!!.fling(
-                scrollDelegate!!.viewScrollX, scrollDelegate!!.viewScrollY, 0, velocityY, 0, 0, 0,
-                Math.max(0, bottom - height), 0, 0
+                mScrollDelegate!!.viewScrollX,
+                mScrollDelegate!!.viewScrollY,
+                0,
+                velocityY,
+                0,
+                0,
+                0,
+                Math.max(0, bottom - height),
+                0,
+                0
             )
             postInvalidate()
         }
@@ -559,31 +567,27 @@ class CardStackView : ViewGroup, ScrollDelegate {
         if (childCount > 0) {
             x = clamp(x, width - paddingRight - paddingLeft, width)
             y = clamp(y, showHeight, totalLength)
-            if (x != scrollDelegate!!.viewScrollX || y != scrollDelegate!!.viewScrollY) {
+            if (x != mScrollDelegate!!.viewScrollX || y != mScrollDelegate!!.viewScrollY) {
                 super.scrollTo(x, y)
             }
         }
     }
 
-    override fun getViewScrollX(): Int {
-        return scrollX
-    }
+    override var viewScrollX: Int
+        get() = scrollX
+        set(x) {
+            scrollX = x
+        }
 
     override fun scrollViewTo(x: Int, y: Int) {
         scrollTo(x, y)
     }
 
-    override fun setViewScrollY(y: Int) {
-        scrollY = y
-    }
-
-    override fun setViewScrollX(x: Int) {
-        scrollX = x
-    }
-
-    override fun getViewScrollY(): Int {
-        return scrollY
-    }
+    override var viewScrollY: Int
+        get() = scrollY
+        set(y) {
+            scrollY = y
+        }
 
     private fun endDrag() {
         mIsBeingDragged = false
@@ -637,6 +641,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
 
         protected abstract fun onBindViewHolder(holder: VH, position: Int)
         abstract val itemCount: Int
+
         fun getItemViewType(position: Int): Int {
             return 0
         }
@@ -653,14 +658,16 @@ class CardStackView : ViewGroup, ScrollDelegate {
     abstract class ViewHolder(var itemView: View) {
         var mItemViewType = INVALID_TYPE
         var position = 0
+
         val context: Context
             get() = itemView.context
 
         abstract fun onItemExpand(b: Boolean)
-        fun onAnimationStateChange(state: Int, willBeSelect: Boolean) {}
+        protected fun onAnimationStateChange(state: Int, willBeSelect: Boolean) {}
     }
 
-    class AdapterDataObservable : Observable<AdapterDataObserver?>() {
+    class AdapterDataObservable :
+        Observable<AdapterDataObserver?>() {
         fun hasObservers(): Boolean {
             return !mObservers.isEmpty()
         }
@@ -698,6 +705,8 @@ class CardStackView : ViewGroup, ScrollDelegate {
         set(duration) {
             mDuration = duration
         }
+    val scrollDelegate: ScrollDelegate?
+        get() = mScrollDelegate
 
     interface ItemExpendListener {
         fun onItemExpend(expend: Boolean)

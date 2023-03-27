@@ -42,38 +42,38 @@ class SettingsFragment : BaseFragment(), OnBackPressedListener, View.OnClickList
         setRetainInstance(true)
         if (view == null) {
             view = inflater.inflate(R.layout.fragment_settings, container, false)
-            getBaseActivity().setOnBackPressedListener(this)
-            prefs = getActivity()!!.getSharedPreferences("settings", 0)
+            baseActivity!!.setOnBackPressedListener(this)
+            prefs = requireActivity().getSharedPreferences("settings", 0)
             strDownloadLocation =
-                prefs.getString("downloadLocation", "/storage/emulated/0/Download/Videodownloader")
-            txtDownloadLocation = view.findViewById(R.id.txtDownloadLocation)
+                prefs!!.getString("downloadLocation", "/storage/emulated/0/Download/Videodownloader")
+            txtDownloadLocation = view!!.findViewById(R.id.txtDownloadLocation)
             if (!strDownloadLocation!!.endsWith("/")) {
                 strDownloadLocation = strDownloadLocation + "/"
             }
-            txtDownloadLocation.setText(strDownloadLocation)
-            searchEngine = prefs.getString("searchEngine", "Google")
-            txtSelectedSearchEngine = view.findViewById(R.id.txtSelectedSearchEngine)
-            txtSelectedSearchEngine.setText(searchEngine)
+            txtDownloadLocation!!.setText(strDownloadLocation)
+            searchEngine = prefs!!.getString("searchEngine", "Google")
+            txtSelectedSearchEngine = view!!.findViewById(R.id.txtSelectedSearchEngine)
+            txtSelectedSearchEngine!!.setText(searchEngine)
             //Back
-            val btnSettingsBack: ImageView = view.findViewById(R.id.backBtn)
+            val btnSettingsBack: ImageView = view!!.findViewById(R.id.backBtn)
             btnSettingsBack.setOnClickListener(this)
 
             // Switch wifi only switch
-            val wifiSwitch: SwitchButton = view.findViewById(R.id.wifiSwitch)
-            val wifiOn: Boolean = prefs.getBoolean(getString(R.string.wifiON), false)
+            val wifiSwitch: SwitchButton = view!!.findViewById(R.id.wifiSwitch)
+        val wifiOn: Boolean = prefs!!.getBoolean(getString(R.string.wifiON), false)
             wifiSwitch.setChecked(wifiOn)
             wifiSwitch.setOnCheckedChangeListener(object : SwitchButton.OnCheckedChangeListener {
-                public override fun onCheckedChanged(
+                override fun onCheckedChanged(
                     buttonView: SwitchButton?,
                     isChecked: Boolean
                 ) {
-                    prefs.edit().putBoolean(getString(R.string.wifiON), isChecked).commit()
+                    prefs!!.edit().putBoolean(getString(R.string.wifiON), isChecked).commit()
                 }
             })
 
             // Switch ad blocker switch
-            val adBlockerSwitch: SwitchButton = view.findViewById(R.id.adBlockerSwitch)
-            val adBlockOn: Boolean = prefs.getBoolean(getString(R.string.adBlockON), true)
+            val adBlockerSwitch: SwitchButton = view!!.findViewById(R.id.adBlockerSwitch)
+            val adBlockOn: Boolean = prefs!!.getBoolean(getString(R.string.adBlockON), true)
             adBlockerSwitch.setChecked(adBlockOn)
             adBlockerSwitch.setOnCheckedChangeListener(object :
                 SwitchButton.OnCheckedChangeListener {
@@ -81,61 +81,61 @@ class SettingsFragment : BaseFragment(), OnBackPressedListener, View.OnClickList
                     buttonView: SwitchButton?,
                     isChecked: Boolean
                 ) {
-                    prefs.edit().putBoolean(getString(R.string.adBlockON), isChecked).commit()
+                    prefs!!.edit().putBoolean(getString(R.string.adBlockON), isChecked).commit()
                 }
             })
-            val llDownloadLocation: LinearLayout = view.findViewById(R.id.llDownloadLocation)
+            val llDownloadLocation: LinearLayout = view!!.findViewById(R.id.llDownloadLocation)
             llDownloadLocation.setOnClickListener(object : View.OnClickListener {
                 public override fun onClick(v: View?) {
                     selectFolder()
                 }
             })
-            val llSearchEngine: LinearLayout = view.findViewById(R.id.llSearchEngine)
+            val llSearchEngine: LinearLayout = view!!.findViewById(R.id.llSearchEngine)
             llSearchEngine.setOnClickListener(object : View.OnClickListener {
                 public override fun onClick(v: View?) {
                     changeSearchEngine()
                 }
             })
-            val txtClearCache: TextView = view.findViewById(R.id.txtClearCache)
+            val txtClearCache: TextView = view!!.findViewById(R.id.txtClearCache)
             txtClearCache.setOnClickListener(object : View.OnClickListener {
                 public override fun onClick(v: View?) {
                     clearCache()
                 }
             })
-            val txtClearHistory: TextView = view.findViewById(R.id.txtClearHistory)
+            val txtClearHistory: TextView = view!!.findViewById(R.id.txtClearHistory)
             txtClearHistory.setOnClickListener(object : View.OnClickListener {
                 public override fun onClick(v: View?) {
                     clearHistory()
                 }
             })
-            val txtClearCookies: TextView = view.findViewById(R.id.txtClearCookies)
+            val txtClearCookies: TextView = view!!.findViewById(R.id.txtClearCookies)
             txtClearCookies.setOnClickListener(object : View.OnClickListener {
                 public override fun onClick(v: View?) {
                     clearCookies()
                 }
             })
-            val txtHowToDownload: TextView = view.findViewById(R.id.txtHowToDownload)
+            val txtHowToDownload: TextView = view!!.findViewById(R.id.txtHowToDownload)
             txtHowToDownload.setOnClickListener(object : View.OnClickListener {
                 public override fun onClick(v: View?) {
                     startActivity(Intent(getActivity(), IntroActivity::class.java))
                 }
             })
-            val txtPrivacyPolicy: TextView = view.findViewById(R.id.txtPrivacyPolicy)
+            val txtPrivacyPolicy: TextView = view!!.findViewById(R.id.txtPrivacyPolicy)
             txtPrivacyPolicy.setOnClickListener(object : View.OnClickListener {
                 public override fun onClick(v: View?) {
-                    getActivity()!!.onBackPressed()
-                    getBaseActivity().isEnableSuggetion = false
-                    getBaseActivity().navView.setSelectedItemId(R.id.navHome)
-                    WebConnect(view.findViewById(R.id.edtSearch), getBaseActivity()).connect()
+                    requireActivity().onBackPressed()
+                    baseActivity!!.isEnableSuggetion = false
+                    baseActivity!!.navView.setSelectedItemId(R.id.navHome)
+                    WebConnect(view!!.findViewById(R.id.edtSearch), baseActivity!!).connect()
                 }
             })
-            val txtVersion: TextView = view.findViewById(R.id.txtVersion)
+            val txtVersion: TextView = view!!.findViewById(R.id.txtVersion)
             txtVersion.setText(BuildConfig.VERSION_NAME)
 
             /*admob*/
-            val adContainer: LinearLayout = view.findViewById(R.id.banner_container)
-            AdController.loadBannerAd(getActivity(), adContainer)
-            AdController.loadInterAd(getActivity())
+            val adContainer: LinearLayout = view!!.findViewById(R.id.banner_container)
+            AdController.loadBannerAd(requireActivity(), adContainer)
+            AdController.loadInterAd(requireActivity())
         }
         return view
     }
@@ -287,7 +287,7 @@ class SettingsFragment : BaseFragment(), OnBackPressedListener, View.OnClickList
 
     fun deleteCache() {
         try {
-            val dir: File = getActivity()!!.getCacheDir()
+            val dir: File = requireActivity().getCacheDir()
             deleteDir(dir)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -357,7 +357,7 @@ class SettingsFragment : BaseFragment(), OnBackPressedListener, View.OnClickList
         val imgBaidu: ImageView = dialog.findViewById(R.id.imgBaidu)
         val imgYandex: ImageView = dialog.findViewById(R.id.imgYandex)
         val txtSelect: TextView = dialog.findViewById(R.id.txtSelect)
-        val prefs: SharedPreferences = getActivity()!!.getSharedPreferences("settings", 0)
+        val prefs: SharedPreferences = requireActivity().getSharedPreferences("settings", 0)
         searchEngine = prefs.getString("searchEngine", "Google")
         txtSelect.setOnClickListener(object : View.OnClickListener {
             public override fun onClick(v: View?) {
@@ -435,15 +435,15 @@ class SettingsFragment : BaseFragment(), OnBackPressedListener, View.OnClickList
         }
     }
 
-    public override fun onBackpressed() {
-        getBaseActivity().transStatusBar(true)
-        getBaseActivity().getBrowserManager().unhideCurrentWindow()
-        getFragmentManager()!!.beginTransaction().remove(this).commit()
+    override fun onBackpressed() {
+        baseActivity!!.transStatusBar(true)
+        baseActivity!!.browserManager.unhideCurrentWindow()
+        requireFragmentManager().beginTransaction().remove(this).commit()
     }
 
     public override fun onClick(view: View) {
         if (view.getId() == R.id.backBtn) {
-            getActivity()!!.onBackPressed()
+            requireActivity().onBackPressed()
         }
     }
 }

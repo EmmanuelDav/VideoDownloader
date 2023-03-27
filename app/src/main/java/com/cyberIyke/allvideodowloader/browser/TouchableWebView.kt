@@ -1,6 +1,9 @@
 package com.cyberIyke.allvideodowloader.browser
 
 import android.content.*
+import android.util.AttributeSet
+import android.view.MotionEvent
+import android.view.View
 import android.view.View.OnTouchListener
 import android.webkit.WebView
 

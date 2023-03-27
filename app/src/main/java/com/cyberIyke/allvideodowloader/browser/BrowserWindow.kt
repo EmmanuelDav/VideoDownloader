@@ -1,11 +1,25 @@
 package com.cyberIyke.allvideodowloader.browser
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.Dialog
 import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
+import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.media.MediaPlayer
 import android.media.MediaPlayer.OnPreparedListener
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.*
@@ -13,7 +27,7 @@ import android.view.animation.BounceInterpolator
 import android.webkit.*
 import android.widget.*
 import androidx.annotation.RequiresApi
-import androidx.lifecycle.ViewModelProvider.get
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.webkit.WebSettingsCompat
@@ -38,13 +52,20 @@ import com.cyberIyke.allvideodowloader.utils.VisitedPage
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
 import com.cyberIyke.allvideodowloader.viewModel.VidInfoViewModel
 import com.cyberIyke.allvideodowloader.views.CustomMediaController
-import com.cyberIyke.allvideodowloader.views.CustomVideoView
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.tonyodev.fetch2.Fetch.addListener
+import com.hjq.permissions.OnPermissionCallback
+import com.hjq.permissions.Permission
+import com.hjq.permissions.XXPermissions
+import com.kunkunapp.allvideodowloader.views.CustomVideoView
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import com.yausername.youtubedl_android.mapper.VideoInfo
+import java.io.IOException
+import java.util.*
+import java.util.function.Predicate
+import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLSocketFactory
+import kotlin.collections.HashSet
 
 class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(),
     View.OnClickListener, OnBackPressedListener, DialogListener {
@@ -85,9 +106,9 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                             dialog!!.show()
                         }
 
-                        public override fun onDenied(permissions: List<String>, never: Boolean) {
-                            super@OnPermissionCallback.onDenied(permissions, never)
-                            Log.d(BrowserWindow.Companion.TAG, "onDenied: =====")
+                         override fun onDenied(permissions: List<String>, never: Boolean) {
+                            super.onDenied(permissions, never)
+                            Log.d(TAG, "onDenied: =====")
                         }
                     })
             } else {
@@ -131,13 +152,13 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         val mediaFoundController: CustomMediaController =
             view!!.findViewById(R.id.mediaFoundController)
         mediaFoundController.setFullscreenEnabled()
-        videoFoundView.setMediaController(mediaFoundController)
-        videoFoundTV.setVisibility(View.GONE)
+        videoFoundView!!.setMediaController(mediaFoundController)
+        videoFoundTV!!.visibility = View.GONE
     }
 
     private fun createVideosFoundHUD() {
         videosFoundHUD = view!!.findViewById(R.id.videosFoundHUD)
-        videosFoundHUD.setOnClickListener(this)
+        videosFoundHUD!!.setOnClickListener(this)
     }
 
     private fun createFoundVideosWindow() {
@@ -157,41 +178,39 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         })
         qualities!!.setLayoutManager(GridLayoutManager(activity, 3))
         qualities.setHasFixedSize(true)
-        foundVideosWindow = view!!.findViewById(R.id.foundVideosWindow)
-        viewModel!!.vidFormats.observe(getViewLifecycleOwner(), Observer({ videoInfo: VideoInfo? ->
+        foundVideosWindow = requireView().findViewById(R.id.foundVideosWindow)
+        viewModel!!.vidFormats.observe(viewLifecycleOwner) { videoInfo ->
             if (videoInfo == null || videoInfo.getFormats() == null) {
                 return@observe
             }
-            videoInfo.getFormats().removeIf(Predicate({ it: VideoFormat ->
-                !it.getExt().contains("mp4") || it.getFormat().contains("audio")
-            }))
+            videoInfo.formats.removeIf { it: VideoFormat ->
+                !it.ext.contains("mp4") || it.format.contains("audio")
+            }
             val namesAlreadySeen: MutableSet<String> = HashSet()
-            videoInfo.getFormats().removeIf(Predicate({ p: VideoFormat ->
-                !namesAlreadySeen.add(
-                    BrowserWindow.Companion.convertSolution(p.getFormat())
-                )
-            }))
+            videoInfo.formats.removeIf { p: VideoFormat ->
+                !namesAlreadySeen.add(convertSolution(p.format))
+            }
             mVideoInfo = videoInfo
             if (videoList != null) {
                 videoList!!.recreateVideoList(
                     qualities,
-                    imgVideo,
-                    txtTitle,
-                    txtDownload,
-                    dialog,
+                    imgVideo!!,
+                    txtTitle!!,
+                    txtDownload!!,
+                    dialog!!,
                     videoInfo
                 )
             } else {
                 videoList = object : VideoList(
                     activity,
                     qualities,
-                    imgVideo,
-                    txtTitle,
-                    txtDownload,
-                    dialog,
+                    imgVideo!!,
+                    txtTitle!!,
+                    txtDownload!!,
+                    dialog!!,
                     videoInfo
                 ) {
-                    public override fun onItemClicked(vidFormatItem: VidFormatItem?) {
+                    override fun onItemClicked(vidFormatItem: VidFormatItem?) {
                         viewModel!!.selectedItem = (vidFormatItem)!!
                         DownloadPathDialogFragment().show(
                             getChildFragmentManager(),
@@ -201,42 +220,42 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                 }
             }
             updateFoundVideosBar()
-        }))
+
+
+        }
     }
 
-    public override fun onCreateView(
+    override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        if (view == null || getResources().getConfiguration().orientation != orientation) {
+        if (view == null || resources.configuration.orientation != orientation) {
             var visibility: Int = View.VISIBLE
             if (view != null) {
-                visibility = view!!.getVisibility()
+                visibility = requireView().visibility
             }
             view = inflater.inflate(R.layout.browser_lay, container, false)
-            viewModel = ViewModelProvider(this).get(
-                VidInfoViewModel::class.java
-            )
+            viewModel = ViewModelProvider(this)[VidInfoViewModel::class.java]
             downloadsViewModel = ViewModelProvider(this).get(
                 DownloadsViewModel::class.java
             )
-            view.setVisibility(visibility)
+            requireView().visibility = visibility
             if (page == null) {
-                page = view.findViewById(R.id.page)
+                page = requireView().findViewById(R.id.page)
             } else {
-                val page1: View = view.findViewById(R.id.page)
+                val page1: View = view!!.findViewById(R.id.page)
                 (view as ViewGroup?)!!.removeView(page1)
                 (page!!.getParent() as ViewGroup).removeView(page)
                 (view as ViewGroup?)!!.addView(page)
-                (view as ViewGroup?)!!.bringChildToFront(view.findViewById(R.id.videosFoundHUD))
-                (view as ViewGroup?)!!.bringChildToFront(view.findViewById(R.id.foundVideosWindow))
+                (view as ViewGroup?)!!.bringChildToFront(view!!.findViewById(R.id.videosFoundHUD))
+                (view as ViewGroup?)!!.bringChildToFront(view!!.findViewById(R.id.foundVideosWindow))
             }
-            loadingPageProgress = view.findViewById(R.id.loadingPageProgress)
-            loadingPageProgress.setVisibility(View.GONE)
-            imgDetacting = view.findViewById(R.id.imgDetacting)
+            loadingPageProgress = view!!.findViewById(R.id.loadingPageProgress)
+            loadingPageProgress!!.setVisibility(View.GONE)
+            imgDetacting = view!!.findViewById(R.id.imgDetacting)
             val rotate: ObjectAnimator =
-                ObjectAnimator().ofFloat(imgDetacting, "rotation", 0f, 360f)
+                ObjectAnimator.ofFloat(imgDetacting, "rotation", 0f, 360f)
             rotate.setDuration(1000)
             rotate.setRepeatCount(999999999)
             rotate.start()
@@ -263,7 +282,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     request: WebResourceRequest
                 ): Boolean {
                     Log.d(
-                        BrowserWindow.Companion.TAG,
+                        TAG,
                         "shouldOverrideUrlLoading: " + request.getUrl().toString()
                     )
                     if (blockedWebsites!!.contains(getBaseDomain(request.getUrl().toString()))) {
@@ -288,17 +307,17 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     return super.shouldOverrideUrlLoading(view, request)
                 }
 
-                public override fun onPageStarted(webview: WebView, url: String, favicon: Bitmap) {
+                 override fun onPageStarted(webview: WebView, url: String, favicon: Bitmap) {
                     mVideoInfo = null
                     Handler(Looper.getMainLooper()).post(object : Runnable {
                         public override fun run() {
                             mVideoInfo = null
                             Log.d(
-                                BrowserWindow.Companion.TAG,
+                                TAG,
                                 "shouldOverrideUrlLoading: " + url + " " + url
                             )
-                            val urlBox: EditText = getBaseActivity().findViewById(R.id.inputURLText)
-                            getBaseActivity().isEnableSuggetion = false
+                            val urlBox: EditText = baseActivity!!.findViewById(R.id.inputURLText)
+                            baseActivity!!.isEnableSuggetion = false
                             urlBox.setText(url)
                             urlBox.setSelection(urlBox.getText().length)
                             this@BrowserWindow.url = url
@@ -311,23 +330,23 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     super.onPageStarted(webview, url, favicon)
                 }
 
-                public override fun onPageFinished(view: WebView, url: String) {
+                override fun onPageFinished(view: WebView, url: String) {
                     super.onPageFinished(view, url)
                     mVideoInfo = null
                     if (!fetchedUrls.contains(url) || !(view.getUrl() == url)) {
                         viewModel!!.fetchInfo(url)
                         fetchedUrls.add(url)
                         updateFoundVideosBar()
-                        Log.d(BrowserWindow.Companion.TAG, "onPageFinished: fetched" + url)
+                        Log.d(TAG, "onPageFinished: fetched" + url)
                     }
-                    loadingPageProgress!!.setVisibility(View.GONE)
+                    loadingPageProgress!!.visibility = View.GONE
                 }
 
-                public override fun onLoadResource(view: WebView, url: String) {
+                override fun onLoadResource(view: WebView, url: String) {
                     Log.d("fb :", "URL: " + url)
                     val viewUrl: String? = view.getUrl()
                     val title: String? = view.getTitle()
-                    object : VideoContentSearch(activity, url, viewUrl, title) {
+                    object : VideoContentSearch(activity!!, url, viewUrl!!, title) {
                         public override fun onStartInspectingURL() {
                             disableSSLCertificateChecking()
                         }
@@ -386,7 +405,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                             && (url.contains("ad") || url.contains("banner") || url.contains("pop")) || url.contains(
                                 "banners"
                             )
-                            && getBaseActivity().getBrowserManager().checkUrlIfAds(url)
+                            && baseActivity!!.browserManager.checkUrlIfAds(url)
                         ) {
                             Log.d("VDDebug", "Ads detected: " + url)
                             return WebResourceResponse(null, null, null)
@@ -400,7 +419,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     view: WebView,
                     request: WebResourceRequest
                 ): WebResourceResponse? {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && getBaseActivity() !=
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && baseActivity !=
                         null
                     ) {
                         if ((MyApp.getInstance()!!.getSharedPreferences("settings", 0)
@@ -409,7 +428,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                                     request.getUrl().toString().contains("banner") ||
                                     request.getUrl().toString().contains("banners") ||
                                     request.getUrl().toString().contains("pop")))
-                                    && getBaseActivity().getBrowserManager().checkUrlIfAds(
+                                    && baseActivity!!.browserManager.checkUrlIfAds(
                                 request.getUrl()
                                     .toString()
                             ))
@@ -453,8 +472,8 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             page!!.loadUrl((url)!!)
             loadedFirsTime = true
         } else {
-            val urlBox: EditText = getBaseActivity().findViewById(R.id.inputURLText)
-            getBaseActivity().isEnableSuggetion = false
+            val urlBox: EditText = baseActivity!!.findViewById(R.id.inputURLText)
+            baseActivity!!.isEnableSuggetion = false
             urlBox.setText(url)
         }
     }
@@ -488,7 +507,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         }
     }
 
-    public override fun onDestroy() {
+     override fun onDestroy() {
         page!!.stopLoading()
         page!!.destroy()
         super.onDestroy()
@@ -496,14 +515,14 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
 
     private fun updateFoundVideosBar() {
         if (mVideoInfo != null && mVideoInfo!!.getFormats().size > 0) {
-            activity!!.runOnUiThread(object : Runnable {
+            requireActivity().runOnUiThread(object : Runnable {
                 public override fun run() {
                     val options: RequestOptions = RequestOptions()
                         .skipMemoryCache(true)
                         .centerInside()
                         .placeholder(R.drawable.ic_download_det)
                         .transform(CircleCrop())
-                    Glide.with((activity))
+                    Glide.with((activity!!))
                         .load(R.drawable.ic_download_det)
                         .apply(options)
                         .into((videosFoundHUD)!!)
@@ -513,11 +532,11 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     animY.setInterpolator(BounceInterpolator())
                     animY.setRepeatCount(2)
                     animY.addListener(object : AnimatorListenerAdapter() {
-                        public override fun onAnimationEnd(
-                            animation: Animator?,
+                        override fun onAnimationEnd(
+                            animation: Animator,
                             isReverse: Boolean
                         ) {
-                            super.onAnimationEnd((animation)!!, isReverse)
+                            super.onAnimationEnd((animation), isReverse)
                             Glide.with((activity))
                                 .load(R.drawable.ic_download_enable)
                                 .into((videosFoundHUD)!!)
@@ -527,16 +546,14 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                 }
             })
         } else {
-            activity!!.runOnUiThread(object : Runnable {
-                public override fun run() {
-                    Glide.with((activity))
-                        .load(R.drawable.ic_download_dis)
-                        .into((videosFoundHUD)!!)
-                    if (foundVideosWindow!!.getVisibility() == View.VISIBLE) foundVideosWindow!!.setVisibility(
-                        View.GONE
-                    )
-                }
-            })
+            requireActivity().runOnUiThread {
+                Glide.with((activity!!))
+                    .load(R.drawable.ic_download_dis)
+                    .into((videosFoundHUD)!!)
+                if (foundVideosWindow!!.getVisibility() == View.VISIBLE) foundVideosWindow!!.setVisibility(
+                    View.GONE
+                )
+            }
         }
     }
 
@@ -547,16 +564,16 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         videoFoundView!!.start()
     }
 
-    public override fun onBackpressed() {
-        if ((foundVideosWindow!!.getVisibility() == View.VISIBLE) && !videoFoundView!!.isPlaying() && (videoFoundTV!!.getVisibility() == View.GONE)) {
+    override fun onBackpressed() {
+        if ((foundVideosWindow!!.getVisibility() == View.VISIBLE) && !videoFoundView!!.isPlaying && (videoFoundTV!!.getVisibility() == View.GONE)) {
             foundVideosWindow!!.setVisibility(View.GONE)
-        } else if (videoFoundView!!.isPlaying() || videoFoundTV!!.getVisibility() == View.VISIBLE) {
+        } else if (videoFoundView!!.isPlaying || videoFoundTV!!.getVisibility() == View.VISIBLE) {
             videoFoundView!!.closePlayer()
             videoFoundTV!!.setVisibility(View.GONE)
         } else if (page!!.canGoBack()) {
             page!!.goBack()
         } else {
-            getBaseActivity().getBrowserManager().closeWindow(this@BrowserWindow)
+            baseActivity!!.browserManager.closeWindow(this@BrowserWindow)
         }
     }
 
@@ -576,16 +593,12 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         Log.d("debug", "onResume: ")
     }
 
-    public override fun onResume() {
+    override fun onResume() {
         super.onResume()
-        if (getBaseActivity().navView.getSelectedItemId() == R.id.navHome && !getBaseActivity().isDisableOnResume) {
+        if (baseActivity!!.navView.selectedItemId == R.id.navHome && !baseActivity!!.isDisableOnResume) {
             if (page != null) page!!.onResume()
         }
-        Handler().postDelayed(object : Runnable {
-            public override fun run() {
-                getBaseActivity().isDisableOnResume = false
-            }
-        }, 500)
+        Handler().postDelayed({ baseActivity!!.isDisableOnResume = false }, 500)
     }
 
     public override fun setUserVisibleHint(isVisibleToUser: Boolean) {
@@ -623,7 +636,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         if (requestCode == BrowserWindow.Companion.OPEN_DIRECTORY_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
                 val uri: Uri? = data!!.getData()
-                activity!!.getContentResolver().takePersistableUriPermission(
+                requireActivity().getContentResolver().takePersistableUriPermission(
                     (uri)!!,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or
                             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
@@ -633,7 +646,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                 viewModel!!.startDownload(
                     viewModel!!.selectedItem,
                     uri.toString(),
-                    (activity),
+                    (requireActivity()),
                     getViewLifecycleOwner()
                 )
             }
@@ -648,10 +661,10 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
     }
 
     private fun removeDialog() {
-        val inflater: LayoutInflater = activity!!.getLayoutInflater()
+        val inflater: LayoutInflater = requireActivity().getLayoutInflater()
         val layout: View = inflater.inflate(
             R.layout.toast_download,
-            activity.findViewById<View>(R.id.toast_layout_root) as ViewGroup?
+            requireActivity().findViewById<View>(R.id.toast_layout_root) as ViewGroup?
         )
         val toast: Toast = Toast(activity)
         toast.setGravity(Gravity.BOTTOM, 0, 250)
@@ -671,11 +684,11 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             val str2: String
             val split: Array<String> = str.split("[^\\d]+".toRegex()).toTypedArray()
             if (split.size >= 2) {
-                str2 = split.get(1)
+                str2 = split[1]
             } else {
                 if (split.size == 1) {
-                    str2 = split.get(0)
-                } else if (!str.matches(".*\\d.*")) {
+                    str2 = split[0]
+                } else if (!str.contains(Regex("\\d"))) {
                     return str
                 } else {
                     return "720P"
@@ -708,26 +721,6 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             } catch (unused: NumberFormatException) {
             }
             return str2
-        }
-
-        @Throws(IOException::class)
-        fun getFileDuration(file: String?, context: Context?): Long {
-            val result: IntArray = intArrayOf(0)
-            try {
-                val mp: MediaPlayer = MediaPlayer()
-                mp.setDataSource(file)
-                mp.setOnPreparedListener(object : OnPreparedListener {
-                    public override fun onPrepared(mp: MediaPlayer) {
-                        val duration: Int = mp.getDuration()
-                        result.get(0) = duration
-                        mp.release() // release the media player once we're done
-                    }
-                })
-                mp.prepareAsync()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-            return result.get(0).toLong()
         }
     }
 }

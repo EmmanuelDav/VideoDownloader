@@ -3,6 +3,7 @@ package com.cyberIyke.allvideodowloader.views.cardstack
 import android.content.Context
 import android.view.LayoutInflater
 import com.cyberIyke.allvideodowloader.browser.BrowserWindow
+import com.kunkunapp.allvideodowloader.views.cardstack.CardStackView
 
 abstract class StackAdapter<T>(val context: Context?) :
     CardStackView.Adapter<CardStackView.ViewHolder?>() {

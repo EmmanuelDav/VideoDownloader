@@ -57,7 +57,7 @@ abstract class VideoList internal constructor(
                         }
 
                         public override fun onDenied(permissions: List<String>, never: Boolean) {
-                            super@OnPermissionCallback.onDenied(permissions, never)
+                            super.onDenied(permissions, never)
                             Log.d(VideoList.Companion.TAG, "onDenied: =====")
                         }
                     })
@@ -98,8 +98,8 @@ abstract class VideoList internal constructor(
                             onItemClicked(headerItem)
                         }
 
-                        public override fun onDenied(permissions: List<String>, never: Boolean) {
-                            super@OnPermissionCallback.onDenied(permissions, never)
+                        override fun onDenied(permissions: List<String>, never: Boolean) {
+                            super.onDenied(permissions, never)
                             Log.d(VideoList.Companion.TAG, "onDenied: =====")
                         }
                     })

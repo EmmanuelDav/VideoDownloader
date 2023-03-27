@@ -1,4 +1,4 @@
-package com.cyberIyke.allvideodowloader.views
+package com.kunkunapp.allvideodowloader.views
 
 import android.app.Activity
 import android.content.Context
@@ -15,17 +15,16 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.cyberIyke.allvideodowloader.R
 import com.cyberIyke.allvideodowloader.helper.OrientationDetector
-import com.cyberIyke.allvideodowloader.helper.OrientationDetector.OrientationChangeListener
-import com.cyberIyke.allvideodowloader.views.CustomVideoView
+import com.cyberIyke.allvideodowloader.views.CustomMediaController
 import java.io.IOException
 
 class CustomVideoView @JvmOverloads constructor(
     private val mContext: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : SurfaceView(
-    mContext, attrs, defStyleAttr
-), CustomMediaController.MediaPlayerControl, OrientationChangeListener {
+) :
+    SurfaceView(mContext, attrs, defStyleAttr), CustomMediaController.MediaPlayerControl,
+    OrientationDetector.OrientationChangeListener {
     private val videoTag = "UniversalVideoView"
 
     // settable by the client
@@ -36,8 +35,8 @@ class CustomVideoView @JvmOverloads constructor(
     // For instance, regardless the VideoView object's current state,
     // calling pause() intends to bring the object to a target state
     // of STATE_PAUSED.
-    private var mCurrentState: Int = CustomVideoView.Companion.STATE_IDLE
-    private var mTargetState: Int = CustomVideoView.Companion.STATE_IDLE
+    private var mCurrentState = STATE_IDLE
+    private var mTargetState = STATE_IDLE
 
     // All the stuff we need for playing and showing a video
     private var mSurfaceHolder: SurfaceHolder? = null
@@ -51,8 +50,8 @@ class CustomVideoView @JvmOverloads constructor(
     private var mOnCompletionListener: OnCompletionListener? = null
     private var mOnPreparedListener: OnPreparedListener? = null
     private var mCurrentBufferPercentage = 0
-    private var mOnErrorListener: MediaPlayer.OnErrorListener? = null
-    private var mOnInfoListener: MediaPlayer.OnInfoListener? = null
+    private var mOnErrorListener: OnErrorListener? = null
+    private var mOnInfoListener: OnInfoListener? = null
     private var mSeekWhenPrepared // recording the seek position while preparing
             = 0
     private var mCanPause = false
@@ -160,24 +159,21 @@ class CustomVideoView @JvmOverloads constructor(
         isFocusable = true
         isFocusableInTouchMode = true
         requestFocus()
-        mCurrentState = CustomVideoView.Companion.STATE_IDLE
-        mTargetState = CustomVideoView.Companion.STATE_IDLE
+        mCurrentState = STATE_IDLE
+        mTargetState = STATE_IDLE
     }
 
-    override fun onOrientationChanged(
-        screenOrientation: Int,
-        direction: OrientationDetector.Direction
-    ) {
+    override fun onOrientationChanged(screenOrientation: Int, direction: OrientationDetector.Direction) {
         if (!mAutoRotation) {
             return
         }
-        if (direction == OrientationDetector.Direction.PORTRAIT) {
+        if (direction === OrientationDetector.Direction.PORTRAIT) {
             setFullscreen(false, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-        } else if (direction == OrientationDetector.Direction.REVERSE_PORTRAIT) {
+        } else if (direction === OrientationDetector.Direction.REVERSE_PORTRAIT) {
             setFullscreen(false, ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT)
-        } else if (direction == OrientationDetector.Direction.LANDSCAPE) {
+        } else if (direction === OrientationDetector.Direction.LANDSCAPE) {
             setFullscreen(true, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-        } else if (direction == OrientationDetector.Direction.REVERSE_LANDSCAPE) {
+        } else if (direction === OrientationDetector.Direction.REVERSE_LANDSCAPE) {
             setFullscreen(true, ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
         }
     }
@@ -231,8 +227,8 @@ class CustomVideoView @JvmOverloads constructor(
             mMediaPlayer!!.stop()
             mMediaPlayer!!.release()
             mMediaPlayer = null
-            mCurrentState = CustomVideoView.Companion.STATE_IDLE
-            mTargetState = CustomVideoView.Companion.STATE_IDLE
+            mCurrentState = STATE_IDLE
+            mTargetState = STATE_IDLE
         }
     }
 
@@ -270,20 +266,18 @@ class CustomVideoView @JvmOverloads constructor(
 
             // we don't set the target state here either, but preserve the
             // target state that was there before.
-            mCurrentState = CustomVideoView.Companion.STATE_PREPARING
+            mCurrentState = STATE_PREPARING
             attachMediaController()
         } catch (ex: IOException) {
             Log.w(videoTag, "Unable to open content: $mUri", ex)
-            mCurrentState = CustomVideoView.Companion.STATE_ERROR
-            mTargetState = CustomVideoView.Companion.STATE_ERROR
-            mErrorListener.onError(mMediaPlayer, MediaPlayer.MEDIA_ERROR_UNKNOWN, 0)
+            mCurrentState = STATE_ERROR
+            mTargetState = STATE_ERROR
+            mErrorListener.onError(mMediaPlayer, MEDIA_ERROR_UNKNOWN, 0)
         }
     }
 
     fun setMediaController(controller: CustomMediaController?) {
-        if (mMediaController != null) {
-            mMediaController!!.hide()
-        }
+        mMediaController?.hide()
         mMediaController = controller
         attachMediaController()
     }
@@ -291,38 +285,35 @@ class CustomVideoView @JvmOverloads constructor(
     private fun attachMediaController() {
         if (mMediaPlayer != null && mMediaController != null) {
             mMediaController!!.setMediaPlayer(this)
-            mMediaController!!.isEnabled = isInPlaybackState
+            mMediaController!!.setEnabled(isInPlaybackState)
             mMediaController!!.hide()
         }
     }
 
-    var mSizeChangedListener = OnVideoSizeChangedListener { mp, width, height ->
-        mVideoWidth = mp.videoWidth
-        mVideoHeight = mp.videoHeight
-        Log.d(
-            videoTag,
-            String.format("onVideoSizeChanged width=%d,height=%d", mVideoWidth, mVideoHeight)
-        )
-        if (mVideoWidth != 0 && mVideoHeight != 0) {
-            holder.setFixedSize(mVideoWidth, mVideoHeight)
-            requestLayout()
+    var mSizeChangedListener: OnVideoSizeChangedListener =
+        OnVideoSizeChangedListener { mp, width, height ->
+            mVideoWidth = mp.videoWidth
+            mVideoHeight = mp.videoHeight
+            Log.d(
+                videoTag,
+                String.format("onVideoSizeChanged width=%d,height=%d", mVideoWidth, mVideoHeight)
+            )
+            if (mVideoWidth != 0 && mVideoHeight != 0) {
+                holder.setFixedSize(mVideoWidth, mVideoHeight)
+                requestLayout()
+            }
         }
-    }
-    var mPreparedListener = OnPreparedListener { mp ->
-        mCurrentState = CustomVideoView.Companion.STATE_PREPARED
+    var mPreparedListener: OnPreparedListener = OnPreparedListener { mp ->
+        mCurrentState = STATE_PREPARED
         mCanSeekForward = true
         mCanSeekBack = mCanSeekForward
         mCanPause = mCanSeekBack
         mPreparedBeforeStart = true
-        if (mMediaController != null) {
-            mMediaController!!.hideLoading()
-        }
+        mMediaController?.hideLoading()
         if (mOnPreparedListener != null) {
             mOnPreparedListener!!.onPrepared(mMediaPlayer)
         }
-        if (mMediaController != null) {
-            mMediaController!!.isEnabled = true
-        }
+        mMediaController?.setEnabled(true)
         mVideoWidth = mp.videoWidth
         mVideoHeight = mp.videoHeight
         val seekToPosition =
@@ -336,13 +327,11 @@ class CustomVideoView @JvmOverloads constructor(
                 // We didn't actually change the size (it was already at the size
                 // we need), so we won't get a "surface changed" callback, so
                 // start the video here instead of in the callback.
-                if (mTargetState == CustomVideoView.Companion.STATE_PLAYING) {
+                if (mTargetState == STATE_PLAYING) {
                     start()
-                    if (mMediaController != null) {
-                        mMediaController!!.show()
-                    }
-                } else if (mMediaController != null && !isPlaying &&
-                    (seekToPosition != 0 || currentPosition > 0)
+                    mMediaController?.show()
+                } else if (((mMediaController != null) && !isPlaying &&
+                            (seekToPosition != 0 || currentPosition > 0))
                 ) {
 
                     // Show the media controls when we're paused into a video and make 'em stick.
@@ -352,14 +341,14 @@ class CustomVideoView @JvmOverloads constructor(
         } else {
             // We don't know the video size yet, but should start anyway.
             // The video size might be reported to us later.
-            if (mTargetState == CustomVideoView.Companion.STATE_PLAYING) {
+            if (mTargetState == STATE_PLAYING) {
                 start()
             }
         }
     }
-    private val mCompletionListener = OnCompletionListener {
-        mCurrentState = CustomVideoView.Companion.STATE_PLAYBACK_COMPLETED
-        mTargetState = CustomVideoView.Companion.STATE_PLAYBACK_COMPLETED
+    private val mCompletionListener: OnCompletionListener = OnCompletionListener {
+        mCurrentState = STATE_PLAYBACK_COMPLETED
+        mTargetState = STATE_PLAYBACK_COMPLETED
         if (mMediaController != null) {
             val a = mMediaPlayer!!.isPlaying
             val b = mCurrentState
@@ -370,45 +359,41 @@ class CustomVideoView @JvmOverloads constructor(
             mOnCompletionListener!!.onCompletion(mMediaPlayer)
         }
     }
-    private val mInfoListener = MediaPlayer.OnInfoListener { mp, what, extra ->
-        var handled = false
-        when (what) {
-            MediaPlayer.MEDIA_INFO_BUFFERING_START -> {
-                Log.d(videoTag, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_START")
-                if (videoViewCallback != null) {
-                    videoViewCallback!!.onBufferingStart(mMediaPlayer)
+    private val mInfoListener: OnInfoListener =
+        OnInfoListener { mp, what, extra ->
+            var handled = false
+            when (what) {
+                MEDIA_INFO_BUFFERING_START -> {
+                    Log.d(videoTag, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_START")
+                    if (videoViewCallback != null) {
+                        videoViewCallback!!.onBufferingStart(mMediaPlayer)
+                    }
+                    mMediaController?.showLoading()
+                    handled = true
                 }
-                if (mMediaController != null) {
-                    mMediaController!!.showLoading()
+                MEDIA_INFO_BUFFERING_END -> {
+                    Log.d(videoTag, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_END")
+                    if (videoViewCallback != null) {
+                        videoViewCallback!!.onBufferingEnd(mMediaPlayer)
+                    }
+                    mMediaController?.hideLoading()
+                    handled = true
                 }
-                handled = true
+                else -> {}
             }
-            MediaPlayer.MEDIA_INFO_BUFFERING_END -> {
-                Log.d(videoTag, "onInfo MediaPlayer.MEDIA_INFO_BUFFERING_END")
-                if (videoViewCallback != null) {
-                    videoViewCallback!!.onBufferingEnd(mMediaPlayer)
-                }
-                if (mMediaController != null) {
-                    mMediaController!!.hideLoading()
-                }
-                handled = true
-            }
-            else -> {}
+            if (mOnInfoListener != null) {
+                mOnInfoListener!!.onInfo(mp, what, extra) || handled
+            } else handled
         }
-        if (mOnInfoListener != null) {
-            mOnInfoListener!!.onInfo(mp, what, extra) || handled
-        } else handled
-    }
-    private val mErrorListener = MediaPlayer.OnErrorListener { mp, frameworkErr, implErr ->
-        Log.d(videoTag, "Error: $frameworkErr,$implErr")
-        mCurrentState = CustomVideoView.Companion.STATE_ERROR
-        mTargetState = CustomVideoView.Companion.STATE_ERROR
-        if (mMediaController != null) {
-            mMediaController!!.showError()
+    private val mErrorListener: OnErrorListener =
+        OnErrorListener { mp, frameworkErr, implErr ->
+            Log.d(videoTag, "Error: $frameworkErr,$implErr")
+            mCurrentState = STATE_ERROR
+            mTargetState = STATE_ERROR
+            mMediaController?.showError()
+            mOnErrorListener!!.onError(mMediaPlayer, frameworkErr, implErr)
         }
-        mOnErrorListener!!.onError(mMediaPlayer, frameworkErr, implErr)
-    }
-    private val mBufferingUpdateListener =
+    private val mBufferingUpdateListener: OnBufferingUpdateListener =
         OnBufferingUpdateListener { mp, percent -> mCurrentBufferPercentage = percent }
 
     /**
@@ -439,7 +424,7 @@ class CustomVideoView @JvmOverloads constructor(
      *
      * @param l The callback that will be run
      */
-    fun setOnErrorListener(l: MediaPlayer.OnErrorListener?) {
+    fun setOnErrorListener(l: OnErrorListener?) {
         mOnErrorListener = l
     }
 
@@ -449,7 +434,7 @@ class CustomVideoView @JvmOverloads constructor(
      *
      * @param l The callback that will be run
      */
-    fun setOnInfoListener(l: MediaPlayer.OnInfoListener?) {
+    fun setOnInfoListener(l: OnInfoListener?) {
         mOnInfoListener = l
     }
 
@@ -460,7 +445,7 @@ class CustomVideoView @JvmOverloads constructor(
         ) {
             mSurfaceWidth = w
             mSurfaceHeight = h
-            val isValidState = mTargetState == CustomVideoView.Companion.STATE_PLAYING
+            val isValidState = mTargetState == STATE_PLAYING
             val hasValidSize = mVideoWidth == w && mVideoHeight == h
             if (mMediaPlayer != null && isValidState && hasValidSize) {
                 if (mSeekWhenPrepared != 0) {
@@ -479,7 +464,7 @@ class CustomVideoView @JvmOverloads constructor(
         override fun surfaceDestroyed(holder: SurfaceHolder) {
             // after we return from this we can't use the surface any more
             mSurfaceHolder = null
-            if (mMediaController != null) mMediaController!!.hide()
+            mMediaController?.hide()
             release(true)
             disableOrientationDetect()
         }
@@ -502,9 +487,7 @@ class CustomVideoView @JvmOverloads constructor(
     }
 
     private fun disableOrientationDetect() {
-        if (mOrientationDetector != null) {
-            mOrientationDetector!!.disable()
-        }
+        mOrientationDetector?.disable()
     }
 
     /*
@@ -515,9 +498,9 @@ class CustomVideoView @JvmOverloads constructor(
             mMediaPlayer!!.reset()
             mMediaPlayer!!.release()
             mMediaPlayer = null
-            mCurrentState = CustomVideoView.Companion.STATE_IDLE
+            mCurrentState = STATE_IDLE
             if (cleartargetstate) {
-                mTargetState = CustomVideoView.Companion.STATE_IDLE
+                mTargetState = STATE_IDLE
             }
         }
     }
@@ -573,10 +556,10 @@ class CustomVideoView @JvmOverloads constructor(
     }
 
     private fun toggleMediaControlsVisibility() {
-        if (mMediaController!!.isShowing) {
-            mMediaController!!.hide()
+        if (mMediaController?.isShowing == true) {
+            mMediaController?.hide()
         } else {
-            mMediaController!!.show()
+            mMediaController?.show()
         }
     }
 
@@ -586,23 +569,23 @@ class CustomVideoView @JvmOverloads constructor(
         }
         if (isInPlaybackState) {
             mMediaPlayer!!.start()
-            mCurrentState = CustomVideoView.Companion.STATE_PLAYING
+            mCurrentState = STATE_PLAYING
             if (videoViewCallback != null) {
                 videoViewCallback!!.onStart(mMediaPlayer)
             }
         }
-        mTargetState = CustomVideoView.Companion.STATE_PLAYING
+        mTargetState = STATE_PLAYING
     }
 
     override fun pause() {
         if (isInPlaybackState && mMediaPlayer!!.isPlaying) {
             mMediaPlayer!!.pause()
-            mCurrentState = CustomVideoView.Companion.STATE_PAUSED
+            mCurrentState = STATE_PAUSED
             if (videoViewCallback != null) {
                 videoViewCallback!!.onPause(mMediaPlayer)
             }
         }
-        mTargetState = CustomVideoView.Companion.STATE_PAUSED
+        mTargetState = STATE_PAUSED
     }
 
     fun suspend() {
@@ -613,17 +596,16 @@ class CustomVideoView @JvmOverloads constructor(
         openVideo()
     }
 
-    override fun getDuration(): Int {
-        return if (isInPlaybackState) {
+    override val duration: Int
+        get() = if (isInPlaybackState) {
             mMediaPlayer!!.duration
         } else -1
-    }
-
-    override fun getCurrentPosition(): Int {
-        return if (isInPlaybackState) {
-            mMediaPlayer!!.currentPosition
-        } else 0
-    }
+    override val currentPosition: Int
+        get() {
+            return if (isInPlaybackState) {
+                mMediaPlayer!!.currentPosition
+            } else 0
+        }
 
     override fun seekTo(msec: Int) {
         mSeekWhenPrepared = if (isInPlaybackState) {
@@ -634,18 +616,19 @@ class CustomVideoView @JvmOverloads constructor(
         }
     }
 
-    override fun isPlaying(): Boolean {
-        return isInPlaybackState && mMediaPlayer!!.isPlaying
-    }
-
-    override fun getBufferPercentage(): Int {
-        return if (mMediaPlayer != null) {
-            mCurrentBufferPercentage
-        } else 0
-    }
-
+    override val isPlaying: Boolean
+        get() = isInPlaybackState && mMediaPlayer!!.isPlaying
+    override val bufferPercentage: Int
+        get() {
+            return if (mMediaPlayer != null) {
+                mCurrentBufferPercentage
+            } else 0
+        }
     private val isInPlaybackState: Boolean
-        private get() = mMediaPlayer != null && mCurrentState != CustomVideoView.Companion.STATE_ERROR && mCurrentState != CustomVideoView.Companion.STATE_IDLE && mCurrentState != CustomVideoView.Companion.STATE_PREPARING
+        private get() = ((mMediaPlayer != null) && (
+                mCurrentState != STATE_ERROR) && (
+                mCurrentState != STATE_IDLE) && (
+                mCurrentState != STATE_PREPARING))
 
     override fun canPause(): Boolean {
         return mCanPause

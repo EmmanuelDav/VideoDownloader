@@ -182,7 +182,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
             }
 
             override fun shortcutRemoveClick(shortcutTable: ShortcutTable?) {
-                AppExecutors.instance.diskIO().execute {
+                AppExecutors.instance!!.diskIO().execute {
                     ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.delete(shortcutTable)
                 }
             }
@@ -304,7 +304,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                     return;
                 }*/mBottomSheetDialog.dismiss()
                 val finalStrURL: String = strURL
-                AppExecutors.instance.diskIO().execute {
+                AppExecutors.instance!!.diskIO().execute {
                     ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(ShortcutTable(R.drawable.ic_default, strName, finalStrURL))
                 }
             }
@@ -313,7 +313,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     }
 
     private fun insertDefaultShortcut() {
-        AppExecutors.instance.diskIO().execute {
+        AppExecutors.instance!!.diskIO().execute {
             ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
                 ShortcutTable(
                     R.drawable.ic_add_shortcut,
@@ -529,7 +529,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                 override fun shortcutRemoveClick(shortcutTable: ShortcutTable?) {}
             })
         rvShortcut.adapter = shortcutAdapter
-        AppExecutors.instance.diskIO().execute {
+        AppExecutors.instance!!.diskIO().execute {
             val shortcutTableList: List<ShortcutTable?>? =
                 ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao().allShortcutList
             if (shortcutTableList != null && shortcutAdapter != null) shortcutAdapter.shortcutArrayList = shortcutTableList as List<ShortcutTable>

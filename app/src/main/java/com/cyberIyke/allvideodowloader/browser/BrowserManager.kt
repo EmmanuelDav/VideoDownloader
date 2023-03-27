@@ -75,11 +75,6 @@ class BrowserManager constructor(private val activity: Activity) : BaseFragment(
         allWindows.adapter = AllWindowsAdapter()
         cardWindowTab = relativeLayout.findViewById(R.id.cardWindowTab)
         browserTabAdapter = BrowserTabAdapter(getActivity())
-        cardWindowTab.ItemExpendListener(object : ItemExpendListener {
-            override fun onItemExpend(expend: Boolean) {
-
-            }
-        })
         cardWindowTab.setAdapter(browserTabAdapter)
         val file: File = File(requireActivity().filesDir, "ad_filters.dat")
         try {

@@ -74,12 +74,12 @@ class AllDownloadFragment : Fragment() {
         downloadsList.layoutManager = LinearLayoutManager(activity)
         downloadsList.adapter = downloadAdapter
         llSelectAll = view!!.findViewById(R.id.llSelectAll)
-        llDeleteSelected = view.findViewById(R.id.llDeleteSelected)
-        imgCancel = view.findViewById(R.id.imgCancel)
-        txtSelectedCount = view.findViewById(R.id.txtSelectedCount)
-        rlTopSelected = view.findViewById(R.id.rlTopSelected)
-        llBottom = view.findViewById(R.id.llBottom)
-        imgCast = view.findViewById(R.id.imgCast)
+        llDeleteSelected = view!!.findViewById(R.id.llDeleteSelected)
+        imgCancel = view!!.findViewById(R.id.imgCancel)
+        txtSelectedCount = view!!.findViewById(R.id.txtSelectedCount)
+        rlTopSelected = view!!.findViewById(R.id.rlTopSelected)
+        llBottom = view!!.findViewById(R.id.llBottom)
+        imgCast = view!!.findViewById(R.id.imgCast)
         imgCast.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View?) {
                 enablingWiFiDisplay()
@@ -160,8 +160,11 @@ class AllDownloadFragment : Fragment() {
             }
         }
         LocalBroadcastManager.getInstance(requireContext())
-            .registerReceiver(progressReceiver as BroadcastReceiver, IntentFilter("DOWNLOAD_PROGRESS"))
-        return view
+            .registerReceiver(
+                progressReceiver as BroadcastReceiver,
+                IntentFilter("DOWNLOAD_PROGRESS")
+            )
+        return view!!
     }
 
     fun unSelectAll() {
@@ -288,7 +291,8 @@ class AllDownloadFragment : Fragment() {
                 val file: File = tempFile
                 Glide.with((activity)!!).load(downloadData.download!!.downloadedPath)
                     .into(holder.imgVideo)
-                val strRename: String? = renameVideoPref.getString(downloadData.download!!.id.toString(), "")
+                val strRename: String? =
+                    renameVideoPref.getString(downloadData.download!!.id.toString(), "")
                 if (strRename!!.isNotEmpty()) {
                     val desFile: File = File(strRename)
                     if (desFile.exists()) {

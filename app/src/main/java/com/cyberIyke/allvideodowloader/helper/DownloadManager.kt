@@ -8,7 +8,7 @@ import android.os.Environment
 import android.util.Log
 import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.R
-import com.cyberIyke.allvideodowloader.helperimport.CompletedVideos
+import com.cyberIyke.allvideodowloader.helper.CompletedVideos
 import java.io.*
 import java.net.URL
 import java.net.URLConnection
