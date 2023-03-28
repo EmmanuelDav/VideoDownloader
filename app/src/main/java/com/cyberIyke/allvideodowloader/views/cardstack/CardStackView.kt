@@ -1,4 +1,4 @@
-package com.kunkunapp.allvideodowloader.views.cardstack
+package com.cyberIyke.allvideodowloader.views.cardstack
 
 import android.annotation.TargetApi
 import android.content.Context
@@ -10,8 +10,8 @@ import android.view.*
 import android.view.View.OnClickListener
 import android.widget.OverScroller
 import com.cyberIyke.allvideodowloader.R
+import com.cyberIyke.allvideodowloader.browser.BrowserWindow
 import com.cyberIyke.allvideodowloader.views.cardstack.*
-import com.kunkunapp.allvideodowloader.R
 
 class CardStackView : ViewGroup, ScrollDelegate {
     var totalLength = 0
@@ -19,7 +19,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
     var overlapGaps = 0
     var overlapGapsCollapse = 0
     var numBottomShow = 0
-    private var mStackAdapter: StackAdapter? = null
+    private var mStackAdapter: StackAdapter<BrowserWindow>? = null
     private val mObserver: ViewDataObserver = ViewDataObserver()
     private var mSelectPosition = DEFAULT_SELECT_POSITION
     var showHeight = 0
@@ -179,9 +179,9 @@ class CardStackView : ViewGroup, ScrollDelegate {
         requestLayout()
     }
 
-    fun setAdapter(stackAdapter: StackAdapter) {
+    fun setAdapter(stackAdapter: StackAdapter<BrowserWindow>) {
         mStackAdapter = stackAdapter
-        mStackAdapter.registerObserver(mObserver)
+        mStackAdapter!!.registerObserver(mObserver)
         refreshView()
     }
 
@@ -208,13 +208,13 @@ class CardStackView : ViewGroup, ScrollDelegate {
     private fun refreshView() {
         removeAllViews()
         mViewHolders!!.clear()
-        for (i in 0 until mStackAdapter.getItemCount()) {
+        for (i in 0 until mStackAdapter!!.itemCount) {
             val holder = getViewHolder(i)
             holder!!.position = i
             holder.onItemExpand(i == mSelectPosition)
             addView(holder.itemView)
             setClickAnimator(holder, i)
-            mStackAdapter.bindViewHolder(holder, i)
+            mStackAdapter!!.bindViewHolder(holder, i)
         }
         requestLayout()
     }
@@ -222,11 +222,11 @@ class CardStackView : ViewGroup, ScrollDelegate {
     fun getViewHolder(i: Int): ViewHolder? {
         if (i == DEFAULT_SELECT_POSITION) return null
         val viewHolder: ViewHolder
-        if (mViewHolders!!.size <= i || mViewHolders!![i].mItemViewType != mStackAdapter.getItemViewType(
+        if (mViewHolders!!.size <= i || mViewHolders!![i].mItemViewType != mStackAdapter!!.getItemViewType(
                 i
             )
         ) {
-            viewHolder = mStackAdapter.createView(this, mStackAdapter.getItemViewType(i))
+            viewHolder = mStackAdapter!!.createView(this, mStackAdapter!!.getItemViewType(i))!!
             mViewHolders!!.add(viewHolder)
         } else {
             viewHolder = mViewHolders!![i]
@@ -261,7 +261,9 @@ class CardStackView : ViewGroup, ScrollDelegate {
 
     private fun doCardClickAnimation(viewHolder: ViewHolder?, position: Int) {
         checkContentHeightByParent()
-        mAnimatorAdapter.itemClick(viewHolder, position)
+        if (viewHolder != null) {
+            mAnimatorAdapter?.itemClick(viewHolder, position)
+        }
     }
 
     private fun initOrResetVelocityTracker() {
@@ -297,7 +299,6 @@ class CardStackView : ViewGroup, ScrollDelegate {
             MotionEvent.ACTION_MOVE -> {
                 val activePointerId = mActivePointerId
                 if (activePointerId == INVALID_POINTER) {
-                    break
                 }
                 val pointerIndex = ev.findPointerIndex(activePointerId)
                 if (pointerIndex == -1) {
@@ -305,7 +306,6 @@ class CardStackView : ViewGroup, ScrollDelegate {
                         TAG, "Invalid pointerId=" + activePointerId
                                 + " in onInterceptTouchEvent"
                     )
-                    break
                 }
                 val y = ev.getY(pointerIndex).toInt()
                 val yDiff = Math.abs(y - mLastMotionY)
@@ -379,7 +379,6 @@ class CardStackView : ViewGroup, ScrollDelegate {
                         TAG,
                         "Invalid pointerId=$mActivePointerId in onTouchEvent"
                     )
-                    break
                 }
                 val y = ev.getY(activePointerIndex).toInt()
                 var deltaY = mLastMotionY - y
@@ -663,7 +662,7 @@ class CardStackView : ViewGroup, ScrollDelegate {
             get() = itemView.context
 
         abstract fun onItemExpand(b: Boolean)
-        protected fun onAnimationStateChange(state: Int, willBeSelect: Boolean) {}
+        fun onAnimationStateChange(state: Int, willBeSelect: Boolean) {}
     }
 
     class AdapterDataObservable :

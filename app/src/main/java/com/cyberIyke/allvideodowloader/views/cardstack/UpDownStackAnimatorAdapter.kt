@@ -52,7 +52,7 @@ class UpDownStackAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapte
                 if (childTop - mCardStackView.scrollDelegate!!.viewScrollY < mCardStackView.getChildAt(
                         0
                     ).y
-                ) mCardStackView.getChildAt(0).y else childTop - mCardStackView.scrollDelegate!!.viewScrollY
+                ) mCardStackView.getChildAt(0).y.toFloat() else childTop - mCardStackView.scrollDelegate!!.viewScrollY.toFloat()
             )
             mSet!!.play(oAnim)
             childTop += lp.mHeaderHeight

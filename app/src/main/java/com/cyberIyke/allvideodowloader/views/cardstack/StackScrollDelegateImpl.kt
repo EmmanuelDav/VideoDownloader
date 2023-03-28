@@ -1,13 +1,21 @@
 package com.cyberIyke.allvideodowloader.views.cardstack
 
-class StackScrollDelegateImpl(private val mCardStackView: CardStackView) : ScrollDelegate {
+import android.view.View
+
+class StackScrollDelegateImpl(cardStackView: CardStackView) : ScrollDelegate {
+    private val mCardStackView: CardStackView
     private var mScrollY = 0
     private var mScrollX = 0
+
+    init {
+        mCardStackView = cardStackView
+    }
+
     private fun updateChildPos() {
-        for (i in 0 until mCardStackView.childCount) {
-            val view = mCardStackView.getChildAt(i)
-            if (view.top - mScrollY < mCardStackView.getChildAt(0).y) {
-                view.translationY = mCardStackView.getChildAt(0).y - view.top
+        for (i in 0 until mCardStackView.getChildCount()) {
+            val view: View = mCardStackView.getChildAt(i)
+            if (view.top - mScrollY < mCardStackView.getChildAt(0).getY()) {
+                view.translationY = mCardStackView.getChildAt(0).getY() - view.top
             } else if (view.top - mScrollY > view.top) {
                 view.translationY = 0f
             } else {
@@ -21,8 +29,8 @@ class StackScrollDelegateImpl(private val mCardStackView: CardStackView) : Scrol
         var y = y
         x = clamp(
             x,
-            mCardStackView.width - mCardStackView.paddingRight - mCardStackView.paddingLeft,
-            mCardStackView.width
+            mCardStackView.getWidth() - mCardStackView.getPaddingRight() - mCardStackView.getPaddingLeft(),
+            mCardStackView.getWidth()
         )
         y = clamp(y, mCardStackView.showHeight, mCardStackView.totalLength)
         mScrollY = y
@@ -30,21 +38,16 @@ class StackScrollDelegateImpl(private val mCardStackView: CardStackView) : Scrol
         updateChildPos()
     }
 
-    override fun setViewScrollY(y: Int) {
-        scrollViewTo(mScrollX, y)
-    }
-
-    override fun setViewScrollX(x: Int) {
-        scrollViewTo(x, mScrollY)
-    }
-
-    override fun getViewScrollY(): Int {
-        return mScrollY
-    }
-
-    override fun getViewScrollX(): Int {
-        return mScrollX
-    }
+    override var viewScrollY: Int
+        get() = mScrollY
+        set(y) {
+            scrollViewTo(mScrollX, y)
+        }
+    override var viewScrollX: Int
+        get() = mScrollX
+        set(x) {
+            scrollViewTo(x, mScrollY)
+        }
 
     companion object {
         private fun clamp(n: Int, my: Int, child: Int): Int {

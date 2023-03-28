@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
     private lateinit var searchTextBar: EditText
     lateinit var browserManager: BrowserManager
-    private lateinit var appLinkData: Uri
+    private var appLinkData: Uri ? = null
     private lateinit var manager: FragmentManager
     lateinit var navView: BottomNavigationView
     lateinit var badge: Badge
@@ -105,9 +105,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         activity = this
         transStatusBar(true)
         val appLinkIntent: Intent = intent
-        appLinkData = appLinkIntent.data!!
+        appLinkData = appLinkIntent.data
         manager = supportFragmentManager
-        // This is for creating browser manager fragment
         supportFragmentManager.findFragmentByTag("BM")?.let { fragment ->
             browserManager = fragment as BrowserManager
         } ?: run {
@@ -190,64 +189,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         rvShortcut.layoutManager = GridLayoutManager(this, 4)
         rvShortcut.adapter = shortcutAdapter
         fetchShortcut()
-        FetchConfiguration.Builder(this)
-            .setDownloadConcurrentLimit(3)
-            .build()
-        fetch!!.getDownloads { }.addListener(object : FetchListener {
-            override fun onAdded(download: Download) {}
-            override fun onQueued(download: Download, b: Boolean) {}
-            override fun onWaitingNetwork(download: Download) {}
-            override fun onCompleted(download: Download) {
-                if (isFinishing || isDestroyed) return
-                try {
-                    val file: File = File(download.file)
-                    MediaScannerConnection.scanFile(this@MainActivity,
-                        arrayOf(file.toString()),
-                        null,
-                        object : OnScanCompletedListener {
-                            override fun onScanCompleted(path: String?, uri: Uri?) {}
-                        })
-                    val customSnackView: View = layoutInflater.inflate(
-                        R.layout.toast_success_download,
-                        activity!!.findViewById<View>(R.id.toast_layout_root) as ViewGroup?
-                    )
-                    val txtTitle: TextView = customSnackView.findViewById(R.id.txtTitle)
-                    txtTitle.text = file.name
-                    val txtPlay: TextView = customSnackView.findViewById(R.id.txtPlay)
-                    txtPlay.setOnClickListener(object : View.OnClickListener {
-                        override fun onClick(v: View?) {
-                            openFile(file)
-                        }
-                    })
-                    val snackbar: Snackbar = Snackbar.make((navView), "", Snackbar.LENGTH_LONG)
-                    snackbar.view.setBackgroundColor(Color.TRANSPARENT)
-                    val snackbarLayout: SnackbarLayout = snackbar.view as SnackbarLayout
-                    snackbarLayout.addView(customSnackView, 0)
-                    snackbar.show()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            override fun onError(download: Download, error: Error, throwable: Throwable?) {}
-            override fun onDownloadBlockUpdated(
-                download: Download,
-                downloadBlock: DownloadBlock,
-                i: Int
-            ) {
-            }
-
-            override fun onStarted(
-                download: Download,
-                downloadBlocks: List<DownloadBlock>,
-                i: Int
-            ) {}
-            override fun onProgress(download: Download, l: Long, l1: Long) {}
-            override fun onPaused(download: Download) {}
-            override fun onResumed(download: Download) {}
-            override fun onCancelled(download: Download) {}
-            override fun onRemoved(download: Download) {}
-            override fun onDeleted(download: Download) {}
-        })
     }
 
     fun openFile(file: File?) {

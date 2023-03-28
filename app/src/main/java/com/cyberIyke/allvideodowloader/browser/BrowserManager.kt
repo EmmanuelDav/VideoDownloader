@@ -25,22 +25,20 @@ import com.cyberIyke.allvideodowloader.database.ShortcutTable
 import com.cyberIyke.allvideodowloader.fragments.base.BaseFragment
 import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.ShortcutListner
-import com.cyberIyke.allvideodowloader.utils.ThemeSettings.Companion.getInstance
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getBaseDomain
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.hideSoftKeyboard
 import com.cyberIyke.allvideodowloader.views.Badge
 import com.cyberIyke.allvideodowloader.views.NotificationBadge
-import com.cyberIyke.allvideodowloader.views.cardstack.CardStackView
-import com.cyberIyke.allvideodowloader.views.cardstack.CardStackView.ItemExpendListener
 import com.cyberIyke.allvideodowloader.views.cardstack.StackAdapter
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.tonyodev.fetch2.Fetch.Impl.getInstance
+import com.cyberIyke.allvideodowloader.views.cardstack.CardStackView
 import java.io.*
 import java.util.*
 
-class BrowserManager constructor(private val activity: Activity) : BaseFragment() {
+class BrowserManager(private val activity: Activity) : BaseFragment() {
+
     private var adBlock: AdBlocker? = null
-    var windowsList: MutableList<BrowserWindow?>? = null
+    var windowsList: MutableList<BrowserWindow>? = null
     private var blockedWebsites: List<String?>? = null
     private lateinit var allWindows: RecyclerView
     private lateinit var llCloseAll: LinearLayout
@@ -81,18 +79,18 @@ class BrowserManager constructor(private val activity: Activity) : BaseFragment(
             if (file.exists()) {
                 Log.d("debug", "file exists")
                 val fileInputStream: FileInputStream = FileInputStream(file)
-                ObjectInputStream(fileInputStream).use({ objectInputStream ->
+                ObjectInputStream(fileInputStream).use ({ objectInputStream ->
                     adBlock = objectInputStream.readObject() as AdBlocker?
                 })
                 fileInputStream.close()
             } else {
                 adBlock = AdBlocker()
                 val fileOutputStream: FileOutputStream = FileOutputStream(file)
-                ObjectOutputStream(fileOutputStream).use({ objectOutputStream ->
+                ObjectOutputStream(fileOutputStream).use { objectOutputStream ->
                     objectOutputStream.writeObject(
                         adBlock
                     )
-                })
+                }
                 fileOutputStream.close()
             }
         } catch (ignored: IOException) {
@@ -261,7 +259,7 @@ class BrowserManager constructor(private val activity: Activity) : BaseFragment(
             }
             updateNumWindows()
             allWindows.adapter!!.notifyDataSetChanged()
-            browserTabAdapter.setData(windowsList)
+            browserTabAdapter.setData(windowsList!!)
             for (posWindow in windowsList!!.indices) {
                 val windowTemp: BrowserWindow? = windowsList!![posWindow]
                 windowTemp!!.onPause()
@@ -314,7 +312,7 @@ class BrowserManager constructor(private val activity: Activity) : BaseFragment(
             inputURLText.text.clear()
             baseActivity!!.setOnBackPressedListener(null)
         }
-        browserTabAdapter.setData(windowsList)
+        browserTabAdapter.setData(windowsList!!)
         updateNumWindows()
     }
 
@@ -332,7 +330,7 @@ class BrowserManager constructor(private val activity: Activity) : BaseFragment(
         }
         windowsList!!.clear()
         allWindows.adapter!!.notifyDataSetChanged()
-        browserTabAdapter.setData(windowsList)
+        browserTabAdapter.setData(windowsList!!)
         updateNumWindows()
     }
 
@@ -403,7 +401,7 @@ class BrowserManager constructor(private val activity: Activity) : BaseFragment(
         }
         val window: BrowserWindow? = windowsList!![index]
         windowsList!!.removeAt(index)
-        windowsList!!.add(window)
+        windowsList!!.add(window!!)
         if (window!!.view != null) {
             window.requireView().visibility = View.VISIBLE
             baseActivity!!.setOnBackPressedListener(window)
@@ -421,7 +419,7 @@ class BrowserManager constructor(private val activity: Activity) : BaseFragment(
             }
         }, 500)
         allWindows.adapter!!.notifyDataSetChanged()
-        browserTabAdapter.setData(windowsList)
+        browserTabAdapter.setData(windowsList!!)
     }
 
     inner class BrowserTabAdapter constructor(context: Context?) :
