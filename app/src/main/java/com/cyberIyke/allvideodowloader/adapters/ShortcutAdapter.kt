@@ -1,11 +1,17 @@
 package com.cyberIyke.allvideodowloader.adapters
 
-import android.content.*
-import android.graphics.*
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
 import android.view.View.OnLongClickListener
-import android.widget.*
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -15,8 +21,15 @@ import com.cyberIyke.allvideodowloader.database.ShortcutTable
 import com.cyberIyke.allvideodowloader.interfaces.ShortcutListner
 
 class ShortcutAdapter constructor(var context: Context, var shortcutListner: ShortcutListner?) :RecyclerView.Adapter<ShortcutAdapter.ViewHolder>() {
-    var shortcutArrayList: List<ShortcutTable> = ArrayList()
+   private var shortcutArrayList: List<ShortcutTable> = ArrayList()
+
     var selectionMode: Boolean = false
+
+
+    fun setShortcutArrayList(shortcutArrayList: List<ShortcutTable>) {
+        this.shortcutArrayList = shortcutArrayList
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShortcutAdapter.ViewHolder {
         val view = LayoutInflater.from(context).inflate(R.layout.item_shortcut, parent, false)

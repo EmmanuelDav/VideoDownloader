@@ -28,13 +28,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cyberIyke.allvideodowloader.BuildConfig
 import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.R
+import com.cyberIyke.allvideodowloader.adapters.ShortcutAdapter
+import com.cyberIyke.allvideodowloader.adapters.SuggestionAdapter
 import com.cyberIyke.allvideodowloader.browser.BrowserManager
+import com.cyberIyke.allvideodowloader.database.AppDatabase
 import com.cyberIyke.allvideodowloader.database.AppExecutors
 import com.cyberIyke.allvideodowloader.database.ShortcutTable
 import com.cyberIyke.allvideodowloader.fragments.AllDownloadFragment
-import com.cyberIyke.allvideodowloader.adapters.ShortcutAdapter
-import com.cyberIyke.allvideodowloader.adapters.SuggestionAdapter
-import com.cyberIyke.allvideodowloader.database.AppDatabase
 import com.cyberIyke.allvideodowloader.fragments.SettingsFragment
 import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.ShortcutListner
@@ -52,17 +52,17 @@ import com.cyberIyke.allvideodowloader.webservice.SearchModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.gyf.immersionbar.ImmersionBar
-import com.tonyodev.fetch2.Fetch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 
+
 class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionListener {
 
     private lateinit var searchTextBar: EditText
     lateinit var browserManager: BrowserManager
-    private var appLinkData: Uri ? = null
+    private var appLinkData: Uri? = null
     private lateinit var manager: FragmentManager
     lateinit var navView: BottomNavigationView
     lateinit var badge: Badge
@@ -87,7 +87,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     var homeContainer: RelativeLayout? = null
     var suggestionAdapter: SuggestionAdapter? = null
     var isEnableSuggetion: Boolean = false
-    private var fetch: Fetch? = null
     var isDisableOnResume: Boolean = false
 
 
@@ -157,18 +156,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         }
         shortcutAdapter = ShortcutAdapter(this, object : ShortcutListner {
             override fun shortcutClick(shortcutTable: ShortcutTable?) {
-                if (shortcutTable != null) {
-                    if (shortcutTable.strTitle.equals(
-                            getString(R.string.add_shortcut),
-                            ignoreCase = true
-                        )
-                    ) {
-                        addShortcut()
-                    } else {
-                        isEnableSuggetion = false
-                        searchTextBar.setText(shortcutTable.strURL)
-                        browserManager.newWindow(shortcutTable.strURL)
-                    }
+                if (shortcutTable!!.strTitle.equals(
+                        getString(R.string.add_shortcut),
+                        ignoreCase = true
+                    )
+                ) {
+                    addShortcut()
+                } else {
+                    isEnableSuggetion = false
+                    searchTextBar.setText(shortcutTable.strURL)
+                    browserManager.newWindow(shortcutTable.strURL)
                 }
             }
 
@@ -204,7 +201,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     }
 
     fun addShortcut() {
-        val mBottomSheetDialog: BottomSheetDialog =
+        val mBottomSheetDialog =
             BottomSheetDialog(this@MainActivity, R.style.CustomBottomSheetDialogTheme)
         mBottomSheetDialog.setContentView(R.layout.dialog_add_shortcut)
         val edtName: EditText? = mBottomSheetDialog.findViewById(R.id.edtName)
@@ -235,7 +232,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                 /* if (!Patterns.WEB_URL.matcher(strURL).matches()) {
                     Toast.makeText(activity, "Please enter valid URL of website!", Toast.LENGTH_SHORT).show();
                     return;
-                }*/mBottomSheetDialog.dismiss()
+                }*/
+
+                mBottomSheetDialog.dismiss()
                 val finalStrURL: String = strURL
                 AppExecutors.instance!!.diskIO().execute {
                     AppDatabase.getDatabase(this@MainActivity).shortcutDao()
@@ -329,18 +328,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     }
 
     private fun fetchShortcut() {
-        AppDatabase.getDatabase(this).shortcutDao().allShortcut!!.observe(this, object : Observer<List<ShortcutTable?>?> {
-                override fun onChanged(shortcutTables: List<ShortcutTable?>?) {
-                    if (isFinishing || isDestroyed) return
-                    if (shortcutTables != null) {
-                        shortcutAdapter!!.shortcutArrayList = shortcutTables as List<ShortcutTable>
-                    }
-                }
-
+        AppDatabase.getDatabase(this).shortcutDao().allShortcut!!.observe(this,
+            Observer<List<ShortcutTable?>?> { shortcutTables ->
+                if (isFinishing || isDestroyed) return@Observer
+                shortcutAdapter!!.setShortcutArrayList(shortcutTables.filterNotNull())
             })
     }
 
-    fun onPopupButtonClick(button: View?) {
+    private fun onPopupButtonClick(button: View?) {
         val popup: PopupMenu = PopupMenu(this, button)
         popup.menuInflater.inflate(R.menu.menu_home, popup.menu)
         popup.setOnMenuItemClickListener { item ->
@@ -380,8 +375,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         val dialog = Dialog(this@MainActivity)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_add_tab)
-        val bottomNavigationView: BottomNavigationView = dialog.findViewById(R.id.bottomNavigationView)
-        bottomNavigationView.setOnNavigationItemSelectedListener(object : BottomNavigationView.OnNavigationItemSelectedListener {
+        val bottomNavigationView: BottomNavigationView =
+            dialog.findViewById(R.id.bottomNavigationView)
+        bottomNavigationView.setOnNavigationItemSelectedListener(object :
+            BottomNavigationView.OnNavigationItemSelectedListener {
             override fun onNavigationItemSelected(item: MenuItem): Boolean {
                 dialog.dismiss()
                 when (item.itemId) {
@@ -403,7 +400,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
             }
         })
         val badgeDialog: Badge = NotificationBadge.getBadge(bottomNavigationView, 2)
-        badgeDialog.number=badge.number
+        badgeDialog.number = badge.number
         badgeDialog.tabSelected(false)
         val howToUseBtn: ImageView = dialog.findViewById(R.id.howToUseBtn)
         howToUseBtn.setOnClickListener {
@@ -465,7 +462,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         AppExecutors.instance!!.diskIO().execute {
             val shortcutTableList: List<ShortcutTable?>? =
                 AppDatabase.getDatabase(this@MainActivity).shortcutDao().allShortcutList
-            if (shortcutTableList != null && shortcutAdapter != null) shortcutAdapter.shortcutArrayList = shortcutTableList as List<ShortcutTable>
+            if (shortcutTableList != null) shortcutAdapter.setShortcutArrayList(shortcutTableList.filterNotNull())
         }
         searchBtn.setOnClickListener {
             isDisableOnResume = true
@@ -569,11 +566,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
             }
 
             override fun afterTextChanged(s: Editable?) {
-                if (searchTextBar.text.toString().trim({ it <= ' ' }).isNotEmpty()) {
+                if (searchTextBar.text.toString().trim { it <= ' ' }.isNotEmpty()) {
                     val imm: InputMethodManager =
                         getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                     if (imm.isAcceptingText && isEnableSuggetion) {
-                        fetchSearchList(searchTextBar.text.toString().trim({ it <= ' ' }))
+                        fetchSearchList(searchTextBar.text.toString().trim { it <= ' ' })
                     }
                     isEnableSuggetion = true
                 } else {
@@ -586,7 +583,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         btnSearch.setOnClickListener(this)
     }
 
-    private var searchModelCall: Call<SearchModel?>?= null
+    private var searchModelCall: Call<SearchModel?>? = null
     private fun fetchSearchList(str: String) {
         if (searchModelCall != null) {
             searchModelCall!!.cancel()

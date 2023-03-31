@@ -208,8 +208,8 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
             })
         rvShortcut.adapter = shortcutAdapter
         AppExecutors.instance!!.diskIO().execute {
-            val shortcutTableList: List<ShortcutTable>? = AppDatabase.getDatabase(baseActivity!!)!!.shortcutDao().allShortcutList as List<ShortcutTable>?
-            if (shortcutTableList != null && shortcutAdapter != null) shortcutAdapter.shortcutArrayList = shortcutTableList
+            val shortcutTableList: List<ShortcutTable>? = AppDatabase.getDatabase(baseActivity!!).shortcutDao().allShortcutList as List<ShortcutTable>?
+            if (shortcutTableList != null && shortcutAdapter != null) shortcutAdapter.setShortcutArrayList(shortcutTableList)
         }
         searchBtn.setOnClickListener {
             baseActivity!!.isDisableOnResume = true
