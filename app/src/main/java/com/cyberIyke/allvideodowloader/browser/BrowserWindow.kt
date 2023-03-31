@@ -65,9 +65,7 @@ import kotlin.collections.HashSet
 class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(), View.OnClickListener, OnBackPressedListener, DialogListener {
 
     var url: String? = null
-
     private var mView: View? = null
-
     private var page: TouchableWebView? = null
     private var defaultSSLSF: SSLSocketFactory? = null
     private var videoFoundTV: FrameLayout? = null
@@ -119,11 +117,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         val guide: Dialog = Dialog((context)!!)
         guide.setContentView(R.layout.dialog_guide_download)
         val txtGotIt: TextView = guide.findViewById(R.id.txtGotIt)
-        txtGotIt.setOnClickListener(object : View.OnClickListener {
-            public override fun onClick(view: View) {
-                guide.dismiss()
-            }
-        })
+        txtGotIt.setOnClickListener { guide.dismiss() }
         guide.show()
         guide.getWindow()!!.setLayout(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -251,8 +245,8 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             imgDetacting = mView!!.findViewById(R.id.imgDetacting)
             val rotate: ObjectAnimator =
                 ObjectAnimator.ofFloat(imgDetacting, "rotation", 0f, 360f)
-            rotate.setDuration(1000)
-            rotate.setRepeatCount(999999999)
+            rotate.duration = 1000
+            rotate.repeatCount = 999999999
             rotate.start()
             createVideosFoundHUD()
             createVideosFoundTV()
@@ -263,10 +257,10 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
     }
 
     @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
-    public override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val fetchedUrls: MutableSet<String?> = HashSet()
         if (!loadedFirsTime) {
-            page!!.getSettings().setJavaScriptEnabled(true)
+            page!!.settings.javaScriptEnabled = true
             page!!.getSettings().setDomStorageEnabled(true)
             page!!.getSettings().setAllowUniversalAccessFromFileURLs(true)
             page!!.getSettings().setJavaScriptCanOpenWindowsAutomatically(true)
@@ -285,11 +279,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
                         dialog.setContentView(R.layout.dialog_youtube_not_supported)
                         val txtGotIt: TextView = dialog.findViewById(R.id.txtGotIt)
-                        txtGotIt.setOnClickListener(object : View.OnClickListener {
-                            public override fun onClick(v: View) {
-                                dialog.dismiss()
-                            }
-                        })
+                        txtGotIt.setOnClickListener { dialog.dismiss() }
                         dialog.show()
                         dialog.getWindow()!!
                             .setLayout(
@@ -340,15 +330,15 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     val viewUrl: String? = view.getUrl()
                     val title: String? = view.getTitle()
                     object : VideoContentSearch(activity!!, url, viewUrl!!, title) {
-                        public override fun onStartInspectingURL() {
+                        override fun onStartInspectingURL() {
                             disableSSLCertificateChecking()
                         }
 
-                        public override fun onFinishedInspectingURL(finishedAll: Boolean) {
+                        override fun onFinishedInspectingURL(finishedAll: Boolean) {
                             HttpsURLConnection.setDefaultSSLSocketFactory(defaultSSLSF)
                         }
 
-                        public override fun onVideoFound(
+                        override fun onVideoFound(
                             size: String?,
                             type: String?,
                             link: String,
@@ -387,7 +377,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     }.start()
                 }
 
-                public override fun shouldInterceptRequest(
+                override fun shouldInterceptRequest(
                     view: WebView,
                     url: String
                 ): WebResourceResponse? {
@@ -594,12 +584,12 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         Handler().postDelayed({ baseActivity!!.isDisableOnResume = false }, 500)
     }
 
-    public override fun setUserVisibleHint(isVisibleToUser: Boolean) {
+    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
         super.setUserVisibleHint(isVisibleToUser)
         visible = isVisibleToUser
     }
 
-    public override fun onOk(dialog: DownloadPathDialogFragment) {
+    override fun onOk(dialog: DownloadPathDialogFragment) {
         val path: String? = PreferenceManager.getDefaultSharedPreferences(context)
             .getString(getString(R.string.download_location_key), null)
         if (path == null) {

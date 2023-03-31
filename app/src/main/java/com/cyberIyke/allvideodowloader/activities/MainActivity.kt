@@ -87,7 +87,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     var homeContainer: RelativeLayout? = null
     var suggestionAdapter: SuggestionAdapter? = null
     var isEnableSuggetion: Boolean = false
-
     private var fetch: Fetch? = null
     var isDisableOnResume: Boolean = false
 
@@ -428,11 +427,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
             navView.selectedItemId = R.id.navHome
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 isEnableSuggetion = false
-                suggestionAdapter!!.resultList = null
+                suggestionAdapter!!.resultList(null)
                 WebConnect(edtSearch, this@MainActivity).connect()
             } else if (actionId == EditorInfo.IME_ACTION_GO) {
                 isEnableSuggetion = false
-                suggestionAdapter!!.resultList = null
+                suggestionAdapter!!.resultList(null)
                 WebConnect(edtSearch, this@MainActivity).connect()
             }
             false
@@ -545,7 +544,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                 isEnableSuggetion = false
                 searchTextBar.setText(str)
                 WebConnect(searchTextBar, this@MainActivity).connect()
-                suggestionAdapter!!.resultList = null
+                suggestionAdapter!!.resultList(null)
             }
         })
         rvSuggetion.layoutManager = LinearLayoutManager(this@MainActivity)
@@ -578,7 +577,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                     }
                     isEnableSuggetion = true
                 } else {
-                    suggestionAdapter!!.resultList = null
+                    suggestionAdapter!!.resultList(null)
                 }
             }
         }
@@ -592,7 +591,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         if (searchModelCall != null) {
             searchModelCall!!.cancel()
         }
-        suggestionAdapter!!.resultList = null
+        suggestionAdapter!!.resultList(null)
         Log.d(TAG, "fetchSearchList: $str")
         searchModelCall = RetrofitClient.instance.api.getSearchResult("json", 5, str)
         searchModelCall!!.enqueue(object : Callback<SearchModel?> {
@@ -607,15 +606,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                     val gossip: Gossip? = searchModel!!.gossip
                     val resultList: List<Result>? = gossip!!.results
                     if (searchTextBar.text.toString().trim { it <= ' ' }.isNotEmpty()) {
-                        suggestionAdapter!!.resultList = resultList
+                        suggestionAdapter!!.resultList(resultList)
                     } else {
-                        suggestionAdapter!!.resultList = null
+                        suggestionAdapter!!.resultList(null)
                     }
                 }
             }
 
             override fun onFailure(call: Call<SearchModel?>?, t: Throwable?) {
-                suggestionAdapter!!.resultList = null
+                suggestionAdapter!!.resultList(null)
             }
         })
     }
@@ -660,7 +659,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         when (view.id) {
             R.id.searchBtn -> {
                 isEnableSuggetion = false
-                suggestionAdapter!!.resultList = null
+                suggestionAdapter!!.resultList(null)
                 WebConnect(searchTextBar, this).connect()
             }
             else -> {}
@@ -675,11 +674,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         val handled: Boolean = false
         if (actionId == EditorInfo.IME_ACTION_SEARCH) {
             isEnableSuggetion = false
-            suggestionAdapter!!.resultList = null
+            suggestionAdapter!!.resultList(null)
             WebConnect(searchTextBar, this).connect()
         } else if (actionId == EditorInfo.IME_ACTION_GO) {
             isEnableSuggetion = false
-            suggestionAdapter!!.resultList = null
+            suggestionAdapter!!.resultList(null)
             WebConnect(searchTextBar, this).connect()
         }
         return handled
@@ -721,7 +720,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
     override fun onBackPressed() {
         if (suggestionAdapter!!.itemCount > 0) {
-            suggestionAdapter!!.resultList = null
+            suggestionAdapter!!.resultList(null)
             return
         }
         if (allDownloadFragment!!.isSelectedMode) {
@@ -743,7 +742,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
             MyApp.getInstance()!!.getOnBackPressedListener()!!.onBackpressed()
             browserManager.resumeCurrentWindow()
             navView.selectedItemId = R.id.navHome
-        } else if (manager.findFragmentByTag(MainActivity.Companion.SETTING) != null) {
+        } else if (manager.findFragmentByTag(SETTING) != null) {
             MyApp.getInstance()!!.getOnBackPressedListener()!!.onBackpressed()
             browserManager.resumeCurrentWindow()
             navView.visibility = View.VISIBLE
@@ -777,7 +776,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         }
     }
 
-    open interface OnBackPressedListener {
+    interface OnBackPressedListener {
         fun onBackpressed()
     }
 
@@ -808,13 +807,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     }
 
     fun settingsClicked() {
-        if (manager.findFragmentByTag(MainActivity.Companion.SETTING) == null) {
+        if (manager.findFragmentByTag(SETTING) == null) {
             transStatusBar(false)
             browserManager.hideCurrentWindow()
             browserManager.pauseCurrentWindow()
             navView.visibility = View.GONE
             manager.beginTransaction()
-                .add(R.id.mainContent, SettingsFragment(), MainActivity.Companion.SETTING).commit()
+                .add(R.id.mainContent, SettingsFragment(), SETTING)
+                .commit()
         }
     }
 

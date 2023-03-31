@@ -168,14 +168,14 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
                 baseActivity!!.isDisableOnResume = true
                 dialog.dismiss()
                 hideSoftKeyboard(baseActivity!!, edtSearch.windowToken)
-                baseActivity!!.navView.setSelectedItemId(R.id.navHome)
+                baseActivity!!.navView.selectedItemId = R.id.navHome
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                     baseActivity!!.isEnableSuggetion = false
-                    baseActivity!!.suggestionAdapter!!.resultList = null
+                    baseActivity!!.suggestionAdapter!!.resultList(null)
                     WebConnect(edtSearch, baseActivity!!).connect()
                 } else if (actionId == EditorInfo.IME_ACTION_GO) {
                     baseActivity!!.isEnableSuggetion = false
-                    baseActivity!!.suggestionAdapter!!.resultList = null
+                    baseActivity!!.suggestionAdapter!!.resultList(null)
                     WebConnect(edtSearch, baseActivity!!).connect()
                 }
                 return false

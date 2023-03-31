@@ -8,15 +8,25 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cyberIyke.allvideodowloader.R
 import com.cyberIyke.allvideodowloader.webservice.Result
 
-class SuggestionAdapter constructor(var suggetionListner: SuggetionListner?) : RecyclerView.Adapter<SuggestionAdapter.ViewHolder>() {
+class SuggestionAdapter constructor(var suggetionListner: SuggetionListner?) :
+    RecyclerView.Adapter<SuggestionAdapter.ViewHolder>() {
 
-    var resultList: List<Result>? = ArrayList()
+    private var resultList: List<Result>? = ArrayList()
+
+    fun resultList(resultList: List<Result>?) {
+        this.resultList = resultList
+        if (this.resultList == null) {
+            this.resultList = ArrayList()
+        }
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
     ): SuggestionAdapter.ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context)
+        return ViewHolder(
+            LayoutInflater.from(parent.context)
                 .inflate(R.layout.item_search_suggestion, parent, false)
         )
     }
