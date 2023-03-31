@@ -2,10 +2,14 @@ package com.cyberIyke.allvideodowloader.browser
 
 import android.app.Activity
 import android.app.Dialog
-import android.content.*
-import android.graphics.*
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.os.*
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.*
 import android.view.inputmethod.EditorInfo
@@ -16,11 +20,12 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.cyberIyke.allvideodowloader.MyApp.Companion.TAG
 import com.cyberIyke.allvideodowloader.R
 import com.cyberIyke.allvideodowloader.activities.IntroActivity
 import com.cyberIyke.allvideodowloader.adapters.ShortcutAdapter
+import com.cyberIyke.allvideodowloader.database.AppDatabase
 import com.cyberIyke.allvideodowloader.database.AppExecutors
-import com.cyberIyke.allvideodowloader.database.ShortcutAppDatabase
 import com.cyberIyke.allvideodowloader.database.ShortcutTable
 import com.cyberIyke.allvideodowloader.fragments.base.BaseFragment
 import com.cyberIyke.allvideodowloader.helper.WebConnect
@@ -29,11 +34,10 @@ import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getBaseDomain
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.hideSoftKeyboard
 import com.cyberIyke.allvideodowloader.views.Badge
 import com.cyberIyke.allvideodowloader.views.NotificationBadge
+import com.cyberIyke.allvideodowloader.views.cardstack.CardStackView
 import com.cyberIyke.allvideodowloader.views.cardstack.StackAdapter
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.cyberIyke.allvideodowloader.views.cardstack.CardStackView
 import java.io.*
-import java.util.*
 
 class BrowserManager(private val activity: Activity) : BaseFragment() {
 
@@ -74,18 +78,18 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
         cardWindowTab = relativeLayout.findViewById(R.id.cardWindowTab)
         browserTabAdapter = BrowserTabAdapter(getActivity())
         cardWindowTab.setAdapter(browserTabAdapter)
-        val file: File = File(requireActivity().filesDir, "ad_filters.dat")
+        val file = File(requireActivity().filesDir, "ad_filters.dat")
         try {
             if (file.exists()) {
                 Log.d("debug", "file exists")
-                val fileInputStream: FileInputStream = FileInputStream(file)
-                ObjectInputStream(fileInputStream).use ({ objectInputStream ->
-                    adBlock = objectInputStream.readObject() as AdBlocker?
-                })
+                val fileInputStream = FileInputStream(file)
+                ObjectInputStream(fileInputStream).use{ objectInputStream ->
+                    adBlock = objectInputStream.readObject() as AdBlocker
+                }
                 fileInputStream.close()
             } else {
                 adBlock = AdBlocker()
-                val fileOutputStream: FileOutputStream = FileOutputStream(file)
+                val fileOutputStream = FileOutputStream(file)
                 ObjectOutputStream(fileOutputStream).use { objectOutputStream ->
                     objectOutputStream.writeObject(
                         adBlock
@@ -95,6 +99,7 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
             }
         } catch (ignored: IOException) {
             //
+            Log.d(TAG, "onCreate: "+ignored.message)
         } catch (ignored: ClassNotFoundException) {
         }
         updateAdFilters()
@@ -113,7 +118,7 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
                 dialog.dismiss()
                 when (item.itemId) {
                     R.id.navHomeTab -> {
-                        baseActivity!!.navView.setSelectedItemId(R.id.navHome)
+                        baseActivity!!.navView.selectedItemId = R.id.navHome
                         return true
                     }
                     R.id.navDownloadTab -> {
@@ -203,7 +208,7 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
             })
         rvShortcut.adapter = shortcutAdapter
         AppExecutors.instance!!.diskIO().execute {
-            val shortcutTableList: List<ShortcutTable>? = ShortcutAppDatabase.getInstance(baseActivity!!)!!.shortcutDao().allShortcutList as List<ShortcutTable>?
+            val shortcutTableList: List<ShortcutTable>? = AppDatabase.getDatabase(baseActivity!!)!!.shortcutDao().allShortcutList as List<ShortcutTable>?
             if (shortcutTableList != null && shortcutAdapter != null) shortcutAdapter.shortcutArrayList = shortcutTableList
         }
         searchBtn.setOnClickListener {
@@ -245,7 +250,7 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
             data.putString("url", url)
             var window: BrowserWindow? = BrowserWindow(activity)
             window!!.arguments = data
-            fragmentManager!!.beginTransaction()
+            requireFragmentManager().beginTransaction()
                 .add(R.id.homeContainer, (window), null)
                 .commit()
             windowsList!!.add(window)
@@ -295,7 +300,7 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
     fun closeWindow(window: BrowserWindow?) {
         val inputURLText: EditText = baseActivity!!.findViewById(R.id.inputURLText)
         windowsList!!.remove(window)
-        fragmentManager!!.beginTransaction().remove((window)!!).commit()
+        requireFragmentManager().beginTransaction().remove((window)!!).commit()
         if (!windowsList!!.isEmpty()) {
             val topWindow: BrowserWindow? = windowsList!!.get(windowsList!!.size - 1)
             if (topWindow != null && topWindow.view != null) {
@@ -317,11 +322,11 @@ class BrowserManager(private val activity: Activity) : BaseFragment() {
     }
 
     fun closeAllWindow() {
-        if (!windowsList!!.isEmpty()) {
+        if (windowsList!!.isNotEmpty()) {
             val iterator: MutableIterator<BrowserWindow?> = windowsList!!.iterator()
             while (iterator.hasNext()) {
                 val window: BrowserWindow? = iterator.next()
-                fragmentManager!!.beginTransaction().remove((window)!!).commit()
+                requireFragmentManager().beginTransaction().remove((window)!!).commit()
                 iterator.remove()
             }
             baseActivity!!.setOnBackPressedListener(null)

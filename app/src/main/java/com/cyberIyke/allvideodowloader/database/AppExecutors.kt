@@ -35,13 +35,13 @@ class AppExecutors private constructor(
         val instance: AppExecutors?
             get() {
                 if (sInstance == null) {
-                    synchronized(LOCK, {
+                    synchronized(LOCK) {
                         sInstance = AppExecutors(
                             Executors.newSingleThreadExecutor(),
                             Executors.newFixedThreadPool(3),
                             MainThreadExecutor()
                         )
-                    })
+                    }
                 }
                 return sInstance
             }

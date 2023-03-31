@@ -5,8 +5,6 @@ import android.app.Dialog
 import android.content.*
 import android.graphics.*
 import android.graphics.drawable.ColorDrawable
-import android.media.MediaScannerConnection
-import android.media.MediaScannerConnection.OnScanCompletedListener
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -36,7 +34,7 @@ import com.cyberIyke.allvideodowloader.database.ShortcutTable
 import com.cyberIyke.allvideodowloader.fragments.AllDownloadFragment
 import com.cyberIyke.allvideodowloader.adapters.ShortcutAdapter
 import com.cyberIyke.allvideodowloader.adapters.SuggestionAdapter
-import com.cyberIyke.allvideodowloader.database.ShortcutAppDatabase
+import com.cyberIyke.allvideodowloader.database.AppDatabase
 import com.cyberIyke.allvideodowloader.fragments.SettingsFragment
 import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.ShortcutListner
@@ -53,15 +51,8 @@ import com.cyberIyke.allvideodowloader.webservice.RetrofitClient
 import com.cyberIyke.allvideodowloader.webservice.SearchModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.snackbar.Snackbar.SnackbarLayout
 import com.gyf.immersionbar.ImmersionBar
-import com.tonyodev.fetch2.Download
-import com.tonyodev.fetch2.Error
 import com.tonyodev.fetch2.Fetch
-import com.tonyodev.fetch2.FetchConfiguration
-import com.tonyodev.fetch2.FetchListener
-import com.tonyodev.fetch2core.DownloadBlock
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -99,6 +90,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
     private var fetch: Fetch? = null
     var isDisableOnResume: Boolean = false
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -182,7 +175,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
             override fun shortcutRemoveClick(shortcutTable: ShortcutTable?) {
                 AppExecutors.instance!!.diskIO().execute {
-                    ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.delete(shortcutTable)
+                    AppDatabase.getDatabase(this@MainActivity).shortcutDao().delete(shortcutTable)
                 }
             }
         })
@@ -246,7 +239,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
                 }*/mBottomSheetDialog.dismiss()
                 val finalStrURL: String = strURL
                 AppExecutors.instance!!.diskIO().execute {
-                    ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(ShortcutTable(R.drawable.ic_default, strName, finalStrURL))
+                    AppDatabase.getDatabase(this@MainActivity).shortcutDao()
+                        .insert(ShortcutTable(R.drawable.ic_default, strName, finalStrURL))
                 }
             }
         })
@@ -255,77 +249,77 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
 
     private fun insertDefaultShortcut() {
         AppExecutors.instance!!.diskIO().execute {
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_add_shortcut,
                     getString(R.string.add_shortcut),
                     ""
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_facebook,
                     getString(R.string.facebook),
                     "https://www.facebook.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_instagram_,
                     getString(R.string.instagram),
                     "https://www.instagram.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_linkedin,
                     getString(R.string.linkedin),
                     "https://www.linkedin.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_pinterest,
                     getString(R.string.pinterest),
                     "https://in.pinterest.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_tiktok,
                     getString(R.string.tiktok),
                     "https://www.tiktok.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_dailymotion,
                     getString(R.string.dailymotion),
                     "https://www.dailymotion.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_vimeo,
                     getString(R.string.vimeo),
                     "https://vimeo.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_buzz_video,
                     getString(R.string.buzz_video),
                     "https://www.buzzvideo.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_imdb,
                     getString(R.string.imdb),
                     "https://www.imdb.com/"
                 )
             )
-            ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao()!!.insert(
+            AppDatabase.getDatabase(this@MainActivity).shortcutDao().insert(
                 ShortcutTable(
                     R.drawable.ic_vlive,
                     getString(R.string.vlive),
@@ -336,7 +330,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     }
 
     private fun fetchShortcut() {
-        ShortcutAppDatabase.getInstance(this)!!.shortcutDao().allShortcut!!.observe(this, object : Observer<List<ShortcutTable?>?> {
+        AppDatabase.getDatabase(this).shortcutDao().allShortcut!!.observe(this, object : Observer<List<ShortcutTable?>?> {
                 override fun onChanged(shortcutTables: List<ShortcutTable?>?) {
                     if (isFinishing || isDestroyed) return
                     if (shortcutTables != null) {
@@ -472,7 +466,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         rvShortcut.adapter = shortcutAdapter
         AppExecutors.instance!!.diskIO().execute {
             val shortcutTableList: List<ShortcutTable?>? =
-                ShortcutAppDatabase.getInstance(this@MainActivity)!!.shortcutDao().allShortcutList
+                AppDatabase.getDatabase(this@MainActivity).shortcutDao().allShortcutList
             if (shortcutTableList != null && shortcutAdapter != null) shortcutAdapter.shortcutArrayList = shortcutTableList as List<ShortcutTable>
         }
         searchBtn.setOnClickListener {

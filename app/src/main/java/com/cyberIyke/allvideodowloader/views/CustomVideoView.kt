@@ -1,4 +1,4 @@
-package com.kunkunapp.allvideodowloader.views
+package com.cyberIyke.allvideodowloader.views
 
 import android.app.Activity
 import android.content.Context
@@ -15,7 +15,6 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.cyberIyke.allvideodowloader.R
 import com.cyberIyke.allvideodowloader.helper.OrientationDetector
-import com.cyberIyke.allvideodowloader.views.CustomMediaController
 import java.io.IOException
 
 class CustomVideoView @JvmOverloads constructor(

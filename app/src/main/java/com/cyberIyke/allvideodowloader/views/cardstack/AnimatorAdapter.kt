@@ -7,7 +7,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
 
 abstract class AnimatorAdapter(protected var mCardStackView: CardStackView) {
     protected var mSet: AnimatorSet? = null
-    protected fun initAnimatorSet() {
+    private fun initAnimatorSet() {
         mSet = AnimatorSet()
         mSet!!.interpolator = AccelerateDecelerateInterpolator()
         mSet!!.duration = duration.toLong()

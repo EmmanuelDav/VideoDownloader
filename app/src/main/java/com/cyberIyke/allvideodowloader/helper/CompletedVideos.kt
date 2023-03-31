@@ -5,11 +5,7 @@ import android.util.Log
 import java.io.*
 
 class CompletedVideos : Serializable {
-    val videos: ArrayList<String>
-
-    init {
-        videos = ArrayList()
-    }
+    val videos: ArrayList<String> = ArrayList()
 
     fun addVideo(context: Context, name: String) {
         videos.add(0, name)

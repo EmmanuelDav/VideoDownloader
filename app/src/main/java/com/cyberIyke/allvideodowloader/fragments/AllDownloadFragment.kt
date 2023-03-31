@@ -59,27 +59,27 @@ class AllDownloadFragment : Fragment() {
     lateinit var llSelectAll: LinearLayout
     lateinit var renameVideoPref: RenameVideoPref
     var progressReceiver: BroadcastReceiver? = null
-    private var view: View? = null
+    private var mView: View? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        view = inflater.inflate(R.layout.fragment_all_download, container, false)
+        mView = inflater.inflate(R.layout.fragment_all_download, container, false)
         downloadsViewModel = ViewModelProvider(this)[DownloadsViewModel::class.java]
         renameVideoPref = RenameVideoPref(requireActivity())
-        downloadsList = view!!.findViewById(R.id.downloadsList)
+        downloadsList = mView!!.findViewById(R.id.downloadsList)
         downloadAdapter = DownloadAdapter()
         downloadsList.layoutManager = LinearLayoutManager(activity)
         downloadsList.adapter = downloadAdapter
-        llSelectAll = view!!.findViewById(R.id.llSelectAll)
-        llDeleteSelected = view!!.findViewById(R.id.llDeleteSelected)
-        imgCancel = view!!.findViewById(R.id.imgCancel)
-        txtSelectedCount = view!!.findViewById(R.id.txtSelectedCount)
-        rlTopSelected = view!!.findViewById(R.id.rlTopSelected)
-        llBottom = view!!.findViewById(R.id.llBottom)
-        imgCast = view!!.findViewById(R.id.imgCast)
+        llSelectAll = mView!!.findViewById(R.id.llSelectAll)
+        llDeleteSelected = mView!!.findViewById(R.id.llDeleteSelected)
+        imgCancel = mView!!.findViewById(R.id.imgCancel)
+        txtSelectedCount = mView!!.findViewById(R.id.txtSelectedCount)
+        rlTopSelected = mView!!.findViewById(R.id.rlTopSelected)
+        llBottom = mView!!.findViewById(R.id.llBottom)
+        imgCast = mView!!.findViewById(R.id.imgCast)
         imgCast.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View?) {
                 enablingWiFiDisplay()
@@ -164,7 +164,7 @@ class AllDownloadFragment : Fragment() {
                 progressReceiver as BroadcastReceiver,
                 IntentFilter("DOWNLOAD_PROGRESS")
             )
-        return view!!
+        return mView!!
     }
 
     fun unSelectAll() {

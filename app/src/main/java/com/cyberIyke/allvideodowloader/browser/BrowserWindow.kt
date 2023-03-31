@@ -13,8 +13,6 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.media.MediaPlayer
-import android.media.MediaPlayer.OnPreparedListener
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -39,7 +37,6 @@ import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.R
 import com.cyberIyke.allvideodowloader.activities.MainActivity
 import com.cyberIyke.allvideodowloader.activities.MainActivity.OnBackPressedListener
-import com.cyberIyke.allvideodowloader.browser.BrowserWindow
 import com.cyberIyke.allvideodowloader.fragments.DownloadPathDialogFragment
 import com.cyberIyke.allvideodowloader.fragments.DownloadPathDialogFragment.DialogListener
 import com.cyberIyke.allvideodowloader.fragments.base.BaseFragment
@@ -57,21 +54,20 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
-import com.kunkunapp.allvideodowloader.views.CustomVideoView
+import com.cyberIyke.allvideodowloader.views.CustomVideoView
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import com.yausername.youtubedl_android.mapper.VideoInfo
-import java.io.IOException
 import java.util.*
-import java.util.function.Predicate
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLSocketFactory
 import kotlin.collections.HashSet
 
-class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(),
-    View.OnClickListener, OnBackPressedListener, DialogListener {
+class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(), View.OnClickListener, OnBackPressedListener, DialogListener {
+
     var url: String? = null
-        private set
-    private var view: View? = null
+
+    private var mView: View? = null
+
     private var page: TouchableWebView? = null
     private var defaultSSLSF: SSLSocketFactory? = null
     private var videoFoundTV: FrameLayout? = null
@@ -87,12 +83,15 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
     private var blockedWebsites: List<String?>? = null
     private var dialog: BottomSheetDialog? = null
     private val mInterstitialAd: InterstitialAd? = null
-    private var context: Context? = null
-    private var isVisible: Boolean = false
+    private var visible: Boolean = false
     private var viewModel: VidInfoViewModel? = null
     private var downloadsViewModel: DownloadsViewModel? = null
+
+
+    override fun getContext(): Context = requireContext()
+
     var mVideoInfo: VideoInfo? = null
-    public override fun onClick(v: View) {
+    override fun onClick(v: View) {
         if (v === videosFoundHUD) {
             if (videoList != null) {
                 XXPermissions.with(activity)
@@ -120,7 +119,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
     }
 
     private fun showGuide() {
-        val guide: Dialog = Dialog((getContext())!!)
+        val guide: Dialog = Dialog((context)!!)
         guide.setContentView(R.layout.dialog_guide_download)
         val txtGotIt: TextView = guide.findViewById(R.id.txtGotIt)
         txtGotIt.setOnClickListener(object : View.OnClickListener {
@@ -136,28 +135,27 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         guide.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
     }
 
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val data: Bundle? = getArguments()
+        val data: Bundle? = arguments
         url = data!!.getString("url")
         defaultSSLSF = HttpsURLConnection.getDefaultSSLSocketFactory()
-        blockedWebsites = Arrays.asList(*getResources().getStringArray(R.array.blocked_sites))
+        blockedWebsites = Arrays.asList(*resources.getStringArray(R.array.blocked_sites))
         setRetainInstance(true)
-        context = getContext()
     }
 
     private fun createVideosFoundTV() {
-        videoFoundTV = view!!.findViewById(R.id.videoFoundTV)
-        videoFoundView = view!!.findViewById(R.id.videoFoundView)
+        videoFoundTV = mView!!.findViewById(R.id.videoFoundTV)
+        videoFoundView = mView!!.findViewById(R.id.videoFoundView)
         val mediaFoundController: CustomMediaController =
-            view!!.findViewById(R.id.mediaFoundController)
+            mView!!.findViewById(R.id.mediaFoundController)
         mediaFoundController.setFullscreenEnabled()
         videoFoundView!!.setMediaController(mediaFoundController)
         videoFoundTV!!.visibility = View.GONE
     }
 
     private fun createVideosFoundHUD() {
-        videosFoundHUD = view!!.findViewById(R.id.videosFoundHUD)
+        videosFoundHUD = mView!!.findViewById(R.id.videosFoundHUD)
         videosFoundHUD!!.setOnClickListener(this)
     }
 
@@ -230,30 +228,30 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        if (view == null || resources.configuration.orientation != orientation) {
+        if (mView == null || resources.configuration.orientation != orientation) {
             var visibility: Int = View.VISIBLE
-            if (view != null) {
+            if (mView != null) {
                 visibility = requireView().visibility
             }
-            view = inflater.inflate(R.layout.browser_lay, container, false)
+            mView = inflater.inflate(R.layout.browser_lay, container, false)
             viewModel = ViewModelProvider(this)[VidInfoViewModel::class.java]
             downloadsViewModel = ViewModelProvider(this).get(
                 DownloadsViewModel::class.java
             )
-            requireView().visibility = visibility
+            mView!!.visibility = visibility
             if (page == null) {
                 page = requireView().findViewById(R.id.page)
             } else {
-                val page1: View = view!!.findViewById(R.id.page)
-                (view as ViewGroup?)!!.removeView(page1)
+                val page1: View = mView!!.findViewById(R.id.page)
+                (mView as ViewGroup?)!!.removeView(page1)
                 (page!!.getParent() as ViewGroup).removeView(page)
-                (view as ViewGroup?)!!.addView(page)
-                (view as ViewGroup?)!!.bringChildToFront(view!!.findViewById(R.id.videosFoundHUD))
-                (view as ViewGroup?)!!.bringChildToFront(view!!.findViewById(R.id.foundVideosWindow))
+                (mView as ViewGroup?)!!.addView(page)
+                (mView as ViewGroup?)!!.bringChildToFront(mView!!.findViewById(R.id.videosFoundHUD))
+                (mView as ViewGroup?)!!.bringChildToFront(mView!!.findViewById(R.id.foundVideosWindow))
             }
-            loadingPageProgress = view!!.findViewById(R.id.loadingPageProgress)
+            loadingPageProgress = mView!!.findViewById(R.id.loadingPageProgress)
             loadingPageProgress!!.setVisibility(View.GONE)
-            imgDetacting = view!!.findViewById(R.id.imgDetacting)
+            imgDetacting = mView!!.findViewById(R.id.imgDetacting)
             val rotate: ObjectAnimator =
                 ObjectAnimator.ofFloat(imgDetacting, "rotation", 0f, 360f)
             rotate.setDuration(1000)
@@ -264,7 +262,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             createFoundVideosWindow()
             webViewLightDark()
         }
-        return view
+        return mView
     }
 
     @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
@@ -547,7 +545,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             })
         } else {
             requireActivity().runOnUiThread {
-                Glide.with((activity!!))
+                Glide.with((requireActivity()))
                     .load(R.drawable.ic_download_dis)
                     .into((videosFoundHUD)!!)
                 if (foundVideosWindow!!.getVisibility() == View.VISIBLE) foundVideosWindow!!.setVisibility(
@@ -603,7 +601,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
 
     public override fun setUserVisibleHint(isVisibleToUser: Boolean) {
         super.setUserVisibleHint(isVisibleToUser)
-        isVisible = isVisibleToUser
+        visible = isVisibleToUser
     }
 
     public override fun onOk(dialog: DownloadPathDialogFragment) {

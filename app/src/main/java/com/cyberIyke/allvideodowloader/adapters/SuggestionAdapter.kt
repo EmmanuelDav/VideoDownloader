@@ -16,7 +16,7 @@ class SuggestionAdapter constructor(var suggetionListner: SuggetionListner?) : R
         parent: ViewGroup,
         viewType: Int
     ): SuggestionAdapter.ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.getContext())
+        return ViewHolder(LayoutInflater.from(parent.context)
                 .inflate(R.layout.item_search_suggestion, parent, false)
         )
     }

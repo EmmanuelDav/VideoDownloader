@@ -19,7 +19,7 @@ class TouchableWebView constructor(context: Context?, attrs: AttributeSet?) : We
         setOnTouchListener(this)
     }
 
-    public override fun onTouch(v: View, event: MotionEvent): Boolean {
+    override fun onTouch(v: View, event: MotionEvent): Boolean {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             clickX = event.getX()
             clickY = event.getY()

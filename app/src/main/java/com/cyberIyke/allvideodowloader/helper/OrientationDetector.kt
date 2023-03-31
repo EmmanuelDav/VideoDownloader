@@ -11,8 +11,8 @@ class OrientationDetector constructor(private val context: Context) {
     private var rotationThreshold: Int = 20
     private var holdingTime: Long = 0
     private var lastCalcTime: Long = 0
-    private var lastDirection: OrientationDetector.Direction =
-        OrientationDetector.Direction.PORTRAIT
+    private var lastDirection: OrientationDetector.Direction = OrientationDetector.Direction.PORTRAIT
+
     private var currentOrientation: Int = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT //初始为竖屏
     private var listener: OrientationChangeListener? = null
     fun setOrientationChangeListener(listener: OrientationChangeListener?) {

@@ -6,11 +6,11 @@ import com.cyberIyke.allvideodowloader.browser.BrowserWindow
 
 abstract class StackAdapter<T>(val context: Context?) :
     CardStackView.Adapter<CardStackView.ViewHolder?>() {
-    val layoutInflater: LayoutInflater
+
+    val layoutInflater: LayoutInflater = LayoutInflater.from(context)
     private val mData: MutableList<T>
 
     init {
-        layoutInflater = LayoutInflater.from(context)
         mData = ArrayList<T>()
     }
 
