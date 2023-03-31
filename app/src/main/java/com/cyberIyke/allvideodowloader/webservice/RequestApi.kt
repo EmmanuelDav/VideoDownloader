@@ -5,7 +5,7 @@ import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-open interface RequestApi {
+interface RequestApi {
     @GET("sg/?")
     fun getSearchResult(
         @Query("output") str: String?,

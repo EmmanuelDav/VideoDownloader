@@ -87,9 +87,6 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
     private var viewModel: VidInfoViewModel? = null
     private var downloadsViewModel: DownloadsViewModel? = null
 
-
-    override fun getContext(): Context = requireContext()
-
     var mVideoInfo: VideoInfo? = null
     override fun onClick(v: View) {
         if (v === videosFoundHUD) {
@@ -176,7 +173,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         })
         qualities!!.setLayoutManager(GridLayoutManager(activity, 3))
         qualities.setHasFixedSize(true)
-        foundVideosWindow = requireView().findViewById(R.id.foundVideosWindow)
+        foundVideosWindow = mView!!.findViewById(R.id.foundVideosWindow)
         viewModel!!.vidFormats.observe(viewLifecycleOwner) { videoInfo ->
             if (videoInfo == null || videoInfo.getFormats() == null) {
                 return@observe
@@ -231,7 +228,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         if (mView == null || resources.configuration.orientation != orientation) {
             var visibility: Int = View.VISIBLE
             if (mView != null) {
-                visibility = requireView().visibility
+                visibility = mView!!.visibility
             }
             mView = inflater.inflate(R.layout.browser_lay, container, false)
             viewModel = ViewModelProvider(this)[VidInfoViewModel::class.java]
@@ -240,7 +237,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             )
             mView!!.visibility = visibility
             if (page == null) {
-                page = requireView().findViewById(R.id.page)
+                page = mView!!.findViewById(R.id.page)
             } else {
                 val page1: View = mView!!.findViewById(R.id.page)
                 (mView as ViewGroup?)!!.removeView(page1)
@@ -305,26 +302,24 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     return super.shouldOverrideUrlLoading(view, request)
                 }
 
-                 override fun onPageStarted(webview: WebView, url: String, favicon: Bitmap) {
+                 override fun onPageStarted(webview: WebView?, url: String?, favicon: Bitmap?) {
                     mVideoInfo = null
-                    Handler(Looper.getMainLooper()).post(object : Runnable {
-                        public override fun run() {
-                            mVideoInfo = null
-                            Log.d(
-                                TAG,
-                                "shouldOverrideUrlLoading: " + url + " " + url
-                            )
-                            val urlBox: EditText = baseActivity!!.findViewById(R.id.inputURLText)
-                            baseActivity!!.isEnableSuggetion = false
-                            urlBox.setText(url)
-                            urlBox.setSelection(urlBox.getText().length)
-                            this@BrowserWindow.url = url
-                            viewModel!!.fetchInfo(url)
-                            updateFoundVideosBar()
-                        }
-                    })
-                    view.findViewById<View>(R.id.loadingProgress).setVisibility(View.GONE)
-                    loadingPageProgress!!.setVisibility(View.VISIBLE)
+                    Handler(Looper.getMainLooper()).post {
+                        mVideoInfo = null
+                        Log.d(
+                            TAG,
+                            "shouldOverrideUrlLoading: $url $url"
+                        )
+                        val urlBox: EditText = baseActivity!!.findViewById(R.id.inputURLText)
+                        baseActivity!!.isEnableSuggetion = false
+                        urlBox.setText(url)
+                        urlBox.setSelection(urlBox.text.length)
+                        this@BrowserWindow.url = url
+                        viewModel!!.fetchInfo(url!!)
+                        updateFoundVideosBar()
+                    }
+                     view.findViewById<View>(R.id.loadingProgress).visibility = View.GONE
+                     loadingPageProgress!!.visibility = View.VISIBLE
                     super.onPageStarted(webview, url, favicon)
                 }
 

@@ -9,7 +9,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-class RetrofitClient private constructor() {
+class RetrofitClient {
     private val retrofit: Retrofit
 
     init {

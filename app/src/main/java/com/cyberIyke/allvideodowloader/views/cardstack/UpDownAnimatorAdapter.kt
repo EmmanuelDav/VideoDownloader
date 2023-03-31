@@ -6,12 +6,12 @@ import android.view.View
 class UpDownAnimatorAdapter(cardStackView: CardStackView?) : AnimatorAdapter(cardStackView!!) {
     override fun itemExpandAnimatorSet(viewHolder: CardStackView.ViewHolder, position: Int) {
         val itemView = viewHolder.itemView
-        itemView!!.clearAnimation()
+        itemView.clearAnimation()
         val oa = ObjectAnimator.ofFloat(
             itemView,
             View.Y,
             itemView.y,
-            (mCardStackView!!.scrollY + mCardStackView.paddingTop).toFloat()
+            (mCardStackView.scrollY + mCardStackView.paddingTop).toFloat()
         )
         mSet!!.play(oa)
         var collapseShowItemCount = 0

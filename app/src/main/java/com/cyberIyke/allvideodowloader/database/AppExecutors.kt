@@ -5,7 +5,7 @@ import android.os.Looper
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
-class AppExecutors private constructor(
+class AppExecutors(
     private val diskIO: Executor,
     private val networkIO: Executor,
     private val mainThread: Executor

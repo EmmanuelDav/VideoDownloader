@@ -23,7 +23,7 @@ class SuggestionAdapter constructor(var suggetionListner: SuggetionListner?) : R
 
     override fun onBindViewHolder(holder: SuggestionAdapter.ViewHolder, position: Int) {
         val result: Result = resultList!!.get(position)
-        if (result?.key != null) {
+        if (result.key != null) {
             holder.txtTitle.text = result.key
             val strSubTitle: String = "Search for \"" + result.key + "\""
             holder.txtSubTitle.text = strSubTitle

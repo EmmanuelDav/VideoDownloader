@@ -45,7 +45,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
 
         createNotificationChannel()
         val notificationId = id.hashCode()
-        var p =0
         val notification = NotificationCompat.Builder(
             applicationContext, channelId
         ).setSmallIcon(R.mipmap.ic_logo).setContentTitle(name)
@@ -74,7 +73,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
             val treeUri = Uri.parse(downloadDir)
             val docId = DocumentsContract.getTreeDocumentId(treeUri)
             val destDir = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId)
-            tmpFile.listFiles().forEach {
+            tmpFile.listFiles()?.forEach {
                 val mimeType =
                     MimeTypeMap.getSingleton().getMimeTypeFromExtension(it.extension) ?: "*/*"
                 destUri = DocumentsContract.createDocument(

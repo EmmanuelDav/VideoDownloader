@@ -378,13 +378,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     }
 
     private fun addTabDialog() {
-        val dialog: Dialog = Dialog(this@MainActivity)
+        val dialog = Dialog(this@MainActivity)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_add_tab)
-        val bottomNavigationView: BottomNavigationView =
-            dialog.findViewById(R.id.bottomNavigationView)
-        bottomNavigationView.setOnNavigationItemSelectedListener(object :
-            BottomNavigationView.OnNavigationItemSelectedListener {
+        val bottomNavigationView: BottomNavigationView = dialog.findViewById(R.id.bottomNavigationView)
+        bottomNavigationView.setOnNavigationItemSelectedListener(object : BottomNavigationView.OnNavigationItemSelectedListener {
             override fun onNavigationItemSelected(item: MenuItem): Boolean {
                 dialog.dismiss()
                 when (item.itemId) {
@@ -422,6 +420,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         val imgMore: ImageView = dialog.findViewById(R.id.imgMore)
         imgMore.setOnClickListener { onPopupButtonChild(imgMore) }
         val edtSearch: EditText = dialog.findViewById(R.id.edtSearch)
+
         edtSearch.setOnEditorActionListener { v, actionId, event ->
             isDisableOnResume = true
             dialog.dismiss()
@@ -669,9 +668,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     }
 
     override fun onEditorAction(
-        textView: TextView,
+        textView: TextView?,
         actionId: Int,
-        keyEvent: KeyEvent
+        keyEvent: KeyEvent?
     ): Boolean {
         val handled: Boolean = false
         if (actionId == EditorInfo.IME_ACTION_SEARCH) {

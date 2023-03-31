@@ -21,9 +21,7 @@ abstract class StackAdapter<T>(val context: Context?) :
 
     fun setData(data: MutableList<T>) {
         mData.clear()
-        if (data != null) {
-            mData.addAll(data)
-        }
+        mData.addAll(data)
         notifyDataSetChanged()
     }
 
