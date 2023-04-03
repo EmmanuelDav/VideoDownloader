@@ -13,7 +13,10 @@ data class Download(
     val timestamp: Long,
 
     @ColumnInfo(name = "total_size")
-    var totalSize: Long
+    var totalSize: Long,
+
+    @ColumnInfo(name = "duration")
+   var duration: Long
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0

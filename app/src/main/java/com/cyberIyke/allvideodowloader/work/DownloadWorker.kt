@@ -25,6 +25,7 @@ import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 import com.cyberIyke.allvideodowloader.R
+import okhttp3.internal.checkDuration
 
 
 class DownloadWorker(appContext: Context, params: WorkerParameters) :
@@ -42,6 +43,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         val downloadDir = inputData.getString(downloadDirKey)!!
         val size = inputData.getLong(sizeKey, 0L)
         val taskId = inputData.getString(taskIdKey)!!
+        val duration = inputData.getInt(duration,0)
 
         createNotificationChannel()
         val notificationId = id.hashCode()
@@ -92,7 +94,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
             applicationContext
         ).downloadsDao()
         val repository = DownloadsRepository(downloadsDao)
-        val download = Download(name, Date().time, size)
+        val download = Download(name, Date().time, size, duration.toLong())
         download.downloadedPath = destUri.toString()
         download.downloadedPercent = 100.00
         download.downloadedSize = size
@@ -159,6 +161,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         const val downloadDirKey = "downloadDir"
         const val sizeKey = "size"
         const val taskIdKey = "taskId"
+        const val duration = "duration"
     }
 }
 

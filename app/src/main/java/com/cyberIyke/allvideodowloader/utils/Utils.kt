@@ -206,7 +206,7 @@ class Utils(private var context: Context) {
             return numbersOnly.toIntOrNull()
         }
 
-        fun formatDuration(durationInSeconds: Int): String {
+        fun formatDuration(durationInSeconds: Long): String {
             val hours = durationInSeconds / 3600
             val minutes = (durationInSeconds % 3600) / 60
             val seconds = durationInSeconds % 60

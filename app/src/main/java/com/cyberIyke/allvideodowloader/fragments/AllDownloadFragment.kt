@@ -32,6 +32,7 @@ import com.cyberIyke.allvideodowloader.helper.RenameVideoPref
 import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.DownloadInterface
 import com.cyberIyke.allvideodowloader.model.DownloadInfo
+import com.cyberIyke.allvideodowloader.utils.Utils
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.convertSecondsToHMmSs
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLengthFile
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
@@ -597,19 +598,7 @@ class AllDownloadFragment : Fragment() {
                                     downloadData.download!!.downloadedSize
                                 ) + "  " + dateString
                                 holder.downloadProgressText.text = strDescComplete
-                                if (documentFile!!.exists()) {
-                                    var duration: String? = null
-                                    try {
-                                        duration = convertSecondsToHMmSs(
-                                            getFileDuration(
-                                                downloadData.download!!.downloadedPath, context
-                                            )
-                                        )
-                                    } catch (e: IOException) {
-                                        e.printStackTrace()
-                                    }
-                                    if (duration != null) holder.txtDuration.text = duration
-                                }
+                                holder.txtDuration.text = Utils.formatDuration(downloadData.download!!.duration)
                             }
                             WorkInfo.State.CANCELLED -> {
                                 val strDesc2: String =

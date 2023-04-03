@@ -90,7 +90,8 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             DownloadWorker.vcodecKey to vidFormat.vcodec,
             DownloadWorker.downloadDirKey to downloadDir,
             DownloadWorker.sizeKey to vidFormat.fileSizeApproximate,
-            DownloadWorker.taskIdKey to vidInfo.id
+            DownloadWorker.taskIdKey to vidInfo.id,
+            DownloadWorker.duration to vidInfo.duration
         )
 
         val workRequest = workTag?.let { OneTimeWorkRequestBuilder<DownloadWorker>().addTag(it).setInputData(workData).build() }
