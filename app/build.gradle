@@ -132,12 +132,15 @@ dependencies {
 
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever-core:1.0.19'
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever-native:1.0.19'
-    implementation "com.github.yausername.youtubedl-android:library:3a0252d88b4ae573068c63c3d08fc52c66102d55"
-    implementation "com.github.yausername.youtubedl-android:ffmpeg:3a0252d88b4ae573068c63c3d08fc52c66102d55"
+
+    implementation "com.github.JunkFood02.youtubedl-android:library:$youtubedlAndroidVer"
+    implementation "com.github.JunkFood02.youtubedl-android:ffmpeg:$youtubedlAndroidVer"
+    implementation "com.github.JunkFood02.youtubedl-android:aria2c:$youtubedlAndroidVer"
 
     def arch_lifecycle_version = "2.4.0"
     def work_version = "2.7.0"
     def room_version = "2.3.0"
+
 
     implementation "androidx.lifecycle:lifecycle-common-java8:$arch_lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$arch_lifecycle_version"

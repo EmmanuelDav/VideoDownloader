@@ -201,6 +201,17 @@ class Utils(private var context: Context) {
             return String.format("%d:%02d:%02d", h, m, s)
         }
 
+        fun getNumbersFromString(str: String): Int? {
+            val numbersOnly = str.replace(Regex("[^0-9]"), "")
+            return numbersOnly.toIntOrNull()
+        }
+
+        fun formatDuration(durationInSeconds: Int): String {
+            val hours = durationInSeconds / 3600
+            val minutes = (durationInSeconds % 3600) / 60
+            val seconds = durationInSeconds % 60
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        }
     }
 
 }

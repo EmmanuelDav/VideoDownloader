@@ -16,6 +16,7 @@ import com.cyberIyke.allvideodowloader.browser.VideoList.VideoListAdapter.VideoI
 import com.cyberIyke.allvideodowloader.model.VidInfoItem
 import com.cyberIyke.allvideodowloader.model.VidInfoItem.VidFormatItem
 import com.cyberIyke.allvideodowloader.utils.PermissionInterceptor
+import com.cyberIyke.allvideodowloader.utils.Utils
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hjq.permissions.*
 import com.yausername.youtubedl_android.mapper.VideoFormat
@@ -115,14 +116,14 @@ abstract class VideoList internal constructor(
                 items = emptyList()
             } else {
                 val itemList: MutableList<VidInfoItem> = ArrayList()
-                vidInfo.getFormats().forEach(Consumer({ videoFormat1: VideoFormat ->
+                vidInfo.formats!!.forEach(Consumer { videoFormat1: VideoFormat ->
                     itemList.add(
                         VidFormatItem(
                             vidInfo,
-                            videoFormat1.getFormatId()
+                            videoFormat1.formatId!!
                         )
                     )
-                }))
+                })
                 items = itemList
             }
             notifyDataSetChanged()
@@ -148,30 +149,31 @@ abstract class VideoList internal constructor(
                 mVideoInfo = headerItem!!.vidInfo
                 if (position == 0) {
                     imgVideo.setVisibility(View.VISIBLE)
-                    if (mVideoInfo!!.getTitle() != null && mVideoInfo!!.getTitle().length > 0) {
+                    if (mVideoInfo!!.title!!.isNotEmpty()) {
                         txtTitle.setVisibility(View.VISIBLE)
-                        txtTitle.setText(mVideoInfo!!.getTitle())
+                        txtTitle.setText(mVideoInfo!!.title)
                     } else {
                         txtTitle.setVisibility(View.INVISIBLE)
                     }
                     Glide.with(activity)
-                        .load(if (mVideoInfo!!.getThumbnail() == null) videoInfo.getUrl() else videoInfo.getThumbnail())
+                        .load(if (mVideoInfo!!.thumbnail == null) videoInfo.url else videoInfo.thumbnail)
                         .thumbnail(0.5f)
                         .into(imgVideo)
                 }
                 val sizeFormatted: String = Formatter.formatShortFileSize(
                     activity,
-                    mVideoInfo!!.getFormats().get(position).getFileSizeApproximate().toString()
+                    mVideoInfo!!.formats!![position].fileSizeApproximate.toString()
                         .toLong()
                 )
-                holder.videoFoundSize.setText(if ((sizeFormatted == "0 B")) "Unknown" else sizeFormatted)
-                holder.name.setText(mVideoInfo!!.getFulltitle())
-                videoFormat = mVideoInfo!!.getFormats().get(selectedVideo)
+
+                val resolution = Utils.getNumbersFromString( BrowserWindow.convertSolution(mVideoInfo!!.formats!![position].formatId!!))
+                holder.videoFoundSize.text = if ((sizeFormatted == "0 B")) BrowserWindow.estimateVideoSize(
+                    mVideoInfo!!.duration, resolution!!) else sizeFormatted
+                holder.name.text = mVideoInfo!!.fulltitle
+                videoFormat = mVideoInfo!!.formats!![selectedVideo]
                 try {
-                    holder.txtQuality.setText(
-                        BrowserWindow.Companion.convertSolution(
-                            mVideoInfo!!.getFormats().get(position).getFormatId()
-                        )
+                    holder.txtQuality.text = BrowserWindow.convertSolution(
+                        mVideoInfo!!.formats!![position].formatId!!
                     )
                 } catch (e: IllegalArgumentException) {
                     e.printStackTrace()
@@ -211,15 +213,15 @@ abstract class VideoList internal constructor(
         }
 
         public override fun getItemCount(): Int {
-            if (videoInfo.getFormats().size == 0) {
-                imgVideo.setVisibility(View.GONE)
-                txtTitle.setVisibility(View.GONE)
+            if (videoInfo.formats!!.size == 0) {
+                imgVideo.visibility = View.GONE
+                txtTitle.visibility = View.GONE
                 bottomSheetDialog.dismiss()
             }
-            if (videoInfo.getFormats().size >= 7) {
+            if (videoInfo.formats!!.size >= 7) {
                 return 7
             }
-            return videoInfo.getFormats().size
+            return videoInfo.formats!!.size
         }
 
         internal inner class VideoItem constructor(itemView: View) :

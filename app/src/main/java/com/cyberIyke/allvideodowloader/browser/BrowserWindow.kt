@@ -6,7 +6,6 @@ import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
@@ -49,18 +48,17 @@ import com.cyberIyke.allvideodowloader.utils.VisitedPage
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
 import com.cyberIyke.allvideodowloader.viewModel.VidInfoViewModel
 import com.cyberIyke.allvideodowloader.views.CustomMediaController
+import com.cyberIyke.allvideodowloader.views.CustomVideoView
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
-import com.cyberIyke.allvideodowloader.views.CustomVideoView
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import com.yausername.youtubedl_android.mapper.VideoInfo
 import java.util.*
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLSocketFactory
-import kotlin.collections.HashSet
 
 class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(), View.OnClickListener, OnBackPressedListener, DialogListener {
 
@@ -160,24 +158,20 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
         val txtDownload: TextView? = dialog!!.findViewById(R.id.txtDownload)
         val dismiss: ImageView? = dialog!!.findViewById(R.id.dismiss)
         assert(dismiss != null)
-        dismiss!!.setOnClickListener(object : View.OnClickListener {
-            public override fun onClick(view: View) {
-                dialog!!.dismiss()
-            }
-        })
-        qualities!!.setLayoutManager(GridLayoutManager(activity, 3))
+        dismiss!!.setOnClickListener { dialog!!.dismiss() }
+        qualities!!.layoutManager = GridLayoutManager(activity, 3)
         qualities.setHasFixedSize(true)
         foundVideosWindow = mView!!.findViewById(R.id.foundVideosWindow)
         viewModel!!.vidFormats.observe(viewLifecycleOwner) { videoInfo ->
-            if (videoInfo == null || videoInfo.getFormats() == null) {
+            if (videoInfo?.formats == null) {
                 return@observe
             }
-            videoInfo.formats.removeIf { it: VideoFormat ->
-                !it.ext.contains("mp4") || it.format.contains("audio")
+            videoInfo.formats!!.removeIf {
+                !it.ext!!.contains("mp4") || it.format!!.contains("audio")
             }
             val namesAlreadySeen: MutableSet<String> = HashSet()
-            videoInfo.formats.removeIf { p: VideoFormat ->
-                !namesAlreadySeen.add(convertSolution(p.format))
+            videoInfo.formats!!.removeIf { p: VideoFormat ->
+                !namesAlreadySeen.add(convertSolution(p.format!!))
             }
             mVideoInfo = videoInfo
             if (videoList != null) {
@@ -202,15 +196,13 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     override fun onItemClicked(vidFormatItem: VidFormatItem?) {
                         viewModel!!.selectedItem = (vidFormatItem)!!
                         DownloadPathDialogFragment().show(
-                            getChildFragmentManager(),
+                            childFragmentManager,
                             "download_location_chooser_dialog"
                         )
                     }
                 }
             }
             updateFoundVideosBar()
-
-
         }
     }
 
@@ -497,37 +489,35 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
     }
 
     private fun updateFoundVideosBar() {
-        if (mVideoInfo != null && mVideoInfo!!.getFormats().size > 0) {
-            requireActivity().runOnUiThread(object : Runnable {
-                public override fun run() {
-                    val options: RequestOptions = RequestOptions()
-                        .skipMemoryCache(true)
-                        .centerInside()
-                        .placeholder(R.drawable.ic_download_det)
-                        .transform(CircleCrop())
-                    Glide.with((activity!!))
-                        .load(R.drawable.ic_download_det)
-                        .apply(options)
-                        .into((videosFoundHUD)!!)
-                    val animY: ObjectAnimator =
-                        ObjectAnimator.ofFloat(videosFoundHUD, "translationY", -100f, 0f)
-                    animY.setDuration(1000)
-                    animY.setInterpolator(BounceInterpolator())
-                    animY.setRepeatCount(2)
-                    animY.addListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(
-                            animation: Animator,
-                            isReverse: Boolean
-                        ) {
-                            super.onAnimationEnd((animation), isReverse)
-                            Glide.with((activity))
-                                .load(R.drawable.ic_download_enable)
-                                .into((videosFoundHUD)!!)
-                        }
-                    })
-                    animY.start()
-                }
-            })
+        if (mVideoInfo != null && mVideoInfo!!.formats!!.size > 0) {
+            requireActivity().runOnUiThread {
+                val options: RequestOptions = RequestOptions()
+                    .skipMemoryCache(true)
+                    .centerInside()
+                    .placeholder(R.drawable.ic_download_det)
+                    .transform(CircleCrop())
+                Glide.with((requireActivity()))
+                    .load(R.drawable.ic_download_det)
+                    .apply(options)
+                    .into((videosFoundHUD)!!)
+                val animY: ObjectAnimator =
+                    ObjectAnimator.ofFloat(videosFoundHUD, "translationY", -100f, 0f)
+                animY.setDuration(1000)
+                animY.setInterpolator(BounceInterpolator())
+                animY.setRepeatCount(2)
+                animY.addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(
+                        animation: Animator,
+                        isReverse: Boolean
+                    ) {
+                        super.onAnimationEnd((animation), isReverse)
+                        Glide.with((activity!!))
+                            .load(R.drawable.ic_download_enable)
+                            .into((videosFoundHUD)!!)
+                    }
+                })
+                animY.start()
+            }
         } else {
             requireActivity().runOnUiThread {
                 Glide.with((requireActivity()))
@@ -663,14 +653,16 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
     companion object {
         private val TAG: String = BrowserWindow::class.java.getCanonicalName()
         private val OPEN_DIRECTORY_REQUEST_CODE: Int = 42069
+
+
         fun convertSolution(str: String): String {
             val str2: String
             val split: Array<String> = str.split("[^\\d]+".toRegex()).toTypedArray()
-            if (split.size >= 2) {
-                str2 = split[1]
+            str2 = if (split.size >= 2) {
+                split[1]
             } else {
                 if (split.size == 1) {
-                    str2 = split[0]
+                    split[0]
                 } else if (!str.contains(Regex("\\d"))) {
                     return str
                 } else {
@@ -702,8 +694,25 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                 }
                 return if (parseLong < 4320) "4K" else "8K"
             } catch (unused: NumberFormatException) {
+
             }
-            return str2
+            return if (str.contains("low", true) || str.contains("unknown", true)) "100P" else str2
+        }
+
+        fun estimateVideoSize(durationInSeconds: Int, resolution: Int): String {
+            val bitRate: Double = when {
+                resolution <= 240 -> 250.0
+                resolution <= 360 -> 500.0
+                resolution <= 480 -> 1000.0
+                resolution <= 720 -> 2500.0
+                else -> 6000.0
+            }
+            val videoSizeInMb = bitRate / 8.0 * durationInSeconds / 60.0 * resolution * resolution / (640.0 * 480.0)
+            return if (videoSizeInMb >= 1000.0) {
+                String.format("%.2f GB", videoSizeInMb / 1000.0)
+            } else {
+                String.format("%.2f MB", videoSizeInMb)
+            }
         }
     }
 }

@@ -37,6 +37,7 @@ ext {
     commonsIoVer = '2.5'
     // supports java 1.6
     commonsCompressVer = '1.12'
+    youtubedlAndroidVer = "7222fe9637"
 }
 
 task clean(type: Delete) {

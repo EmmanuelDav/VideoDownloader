@@ -73,7 +73,7 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
         val vidFormat = vidFormatItem.vidFormat
         val workTag = vidInfo.id
         val workManager = WorkManager.getInstance(activity.applicationContext!!)
-        val state = workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
+        val state = workTag?.let { workManager.getWorkInfosByTag(it).get()?.getOrNull(0)?.state }
         val running = state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED
 
         if (running) {
@@ -93,11 +93,11 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             DownloadWorker.taskIdKey to vidInfo.id
         )
 
-        val workRequest = OneTimeWorkRequestBuilder<DownloadWorker>().addTag(workTag).setInputData(workData).build()
+        val workRequest = workTag?.let { OneTimeWorkRequestBuilder<DownloadWorker>().addTag(it).setInputData(workData).build() }
 
-        workManager.enqueueUniqueWork(
-            workTag, ExistingWorkPolicy.KEEP, workRequest
-        )
+            workManager.enqueueUniqueWork(
+                workTag!!, ExistingWorkPolicy.KEEP, workRequest!!
+            )
 
         Toast.makeText(
             activity, "download_queued", Toast.LENGTH_LONG
