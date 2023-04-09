@@ -6,6 +6,7 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.net.Uri
 import android.os.IBinder
 import android.util.TypedValue
@@ -13,6 +14,9 @@ import android.view.inputmethod.InputMethodManager
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 import com.cyberIyke.allvideodowloader.R
+import com.cyberIyke.allvideodowloader.model.Format
+import com.yausername.youtubedl_android.mapper.VideoInfo
+import kotlinx.coroutines.*
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
@@ -211,6 +215,42 @@ class Utils(private var context: Context) {
             val minutes = (durationInSeconds % 3600) / 60
             val seconds = durationInSeconds % 60
             return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        }
+
+        private fun estimateVideoSize(durationInSeconds: Int): List<String> {
+            val resolutions = listOf(240, 360, 480, 720, 1080)
+            val sizes = mutableListOf<String>()
+            for (resolution in resolutions) {
+                val bitRate: Double = when {
+                    resolution <= 240 -> 250.0
+                    resolution <= 360 -> 300.0
+                    resolution <= 480 -> 420.0
+                    resolution <= 720 -> 700.0
+                    else -> 1000.0
+                }
+                val videoSizeInMb = bitRate / 8.0 * durationInSeconds / 60.0 * resolution * resolution / (640.0 * 480.0)
+                val size = if (videoSizeInMb >= 1000.0) {
+                    String.format("%.2f GB", videoSizeInMb / 1000.0)
+                } else {
+                    String.format("%.2f MB", videoSizeInMb)
+                }
+                sizes.add(size)
+            }
+            return sizes
+        }
+
+        suspend fun generateFormatsList(videoInfo: VideoInfo, resources: Resources): MutableList<Format> = withContext(Dispatchers.IO) {
+            val formats = mutableListOf<Format>()
+            val videoFormats = resources.getStringArray(R.array.video_formats)
+            val size = estimateVideoSize(videoInfo.duration)
+
+            if (videoFormats.isNotEmpty() && size.isNotEmpty()) {
+                for (i in 0 until minOf(videoFormats.size, size.size)) {
+                    formats.add(Format(videoFormats[i], "", "", "", size[i], 0, ""))
+                }
+            }
+
+            formats
         }
     }
 

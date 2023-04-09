@@ -22,11 +22,10 @@ class CancelReceiver : BroadcastReceiver() {
         val result = YoutubeDL.getInstance().destroyProcessById(taskId)
         if (result) {
             Log.d(TAG, "Task (id:$taskId) was killed.")
-            WorkManager.getInstance(MyApp.context).cancelAllWorkByTag(taskId)
-            val notificationManager =
-                MyApp.context.getSystemService(Context.NOTIFICATION_SERVICE) as
+            WorkManager.getInstance(context!!).cancelAllWorkByTag(taskId)
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as
                         NotificationManager?
-            Toast.makeText(MyApp.context, R.string.download_cancelled, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, R.string.download_cancelled, Toast.LENGTH_LONG).show()
             notificationManager?.cancel(notificationId)
         }
     }

@@ -17,6 +17,7 @@ import com.cyberIyke.allvideodowloader.work.CancelReceiver
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.cyberIyke.allvideodowloader.utils.ThemeSettings.Companion.getInstance
+import com.cyberIyke.allvideodowloader.work.PauseReceiver
 import kotlinx.coroutines.*
 
 class MyApp : Application() {
@@ -53,6 +54,7 @@ class MyApp : Application() {
             }
         }
         registerReceiver(CancelReceiver(), IntentFilter())
+        registerReceiver(PauseReceiver(), IntentFilter())
 
 
         // Enable verbose OneSignal logging to debug issues if needed.
@@ -81,7 +83,6 @@ class MyApp : Application() {
         fun getInstance(): MyApp? {
             return instance
         }
-
     }
 
 

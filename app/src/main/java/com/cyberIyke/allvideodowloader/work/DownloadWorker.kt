@@ -28,8 +28,7 @@ import com.cyberIyke.allvideodowloader.R
 import okhttp3.internal.checkDuration
 
 
-class DownloadWorker(appContext: Context, params: WorkerParameters) :
-    CoroutineWorker(appContext, params) {
+class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     private val notificationManager =
         appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
 
@@ -108,12 +107,11 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
     ) {
 
         val downloadList = ArrayList<DownloadInfo>()
-        val downloadInfo =  DownloadInfo(taskId, name, progress, line)
+        val downloadInfo =  DownloadInfo(id,taskId, name, progress, line)
         downloadList.add(downloadInfo)
 
         val text = line.replace(tmpFile.toString(), "")
-        val intent = Intent(applicationContext, CancelReceiver::class.java).putExtra("taskId", taskId)
-                .putExtra("notificationId", id)
+        val intent = Intent(applicationContext, CancelReceiver::class.java).putExtra("taskId", taskId).putExtra("notificationId", id)
         val pendingIntent = PendingIntent.getBroadcast(
             applicationContext,
             0,

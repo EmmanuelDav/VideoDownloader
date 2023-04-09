@@ -1,5 +1,7 @@
 package com.cyberIyke.allvideodowloader.utils
 
+import com.yausername.youtubedl_android.mapper.VideoFormat
+
 object Constants {
 
     const val SPLASH_SCREEN_TIMEOUT = "4000"

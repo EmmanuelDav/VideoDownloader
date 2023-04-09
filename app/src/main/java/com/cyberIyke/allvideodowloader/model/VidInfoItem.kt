@@ -3,7 +3,7 @@ import com.yausername.youtubedl_android.mapper.VideoFormat
 import com.yausername.youtubedl_android.mapper.VideoInfo
 
 
-sealed class VidInfoItem {
+abstract class VidInfoItem {
     abstract val id: String
 
     data class VidFormatItem(val vidInfo: VideoInfo, val formatId: String) : VidInfoItem() {

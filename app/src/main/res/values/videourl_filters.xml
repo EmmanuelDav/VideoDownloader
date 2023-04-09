@@ -8,4 +8,13 @@
         <item>embed</item>
     </string-array>
 
+    <string-array name="video_formats">
+        <item>100P</item>
+        <item>240P</item>
+        <item>360P</item>
+        <item>480P</item>
+        <item>720P</item>
+        <item>1080P</item>
+    </string-array>
+
 </resources>

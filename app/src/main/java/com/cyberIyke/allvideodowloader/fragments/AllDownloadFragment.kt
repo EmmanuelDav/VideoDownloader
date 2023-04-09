@@ -33,9 +33,10 @@ import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.DownloadInterface
 import com.cyberIyke.allvideodowloader.model.DownloadInfo
 import com.cyberIyke.allvideodowloader.utils.Utils
-import com.cyberIyke.allvideodowloader.utils.Utils.Companion.convertSecondsToHMmSs
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLengthFile
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
+import com.cyberIyke.allvideodowloader.work.CancelReceiver
+import com.cyberIyke.allvideodowloader.work.PauseReceiver
 import wseemann.media.FFmpegMediaMetadataRetriever
 import java.io.File
 import java.io.IOException
@@ -220,7 +221,8 @@ class AllDownloadFragment : Fragment() {
         private var downloadList: List<DownloadInfo>? = ArrayList()
         var downloaded: Boolean = false
         var originalHeight: Int = 0
-        var headerViewHolder: ProgressViewHolder? = null
+        var progressViewHolder: ProgressViewHolder? = null
+
         fun loadProgress(downloadDataList: List<DownloadInfo>?) {
             downloadList = downloadDataList
             notifyDataSetChanged()
@@ -638,13 +640,32 @@ class AllDownloadFragment : Fragment() {
                     }
                 }
             } else if (itemHolder is ProgressViewHolder) {
-                headerViewHolder = itemHolder
-                val downloadInfo: DownloadInfo = downloadList!!.get(position)
-                headerViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
-                headerViewHolder!!.downloadProgressText.text = downloadInfo.line
-                headerViewHolder!!.imgSelect.visibility = View.GONE
-                headerViewHolder!!.downloadVideoName.text = downloadInfo.name
-                originalHeight = headerViewHolder!!.itemView.layoutParams.height
+                progressViewHolder = itemHolder
+                val downloadInfo: DownloadInfo = downloadList!![position]
+                val playImage = R.drawable.ic_resume
+                val pauseImage = R.drawable.ic_pause
+                var isPlaying = false
+                progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
+                progressViewHolder!!.downloadProgressText.text = downloadInfo.line
+                progressViewHolder!!.imgSelect.visibility = View.GONE
+                progressViewHolder!!.downloadVideoName.text = downloadInfo.name
+                progressViewHolder!!.imgCancel.setOnClickListener {
+                    val cancelIntent = Intent(context, CancelReceiver::class.java)
+                    cancelIntent.putExtra("taskId", downloadInfo.taskId)
+                    cancelIntent.putExtra("notificationId", downloadInfo.id)
+                    activity!!.sendBroadcast(cancelIntent)
+                }
+                progressViewHolder!!.imgPause.setOnClickListener{
+                    isPlaying = !isPlaying
+                    progressViewHolder!!.imgPause.setImageResource(if (isPlaying) pauseImage else playImage)
+
+                    val cancelIntent = Intent(context, PauseReceiver::class.java)
+                    cancelIntent.putExtra("taskId", downloadInfo.taskId)
+                    cancelIntent.putExtra("notificationId", downloadInfo.id)
+                    cancelIntent.putExtra("isPaused", isPlaying)
+                    activity!!.sendBroadcast(cancelIntent)
+                }
+                originalHeight = progressViewHolder!!.itemView.layoutParams.height
             }
         }
 
@@ -654,17 +675,17 @@ class AllDownloadFragment : Fragment() {
 
         override fun loading() {
             Log.d(AllDownloadFragment.Companion.TAG, "loading: loading")
-            if (headerViewHolder != null) {
-                headerViewHolder!!.itemView.visibility = View.VISIBLE
-                headerViewHolder!!.itemView.layoutParams.height = -2
+            if (progressViewHolder != null) {
+                progressViewHolder!!.itemView.visibility = View.VISIBLE
+                progressViewHolder!!.itemView.layoutParams.height = -2
             }
         }
 
         override fun notLoading() {
             Log.d(AllDownloadFragment.Companion.TAG, "loading: not loading")
-            if (headerViewHolder != null) {
-                headerViewHolder!!.itemView.visibility = View.GONE
-                headerViewHolder!!.itemView.layoutParams.height = 0
+            if (progressViewHolder != null) {
+                progressViewHolder!!.itemView.visibility = View.GONE
+                progressViewHolder!!.itemView.layoutParams.height = 0
             }
         }
 
@@ -709,12 +730,14 @@ class AllDownloadFragment : Fragment() {
             var imgCancel: ImageView
             var imgPause: ImageView
             var imgSelect: ImageView
+            var imgResume: ImageView
 
             init {
                 imgSelect = itemView.findViewById(R.id.imgSelect)
                 imgPause = itemView.findViewById(R.id.imgPause)
                 imgMore = itemView.findViewById(R.id.imgMore)
                 imgCancel = itemView.findViewById(R.id.imgCancel)
+                imgResume = itemView.findViewById(R.id.imgResume)
                 downloadProgressText = itemView.findViewById(R.id.downloadProgressText)
                 imgVideo = itemView.findViewById(R.id.imgVideo)
                 downloadVideoName = itemView.findViewById(R.id.downloadVideoName)

@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.cyberIyke.allvideodowloader.R
-import com.cyberIyke.allvideodowloader.browser.VideoList
 import com.cyberIyke.allvideodowloader.browser.VideoList.VideoListAdapter.VideoItem
+import com.cyberIyke.allvideodowloader.model.Format
 import com.cyberIyke.allvideodowloader.model.VidInfoItem
 import com.cyberIyke.allvideodowloader.model.VidInfoItem.VidFormatItem
 import com.cyberIyke.allvideodowloader.utils.PermissionInterceptor
@@ -30,36 +30,37 @@ abstract class VideoList internal constructor(
     var txtTitle: EditText,
     var txtDownload: TextView,
     var bottomSheetDialog: BottomSheetDialog,
-    var videoInfo: VideoInfo
+    var videoInfo: VideoInfo,
+    val formats: MutableList<Format> = mutableListOf()
 ) {
     var selectedVideo: Int = 0
-    private var videoFormat: VideoFormat? = null
     private var headerItem: VidFormatItem? = null
+
     abstract fun onItemClicked(vidFormatItem: VidFormatItem?)
 
     init {
         selectedVideo = 0
         val videoListAdapter: VideoListAdapter = VideoListAdapter()
         videoListAdapter.fill(videoInfo)
-        view.setAdapter(videoListAdapter)
-        view.setLayoutManager(GridLayoutManager(activity, 3))
+        view.adapter = videoListAdapter
+        view.layoutManager = GridLayoutManager(activity, 3)
         view.setHasFixedSize(true)
         txtDownload.setOnClickListener(object : View.OnClickListener {
-            public override fun onClick(v: View) {
+            override fun onClick(v: View) {
                 XXPermissions.with(activity)
                     .permission(Permission.MANAGE_EXTERNAL_STORAGE)
                     .interceptor(PermissionInterceptor())
                     .request(object : OnPermissionCallback {
-                        public override fun onGranted(permissions: List<String>, all: Boolean) {
+                        override fun onGranted(permissions: List<String>, all: Boolean) {
                             if (!all) {
                                 return
                             }
                             onItemClicked(headerItem)
                         }
 
-                        public override fun onDenied(permissions: List<String>, never: Boolean) {
+                        override fun onDenied(permissions: List<String>, never: Boolean) {
                             super.onDenied(permissions, never)
-                            Log.d(VideoList.Companion.TAG, "onDenied: =====")
+                            Log.d(TAG, "onDenied: =====")
                         }
                     })
             }
@@ -83,16 +84,16 @@ abstract class VideoList internal constructor(
         selectedVideo = 0
         val videoListAdapter: VideoListAdapter = VideoListAdapter()
         videoListAdapter.fill(videoInfo)
-        view.setAdapter(videoListAdapter)
-        view.setLayoutManager(GridLayoutManager(activity, 3))
+        view.adapter = videoListAdapter
+        view.layoutManager = GridLayoutManager(activity, 3)
         view.setHasFixedSize(true)
         txtDownload.setOnClickListener(object : View.OnClickListener {
-            public override fun onClick(v: View) {
+            override fun onClick(v: View) {
                 XXPermissions.with(activity)
                     .permission(Permission.MANAGE_EXTERNAL_STORAGE)
                     .interceptor(PermissionInterceptor())
                     .request(object : OnPermissionCallback {
-                        public override fun onGranted(permissions: List<String>, all: Boolean) {
+                        override fun onGranted(permissions: List<String>, all: Boolean) {
                             if (!all) {
                                 return
                             }
@@ -101,19 +102,21 @@ abstract class VideoList internal constructor(
 
                         override fun onDenied(permissions: List<String>, never: Boolean) {
                             super.onDenied(permissions, never)
-                            Log.d(VideoList.Companion.TAG, "onDenied: =====")
+                            Log.d(TAG, "onDenied: =====")
                         }
                     })
             }
         })
     }
 
-    internal inner class VideoListAdapter constructor() : RecyclerView.Adapter<VideoItem>() {
+    internal inner class VideoListAdapter : RecyclerView.Adapter<VideoItem>() {
         var items: List<VidInfoItem> = emptyList()
         var mVideoInfo: VideoInfo? = null
+
         fun fill(vidInfo: VideoInfo?) {
-            if (vidInfo == null) {
-                items = emptyList()
+            items = if (vidInfo == null) {
+                emptyList()
+
             } else {
                 val itemList: MutableList<VidInfoItem> = ArrayList()
                 vidInfo.formats!!.forEach(Consumer { videoFormat1: VideoFormat ->
@@ -124,15 +127,16 @@ abstract class VideoList internal constructor(
                         )
                     )
                 })
-                items = itemList
+
+                itemList
             }
             notifyDataSetChanged()
         }
 
-        public override fun onCreateViewHolder(
+        override fun onCreateViewHolder(
             parent: ViewGroup,
             viewType: Int
-        ): VideoList.VideoListAdapter.VideoItem {
+        ): VideoItem {
             val inflater: LayoutInflater = LayoutInflater.from(activity)
             return (VideoItem(
                 inflater.inflate(
@@ -142,35 +146,43 @@ abstract class VideoList internal constructor(
             ))
         }
 
-        public override fun onBindViewHolder(holder: VideoItem, position: Int) {
-            val item: VidInfoItem = items.get(position)
-            if (item is VidFormatItem) {
-                headerItem = items.get(selectedVideo) as VidFormatItem?
-                mVideoInfo = headerItem!!.vidInfo
-                if (position == 0) {
-                    imgVideo.setVisibility(View.VISIBLE)
-                    if (mVideoInfo!!.title!!.isNotEmpty()) {
-                        txtTitle.setVisibility(View.VISIBLE)
-                        txtTitle.setText(mVideoInfo!!.title)
-                    } else {
-                        txtTitle.setVisibility(View.INVISIBLE)
-                    }
-                    Glide.with(activity)
-                        .load(if (mVideoInfo!!.thumbnail == null) videoInfo.url else videoInfo.thumbnail)
-                        .thumbnail(0.5f)
-                        .into(imgVideo)
+        override fun onBindViewHolder(holder: VideoItem, position: Int) {
+            if (position == 0) {
+                if (items.size > 1) {
+                    headerItem = items[selectedVideo] as VidFormatItem?
+                    mVideoInfo = headerItem!!.vidInfo
                 }
+                imgVideo.visibility = View.VISIBLE
+                if (videoInfo.title!!.isNotEmpty()) {
+                    txtTitle.visibility = View.VISIBLE
+                    txtTitle.setText(videoInfo.title)
+                } else {
+                    txtTitle.visibility = View.INVISIBLE
+                }
+                Glide.with(activity)
+                    .load(if (videoInfo.thumbnail == null) videoInfo.url else videoInfo.thumbnail)
+                    .thumbnail(0.5f)
+                    .into(imgVideo)
+            }
+
+            if (items.size <= 1) {
+                headerItem = items[0] as VidFormatItem?
+                val items = formats[position]
+                holder.videoFoundSize.text = items.encoding
+                holder.txtQuality.text = items.format_id
+            } else {
                 val sizeFormatted: String = Formatter.formatShortFileSize(
                     activity,
                     mVideoInfo!!.formats!![position].fileSizeApproximate.toString()
                         .toLong()
                 )
-
-                val resolution = Utils.getNumbersFromString( BrowserWindow.convertSolution(mVideoInfo!!.formats!![position].formatId!!))
-                holder.videoFoundSize.text = if ((sizeFormatted == "0 B")) BrowserWindow.estimateVideoSize(
-                    mVideoInfo!!.duration, resolution!!) else sizeFormatted
+                val resolution =
+                    Utils.getNumbersFromString(BrowserWindow.convertSolution(mVideoInfo!!.formats!![position].formatId!!))
+                holder.videoFoundSize.text =
+                    if (sizeFormatted == "0 B") BrowserWindow.estimateVideoSize(
+                        mVideoInfo!!.duration, resolution!!
+                    ) else sizeFormatted
                 holder.name.text = mVideoInfo!!.fulltitle
-                videoFormat = mVideoInfo!!.formats!![selectedVideo]
                 try {
                     holder.txtQuality.text = BrowserWindow.convertSolution(
                         mVideoInfo!!.formats!![position].formatId!!
@@ -178,41 +190,38 @@ abstract class VideoList internal constructor(
                 } catch (e: IllegalArgumentException) {
                     e.printStackTrace()
                 }
-                if (selectedVideo == position) {
-                    holder.imgSelected.setVisibility(View.VISIBLE)
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                        holder.llMain.setBackgroundDrawable(
-                            ContextCompat.getDrawable(
-                                activity, R.drawable.bg_round_quality_select
-                            )
+            }
+
+            if (selectedVideo == position) {
+                holder.imgSelected.visibility = View.VISIBLE
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                    holder.llMain.setBackgroundDrawable(
+                        ContextCompat.getDrawable(
+                            activity, R.drawable.bg_round_quality_select
                         )
-                    } else {
-                        holder.llMain.setBackground(
-                            ContextCompat.getDrawable(
-                                activity, R.drawable.bg_round_quality_select
-                            )
-                        )
-                    }
+                    )
                 } else {
-                    holder.imgSelected.setVisibility(View.GONE)
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                        holder.llMain.setBackgroundDrawable(
-                            ContextCompat.getDrawable(
-                                activity, R.drawable.bg_round_quality_unselect
-                            )
+                    holder.llMain.background = ContextCompat.getDrawable(
+                        activity, R.drawable.bg_round_quality_select
+                    )
+                }
+            } else {
+                holder.imgSelected.visibility = View.GONE
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                    holder.llMain.setBackgroundDrawable(
+                        ContextCompat.getDrawable(
+                            activity, R.drawable.bg_round_quality_unselect
                         )
-                    } else {
-                        holder.llMain.setBackground(
-                            ContextCompat.getDrawable(
-                                activity, R.drawable.bg_round_quality_unselect
-                            )
-                        )
-                    }
+                    )
+                } else {
+                    holder.llMain.background = ContextCompat.getDrawable(
+                        activity, R.drawable.bg_round_quality_unselect
+                    )
                 }
             }
         }
 
-        public override fun getItemCount(): Int {
+        override fun getItemCount(): Int {
             if (videoInfo.formats!!.size == 0) {
                 imgVideo.visibility = View.GONE
                 txtTitle.visibility = View.GONE
@@ -221,8 +230,14 @@ abstract class VideoList internal constructor(
             if (videoInfo.formats!!.size >= 7) {
                 return 7
             }
+
+            if (videoInfo.formats!!.size <= 1) {
+                return formats.size
+            }
+
             return videoInfo.formats!!.size
         }
+
 
         internal inner class VideoItem constructor(itemView: View) :
             RecyclerView.ViewHolder(itemView), View.OnClickListener {
@@ -241,9 +256,9 @@ abstract class VideoList internal constructor(
                 itemView.setOnClickListener(this)
             }
 
-            public override fun onClick(v: View) {
+            override fun onClick(v: View) {
                 if (v === itemView) {
-                    selectedVideo = getAdapterPosition()
+                    selectedVideo = adapterPosition
                     notifyDataSetChanged()
                 }
             }
@@ -251,6 +266,6 @@ abstract class VideoList internal constructor(
     }
 
     companion object {
-        private val TAG: String = VideoList::class.java.getCanonicalName()
+        private val TAG: String = VideoList::class.java.canonicalName
     }
 }
