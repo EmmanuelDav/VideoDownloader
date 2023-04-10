@@ -90,6 +90,7 @@
 
         <receiver android:name="com.cyberIyke.allvideodowloader.work.CancelReceiver">
         </receiver>
+        <receiver android:name="com.cyberIyke.allvideodowloader.work.PauseReceiver"/>
 
     </application>
 

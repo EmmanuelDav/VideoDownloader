@@ -34,6 +34,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
 
 
     override suspend fun doWork(): Result {
+
         val url = inputData.getString(urlKey)!!
         val name = FileNameUtils.createFilename(inputData.getString(nameKey)!!)
         val formatId = inputData.getString(formatIdKey)!!
@@ -46,14 +47,11 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
 
         createNotificationChannel()
         val notificationId = id.hashCode()
-        val notification = NotificationCompat.Builder(
-            applicationContext, channelId
-        ).setSmallIcon(R.mipmap.ic_logo).setContentTitle(name)
-            .setContentText(applicationContext.getString(R.string.download_start)).build()
-
+        val notification = NotificationCompat.Builder(applicationContext, channelId).setSmallIcon(R.mipmap.ic_logo).setContentTitle(name).setContentText(applicationContext.getString(R.string.download_start)).build()
         val foregroundInfo = ForegroundInfo(notificationId, notification)
         setForeground(foregroundInfo)
         val request = YoutubeDLRequest(url)
+
         val tmpFile = File.createTempFile("Video_DL", null, applicationContext.externalCacheDir)
         tmpFile.delete()
         tmpFile.mkdir()

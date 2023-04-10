@@ -188,7 +188,7 @@ class AllDownloadFragment : Fragment() {
         super.onResume()
         downloadsViewModel!!.allDownloads.observe(
             viewLifecycleOwner,
-            Observer { downloads: List<Download>? ->
+            { downloads: List<Download>? ->
                 val list: ArrayList<Download> = ArrayList(downloads)
                 for (download: Download in list) {
                     val file: DocumentFile? = DocumentFile.fromSingleUri(
@@ -282,9 +282,8 @@ class AllDownloadFragment : Fragment() {
 
         override fun onBindViewHolder(itemHolder: RecyclerView.ViewHolder, position: Int) {
             if (itemHolder is ViewHolder) {
-                val downloadData: DownloadData
                 val holder: ViewHolder = itemHolder
-                downloadData = downloads.get(position - downloadList!!.size)
+                val downloadData: DownloadData = downloads.get(position - downloadList!!.size)
                 val documentFile: DocumentFile? = DocumentFile.fromSingleUri(
                     (context)!!, Uri.parse(
                         downloadData.download!!.downloadedPath
@@ -326,11 +325,11 @@ class AllDownloadFragment : Fragment() {
                                 activity,
                                 arrayOf(documentFile.toString()),
                                 null,
-                                OnScanCompletedListener({ path: String?, uri: Uri? ->
+                                { path: String?, uri: Uri? ->
                                     downloadsViewModel!!.viewContent(
                                         downloadData.download!!.downloadedPath, (context)!!
                                     )
-                                })
+                                }
                             )
                         }
                     }
@@ -642,7 +641,7 @@ class AllDownloadFragment : Fragment() {
             } else if (itemHolder is ProgressViewHolder) {
                 progressViewHolder = itemHolder
                 val downloadInfo: DownloadInfo = downloadList!![position]
-                val playImage = R.drawable.ic_resume
+                val playImage = R.drawable.ic_play
                 val pauseImage = R.drawable.ic_pause
                 var isPlaying = false
                 progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
@@ -658,7 +657,6 @@ class AllDownloadFragment : Fragment() {
                 progressViewHolder!!.imgPause.setOnClickListener{
                     isPlaying = !isPlaying
                     progressViewHolder!!.imgPause.setImageResource(if (isPlaying) pauseImage else playImage)
-
                     val cancelIntent = Intent(context, PauseReceiver::class.java)
                     cancelIntent.putExtra("taskId", downloadInfo.taskId)
                     cancelIntent.putExtra("notificationId", downloadInfo.id)
