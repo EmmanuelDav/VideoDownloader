@@ -187,15 +187,12 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             }
 
             mVideoInfo = videoInfo
-//            GlobalScope.launch(Dispatchers.Main) {
-//                // Call the function to generate the formats list in a background thread
-//                val formats = generateFormatsList(videoInfo, resources)
-//
-//            }
-            var formats = ArrayList<Format>()
+            GlobalScope.launch(Dispatchers.Main) {
+                val formats = generateFormatsList(videoInfo, resources)
+            }
 
+            val formats = kotlin.collections.ArrayList<Format>()
             if (videoList != null) {
-
                 videoList!!.recreateVideoList(
                     qualities,
                     imgVideo!!,
@@ -225,6 +222,8 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     }
                 }
             }
+
+
             updateFoundVideosBar()
         }
     }
@@ -304,7 +303,8 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                 }
 
                 override fun onPageStarted(webview: WebView?, url: String?, favicon: Bitmap?) {
-                    view!!.findViewById<View>(R.id.loadingProgress).visibility = View.GONE
+                    updateFoundVideosBar()
+                    view.findViewById<View>(R.id.loadingProgress).visibility = View.GONE
                     loadingPageProgress!!.visibility = View.VISIBLE
                     Log.d(TAG, "onPageStarted: fetched $url")
                     super.onPageStarted(webview, url, favicon)
@@ -681,47 +681,34 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
 
 
         fun convertSolution(str: String): String {
-            val str2: String
-            val split: Array<String> = str.split("[^\\d]+".toRegex()).toTypedArray()
-            str2 = if (split.size >= 2) {
+            if (!str.contains(Regex("\\d"))) {
+                return "114P"
+            }
+            if (str.contains("low", true) || str.contains("sd") || str.contains("unknown", true)) {
+                return "114P"
+            }
+            val split: List<String> = str.split("[^\\d]+".toRegex())
+            val str2 = if (split.size >= 2) {
                 split[1]
             } else {
-                if (split.size == 1) {
-                    split[0]
-                } else if (!str.contains(Regex("\\d"))) {
-                    return str
-                } else {
-                    return "720P"
-                }
+                split[0]
             }
             try {
                 val parseLong: Long = str2.toLong()
-                if (parseLong < 240) {
-                    return "144P"
+                return when {
+                    parseLong < 240 -> "144P"
+                    parseLong < 360 -> "240P"
+                    parseLong < 480 -> "360P"
+                    parseLong < 720 -> "480P"
+                    parseLong < 1080 -> "720P"
+                    parseLong < 1440 -> "1080P"
+                    parseLong < 2160 -> "1440P"
+                    parseLong < 4320 -> "4K"
+                    else -> "8K"
                 }
-                if (parseLong < 360) {
-                    return "240P"
-                }
-                if (parseLong < 480) {
-                    return "360P"
-                }
-                if (parseLong < 720) {
-                    return "480P"
-                }
-                if (parseLong < 1080) {
-                    return "720P"
-                }
-                if (parseLong < 1440) {
-                    return "1080P"
-                }
-                if (parseLong < 2160) {
-                    return "1440P"
-                }
-                return if (parseLong < 4320) "4K" else "8K"
             } catch (unused: NumberFormatException) {
-
+                return str2
             }
-            return if (str.contains("low", true) || str.contains("unknown", true)) "114P" else str2
         }
 
         fun estimateVideoSize(durationInSeconds: Int, resolution: Int): String {

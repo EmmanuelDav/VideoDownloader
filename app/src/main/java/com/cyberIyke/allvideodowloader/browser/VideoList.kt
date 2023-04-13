@@ -176,8 +176,7 @@ abstract class VideoList internal constructor(
                     mVideoInfo!!.formats!![position].fileSizeApproximate.toString()
                         .toLong()
                 )
-                val resolution =
-                    Utils.getNumbersFromString(BrowserWindow.convertSolution(mVideoInfo!!.formats!![position].formatId!!))
+                val resolution = Utils.getNumbersFromString(BrowserWindow.convertSolution(mVideoInfo!!.formats!![position].formatId!!))
                 holder.videoFoundSize.text =
                     if (sizeFormatted == "0 B") BrowserWindow.estimateVideoSize(
                         mVideoInfo!!.duration, resolution!!

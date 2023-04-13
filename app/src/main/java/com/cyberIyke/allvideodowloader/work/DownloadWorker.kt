@@ -64,9 +64,24 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
             request.addOption("-f", formatId)
         }
         var destUri: Uri? = null
+        val downloadList = ArrayList<DownloadInfo>()
+
 
         try {
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
+                val index = downloadList.indexOfFirst { it.id.hashCode() == id.hashCode() }
+                if (index == -1) {
+                    val downloadInfo = DownloadInfo(id.hashCode(), taskId, name, progress.toInt(), line)
+                    downloadList.add(downloadInfo)
+                } else {
+                    downloadList[index].progress = progress.toInt()
+                    downloadList[index].line = line
+                }
+
+                val progressIntent = Intent("DOWNLOAD_PROGRESS")
+                progressIntent.putExtra("downloadList", downloadList)
+                LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(progressIntent)
+
                 showProgress(id.hashCode(), taskId, name, progress.toInt(), line, tmpFile)
             }
             val treeUri = Uri.parse(downloadDir)
@@ -104,10 +119,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         id: Int, taskId: String, name: String, progress: Int, line: String, tmpFile: File
     ) {
 
-        val downloadList = ArrayList<DownloadInfo>()
-        val downloadInfo =  DownloadInfo(id,taskId, name, progress, line)
-        downloadList.add(downloadInfo)
-
         val text = line.replace(tmpFile.toString(), "")
         val intent = Intent(applicationContext, CancelReceiver::class.java).putExtra("taskId", taskId).putExtra("notificationId", id)
         val pendingIntent = PendingIntent.getBroadcast(
@@ -119,17 +130,16 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         val notification = NotificationCompat.Builder(
             applicationContext, channelId
         ).setPriority(NotificationCompat.PRIORITY_LOW).setSmallIcon(R.mipmap.ic_logo)
-            .setContentTitle(name).setStyle(
-                NotificationCompat.BigTextStyle().bigText(text)
-            ).setProgress(100, progress, progress == -1).addAction(
+            .setContentTitle(name)
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText(text))
+            .setProgress(100, progress, progress == -1).addAction(
                 R.drawable.ic_baseline_stop_24,
                 applicationContext.getString(R.string.cancel_download),
                 pendingIntent
             ).build()
+
         notificationManager?.notify(id, notification)
-        val progressIntent = Intent("DOWNLOAD_PROGRESS")
-        progressIntent.putExtra("downloadList", downloadList)
-        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(progressIntent)
     }
 
 
