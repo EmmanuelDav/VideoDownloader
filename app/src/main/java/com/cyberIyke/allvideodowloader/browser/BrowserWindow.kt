@@ -342,7 +342,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     isReload: Boolean
                 ) {
                     mVideoInfo = null
-updateFoundVideosBar()
+                    updateFoundVideosBar()
                     Log.d(TAG, "doUpdateVisitedHistory: $url")
                     viewModel!!.fetchInfo(url!!)
                     super.doUpdateVisitedHistory(view, url, isReload)
@@ -401,10 +401,11 @@ updateFoundVideosBar()
                     view: WebView,
                     url: String
                 ): WebResourceResponse? {
-                    Log.d(TAG,"WebView prl $url")
+                    Log.d(TAG, "WebView prl $url")
                     if (activity != null) {
                         Log.d("VDDebug", "Url: $url")
-                        if (activity.getSharedPreferences("settings", 0).getBoolean(getString(R.string.adBlockON), true)
+                        if (activity.getSharedPreferences("settings", 0)
+                                .getBoolean(getString(R.string.adBlockON), true)
                             && (url.contains("ad") || url.contains("banner") || url.contains("pop")) || url.contains(
                                 "banners"
                             )
@@ -673,7 +674,7 @@ updateFoundVideosBar()
         toast.show()
         (activity as MainActivity?)!!.downloadCount =
             (activity!!.downloadCount + 1)
-        activity!!.badgeDownload.setNumber(activity!!.downloadCount)
+        activity.badgeDownload.setNumber(activity.downloadCount)
         dialog!!.dismiss()
     }
 
@@ -730,4 +731,4 @@ updateFoundVideosBar()
             }
         }
     }
-    }
+}

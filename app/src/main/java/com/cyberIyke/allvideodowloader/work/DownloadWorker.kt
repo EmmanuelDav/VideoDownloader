@@ -33,7 +33,6 @@ import kotlin.math.log
 class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     private val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
 
-
     override suspend fun doWork(): Result {
 
         val url = inputData.getString(urlKey)!!
@@ -67,16 +66,15 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         var destUri: Uri? = null
 
 
+
         try {
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
-                val existingDownload = downloadList.find { it.name == name }
-                if (existingDownload != null) {
-                    existingDownload.progress = progress.toInt()
-                    existingDownload.line = line
-                    val updatedIndex = downloadList.indexOf(existingDownload)
-                    downloadList[updatedIndex] = existingDownload
-                } else {
+                val index = downloadList.indexOfFirst { it.name == name }
+                if (index == -1) {
                     downloadList.add(DownloadInfo(id.hashCode(), taskId, name, progress.toInt(), line))
+                } else {
+                    downloadList[index].progress = progress.toInt()
+                    downloadList[index].line = line
                 }
                 val progressIntent = Intent("DOWNLOAD_PROGRESS")
                 progressIntent.putExtra("downloadList", downloadList)
@@ -167,8 +165,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         const val sizeKey = "size"
         const val taskIdKey = "taskId"
         const val duration = "duration"
-        private val downloadList = ArrayList<DownloadInfo>()
-
+        val downloadList = ArrayList<DownloadInfo>()
     }
 }
 

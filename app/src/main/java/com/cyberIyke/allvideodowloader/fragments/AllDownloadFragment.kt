@@ -193,7 +193,7 @@ class AllDownloadFragment : Fragment() {
 
     inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(), DownloadInterface {
         val downloadList: MutableList<DownloadData> = ArrayList()
-        private var progressList: List<DownloadInfo>? = ArrayList()
+        var progressList: List<DownloadInfo>? = ArrayList()
         var downloaded: Boolean = false
         var originalHeight: Int = 0
         var progressViewHolder: ProgressViewHolder? = null
@@ -604,26 +604,15 @@ class AllDownloadFragment : Fragment() {
             } else if (itemHolder is ProgressViewHolder) {
                 progressViewHolder = itemHolder
                 val downloadInfo: DownloadInfo = progressList!![position]
-                val playImage = R.drawable.ic_play
-                val pauseImage = R.drawable.ic_pause
-                var isPlaying = false
                 progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
                 progressViewHolder!!.downloadProgressText.text = downloadInfo.line
                 progressViewHolder!!.imgSelect.visibility = View.GONE
+                progressViewHolder!!.imgPause.visibility = View.GONE
                 progressViewHolder!!.downloadVideoName.text = downloadInfo.name
                 progressViewHolder!!.imgCancel.setOnClickListener {
                     val cancelIntent = Intent(context, CancelReceiver::class.java)
                     cancelIntent.putExtra("taskId", downloadInfo.taskId)
                     cancelIntent.putExtra("notificationId", downloadInfo.id)
-                    activity!!.sendBroadcast(cancelIntent)
-                }
-                progressViewHolder!!.imgPause.setOnClickListener{
-                    isPlaying = !isPlaying
-                    progressViewHolder!!.imgPause.setImageResource(if (isPlaying) pauseImage else playImage)
-                    val cancelIntent = Intent(context, PauseReceiver::class.java)
-                    cancelIntent.putExtra("taskId", downloadInfo.taskId)
-                    cancelIntent.putExtra("notificationId", downloadInfo.id)
-                    cancelIntent.putExtra("isPaused", isPlaying)
                     activity!!.sendBroadcast(cancelIntent)
                 }
                 originalHeight = progressViewHolder!!.itemView.layoutParams.height
@@ -635,7 +624,6 @@ class AllDownloadFragment : Fragment() {
         }
 
         override fun loading() {
-            Log.d(AllDownloadFragment.Companion.TAG, "loading: loading")
             if (progressViewHolder != null) {
                 progressViewHolder!!.itemView.visibility = View.VISIBLE
                 progressViewHolder!!.itemView.layoutParams.height = -2
@@ -643,7 +631,6 @@ class AllDownloadFragment : Fragment() {
         }
 
         override fun notLoading() {
-            Log.d(AllDownloadFragment.Companion.TAG, "loading: not loading")
             if (progressViewHolder != null) {
                 progressViewHolder!!.itemView.visibility = View.GONE
                 progressViewHolder!!.itemView.layoutParams.height = 0
