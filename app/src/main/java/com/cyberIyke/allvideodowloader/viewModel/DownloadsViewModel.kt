@@ -43,11 +43,10 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
         repository.delete(word)
     }
 
-     fun startDelete(id: Long, context: Context) {
+    fun startDelete(id: Long, context: Context) {
         val workTag = "tag_$id"
         val workManager = WorkManager.getInstance(context.applicationContext!!)
         val state = workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
-         Log.d("TAG", "getId: "+state)
 
         if (state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED) {
             return
@@ -67,7 +66,7 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
         )
     }
 
-     fun viewContent(path: String, context: Context) {
+    fun viewContent(path: String, context: Context) {
         val intent = Intent(Intent.ACTION_VIEW)
         val uri = Uri.parse(path)
         val downloadedFile = DocumentFile.fromSingleUri(context, uri)!!

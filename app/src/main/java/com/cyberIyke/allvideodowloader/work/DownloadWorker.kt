@@ -78,7 +78,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
                 } else {
                     downloadList.add(DownloadInfo(id.hashCode(), taskId, name, progress.toInt(), line))
                 }
-                Log.d("TAG", "doWork: ${downloadList.size}")
                 val progressIntent = Intent("DOWNLOAD_PROGRESS")
                 progressIntent.putExtra("downloadList", downloadList)
                 LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(progressIntent)

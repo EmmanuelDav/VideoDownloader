@@ -43,6 +43,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 class AllDownloadFragment : Fragment() {
 
@@ -82,68 +83,46 @@ class AllDownloadFragment : Fragment() {
         rlTopSelected = mView!!.findViewById(R.id.rlTopSelected)
         llBottom = mView!!.findViewById(R.id.llBottom)
         imgCast = mView!!.findViewById(R.id.imgCast)
-        imgCast.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                enablingWiFiDisplay()
-            }
-        })
-        imgCancel.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
+        imgCast.setOnClickListener { enablingWiFiDisplay() }
+        imgCancel.setOnClickListener { unSelectAll() }
+        llDeleteSelected.setOnClickListener {
+            val dialog: Dialog = Dialog((activity)!!)
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            dialog.setContentView(R.layout.dialog_confirmation)
+            val txtTitle: TextView = dialog.findViewById(R.id.txtTitle)
+            val txtDesc: TextView = dialog.findViewById(R.id.txtDesc)
+            txtTitle.text = "Confirm"
+            txtDesc.text = "Are you sure you want to delete this videos?"
+            val txtNO: TextView = dialog.findViewById(R.id.txtNO)
+            val txtOK: TextView = dialog.findViewById(R.id.txtOK)
+            txtNO.setOnClickListener { dialog.dismiss() }
+            txtOK.setOnClickListener {
+                dialog.dismiss()
+                for (download in selectedList) {
+                    val file = DocumentFile.fromSingleUri(
+                        requireActivity().applicationContext, Uri.parse(download.download!!.downloadedPath)
+                    )
+                    file?.takeIf { it.exists() }?.delete()
+                    downloadAdapter.downloadList.remove(download)
+                }
+                selectedList.clear()
+                downloadAdapter.notifyDataSetChanged()
                 unSelectAll()
             }
-        })
-        llDeleteSelected.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                val dialog: Dialog = Dialog((activity)!!)
-                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-                dialog.setContentView(R.layout.dialog_confirmation)
-                val txtTitle: TextView = dialog.findViewById(R.id.txtTitle)
-                val txtDesc: TextView = dialog.findViewById(R.id.txtDesc)
-                txtTitle.text = "Confirm"
-                txtDesc.text = "Are you sure you want to delete this video?"
-                val txtNO: TextView = dialog.findViewById(R.id.txtNO)
-                val txtOK: TextView = dialog.findViewById(R.id.txtOK)
-                txtNO.setOnClickListener(object : View.OnClickListener {
-                    override fun onClick(v: View?) {
-                        dialog.dismiss()
-                    }
-                })
-                txtOK.setOnClickListener(object : View.OnClickListener {
-                    override fun onClick(v: View?) {
-                        dialog.dismiss()
-                        for (download: DownloadData in selectedList) {
-                            val file: DocumentFile? = DocumentFile.fromSingleUri(
-                                activity!!.applicationContext, Uri.parse(
-                                    download.download!!.downloadedPath
-                                )
-                            )
-                            if (file!!.exists()) {
-                                file.delete()
-                                //fetch.remove((int) download.download.getId());;
-                            }
-                        }
-                        downloadAdapter.notifyDataSetChanged()
-                        onResume()
-                        unSelectAll()
-                    }
-                })
-                dialog.show()
-                dialog.window!!
-                    .setLayout(
-                        WindowManager.LayoutParams.MATCH_PARENT,
-                        WindowManager.LayoutParams.MATCH_PARENT
-                    )
-                dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            }
-        })
-        llSelectAll.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                selectedList.clear()
-                selectedList.addAll(downloadAdapter.downloads)
-                txtSelectedCount.text = selectedList.size.toString() + " selected"
-                downloadAdapter.notifyDataSetChanged()
-            }
-        })
+            dialog.show()
+            dialog.window!!
+                .setLayout(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.MATCH_PARENT
+                )
+            dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
+        llSelectAll.setOnClickListener {
+            selectedList.clear()
+            selectedList.addAll(downloadAdapter.downloadList)
+            txtSelectedCount.text = selectedList.size.toString() + " selected"
+            downloadAdapter.notifyDataSetChanged()
+        }
         progressReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
                 if ((intent.action == "DOWNLOAD_PROGRESS")) {
@@ -186,55 +165,51 @@ class AllDownloadFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        downloadsViewModel!!.allDownloads.observe(
-            viewLifecycleOwner,
-            { downloads: List<Download>? ->
-                val list: ArrayList<Download> = ArrayList(downloads)
-                for (download: Download in list) {
-                    val file: DocumentFile? = DocumentFile.fromSingleUri(
-                        requireActivity().applicationContext,
-                        Uri.parse(download.downloadedPath)
-                    )
-                    val strRename: String? = renameVideoPref.getString(download.id.toString(), "")
-                    if (strRename != null) {
-                        if (strRename.isNotEmpty()) {
-                            val desFile: File = File(strRename)
-                            if (desFile.exists()) {
-                                downloadAdapter.addDownload(download)
-                            }
-                        } else if (file!!.exists()) {
+        downloadsViewModel!!.allDownloads.observe(viewLifecycleOwner) { downloads: List<Download>? ->
+            val list = ArrayList(downloads!!)
+            for (download in list) {
+                val file: DocumentFile? = DocumentFile.fromSingleUri(
+                    requireActivity().applicationContext,
+                    Uri.parse(download.downloadedPath)
+                )
+                val strRename: String? = renameVideoPref.getString(download.id.toString(), "")
+                if (strRename != null) {
+                    if (strRename.isNotEmpty()) {
+                        val desFile: File = File(strRename)
+                        if (desFile.exists()) {
                             downloadAdapter.addDownload(download)
                         }
+                    } else if (file!!.exists()) {
+                        downloadAdapter.addDownload(download)
                     }
-                    downloadAdapter.notifyDataSetChanged()
                 }
-                if (downloadInterface != null) {
-                    downloadInterface!!.notLoading()
-                }
+                downloadAdapter.notifyDataSetChanged()
             }
-        )
+            if (downloadInterface != null) {
+                downloadInterface!!.notLoading()
+            }
+        }
     }
 
-    inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(),
-        DownloadInterface {
-        val downloads: MutableList<DownloadData> = ArrayList()
-        private var downloadList: List<DownloadInfo>? = ArrayList()
+    inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(), DownloadInterface {
+        val downloadList: MutableList<DownloadData> = ArrayList()
+        private var progressList: List<DownloadInfo>? = ArrayList()
         var downloaded: Boolean = false
         var originalHeight: Int = 0
         var progressViewHolder: ProgressViewHolder? = null
 
         fun loadProgress(downloadDataList: List<DownloadInfo>?) {
-            downloadList = downloadDataList
+            progressList = downloadDataList
             notifyDataSetChanged()
         }
 
         fun addDownload(download: Download) {
             downloadInterface = this
-            var found: Boolean = false
+            var found = false
             var data: DownloadData? = null
             var dataPosition: Int = -1
-            for (i in downloads.indices) {
-                val downloadData: DownloadData = downloads.get(i)
+            for (i in downloadList.indices) {
+                val downloadData: DownloadData = downloadList[i]
                 if (downloadData.id.toLong() == download.id) {
                     data = downloadData
                     dataPosition = i
@@ -243,15 +218,15 @@ class AllDownloadFragment : Fragment() {
                 }
             }
             if (!found) {
-                val downloadData: DownloadData = DownloadData()
+                val downloadData = DownloadData()
                 downloadData.id = download.id.toInt()
                 downloadData.download = download
-                downloads.add(downloadData)
-                downloads.sortWith(Comparator { o1, o2 ->
+                downloadList.add(downloadData)
+                downloadList.sortWith(Comparator { o1, o2 ->
                     o2.download!!.timestamp.toString()
                         .compareTo(o1.download!!.timestamp.toString())
                 })
-                notifyItemInserted(downloads.indexOf(downloadData))
+                notifyItemInserted(downloadList.indexOf(downloadData))
             } else {
                 data!!.download = download
                 notifyItemChanged(dataPosition)
@@ -263,27 +238,27 @@ class AllDownloadFragment : Fragment() {
             viewType: Int
         ): RecyclerView.ViewHolder {
             val inflater: LayoutInflater = LayoutInflater.from(parent.context)
-            if (viewType == Companion.VIEW_TYPE_DOWNLOAD) {
+            return if (viewType == Companion.VIEW_TYPE_DOWNLOAD) {
                 val view: View = inflater.inflate(R.layout.item_download, parent, false)
-                return ProgressViewHolder(view)
+                ProgressViewHolder(view)
             } else {
                 val view: View = inflater.inflate(R.layout.item_download, parent, false)
-                return ViewHolder(view)
+                ViewHolder(view)
             }
         }
 
         override fun getItemViewType(position: Int): Int {
-            if (position < downloadList!!.size) {
-                return Companion.VIEW_TYPE_DOWNLOAD
+            return if (position < progressList!!.size) {
+                Companion.VIEW_TYPE_DOWNLOAD
             } else {
-                return Companion.VIEW_TYPE_ITEM
+                Companion.VIEW_TYPE_ITEM
             }
         }
 
         override fun onBindViewHolder(itemHolder: RecyclerView.ViewHolder, position: Int) {
             if (itemHolder is ViewHolder) {
                 val holder: ViewHolder = itemHolder
-                val downloadData: DownloadData = downloads.get(position - downloadList!!.size)
+                val downloadData: DownloadData = downloadList[position - progressList!!.size]
                 val documentFile: DocumentFile? = DocumentFile.fromSingleUri(
                     (context)!!, Uri.parse(
                         downloadData.download!!.downloadedPath
@@ -323,14 +298,11 @@ class AllDownloadFragment : Fragment() {
                         if (downloaded) {
                             MediaScannerConnection.scanFile(
                                 activity,
-                                arrayOf(documentFile.toString()),
-                                null,
-                                { path: String?, uri: Uri? ->
-                                    downloadsViewModel!!.viewContent(
-                                        downloadData.download!!.downloadedPath, (context)!!
-                                    )
-                                }
-                            )
+                                arrayOf(documentFile.toString()), null) { path: String?, uri: Uri? ->
+                                downloadsViewModel!!.viewContent(
+                                    downloadData.download!!.downloadedPath, (context)!!
+                                )
+                            }
                         }
                     }
                 })
@@ -436,113 +408,104 @@ class AllDownloadFragment : Fragment() {
                     override fun onClick(v: View?) {
                         val popup: PopupMenu = PopupMenu(activity, holder.imgMore)
                         popup.menuInflater.inflate(R.menu.menu_download, popup.menu)
-                        popup.setOnMenuItemClickListener(object :
-                            PopupMenu.OnMenuItemClickListener {
-                            override fun onMenuItemClick(item: MenuItem): Boolean {
-                                when (item.itemId) {
-                                    R.id.menu_share -> shareFile(downloadData.download!!.downloadedPath)
-                                    R.id.menu_rename -> renameFile(downloadData, documentFile)
-                                    R.id.menu_edit_video -> {
-                                        val videoURI: Uri = FileProvider.getUriForFile(
-                                            (activity)!!,
-                                            BuildConfig.APPLICATION_ID + ".fileprovider",
-                                            file
-                                        )
-                                        val intent: Intent = Intent(Intent.ACTION_EDIT)
-                                        //intent.setDataAndType(videoURI, "video/*");
-                                        intent.setDataAndType(videoURI, getMimeType(videoURI))
-                                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        popup.setOnMenuItemClickListener { item ->
+                            when (item.itemId) {
+                                R.id.menu_share -> shareFile(downloadData.download!!.downloadedPath)
+                                R.id.menu_rename -> renameFile(downloadData, documentFile)
+                                R.id.menu_edit_video -> {
+                                    val videoURI: Uri = FileProvider.getUriForFile(
+                                        (activity)!!,
+                                        BuildConfig.APPLICATION_ID + ".fileprovider",
+                                        file
+                                    )
+                                    val intent: Intent = Intent(Intent.ACTION_EDIT)
+                                    //intent.setDataAndType(videoURI, "video/*");
+                                    intent.setDataAndType(videoURI, getMimeType(videoURI))
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                    try {
+                                        val choose: Intent =
+                                            Intent.createChooser(intent, "Edit with")
+                                        startActivityForResult(choose, 1005)
+                                    } catch (e: ActivityNotFoundException) {
                                         try {
-                                            val choose: Intent =
-                                                Intent.createChooser(intent, "Edit with")
-                                            startActivityForResult(choose, 1005)
-                                        } catch (e: ActivityNotFoundException) {
-                                            try {
-                                                startActivity(
-                                                    Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        Uri.parse("market://details?id=com.kunkun.videoeditor.videomaker")
-                                                    )
+                                            startActivity(
+                                                Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    Uri.parse("market://details?id=com.kunkun.videoeditor.videomaker")
                                                 )
-                                            } catch (exception: ActivityNotFoundException) {
-                                                startActivity(
-                                                    Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        Uri.parse("https://play.google.com/store/apps/details?id=com.kunkun.videoeditor.videomaker")
-                                                    )
+                                            )
+                                        } catch (exception: ActivityNotFoundException) {
+                                            startActivity(
+                                                Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    Uri.parse("https://play.google.com/store/apps/details?id=com.kunkun.videoeditor.videomaker")
                                                 )
-                                            }
-                                        } catch (e: Exception) {
-                                            try {
-                                                startActivity(
-                                                    Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        Uri.parse("market://details?id=com.kunkun.videoeditor.videomaker")
-                                                    )
+                                            )
+                                        }
+                                    } catch (e: Exception) {
+                                        try {
+                                            startActivity(
+                                                Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    Uri.parse("market://details?id=com.kunkun.videoeditor.videomaker")
                                                 )
-                                            } catch (exception: ActivityNotFoundException) {
-                                                startActivity(
-                                                    Intent(
-                                                        Intent.ACTION_VIEW,
-                                                        Uri.parse("https://play.google.com/store/apps/details?id=com.kunkun.videoeditor.videomaker")
-                                                    )
+                                            )
+                                        } catch (exception: ActivityNotFoundException) {
+                                            startActivity(
+                                                Intent(
+                                                    Intent.ACTION_VIEW,
+                                                    Uri.parse("https://play.google.com/store/apps/details?id=com.kunkun.videoeditor.videomaker")
                                                 )
-                                            }
+                                            )
                                         }
                                     }
-                                    R.id.menu_open_link -> {
-                                        activity!!.onBackPressed()
-                                        (activity as MainActivity?)!!.isEnableSuggetion = false
-                                        (activity as MainActivity?)!!.navView.selectedItemId =
-                                            R.id.navHome
-                                        WebConnect(
-                                            holder.edtSearch,
-                                            (activity as MainActivity)
-                                        ).connect()
-                                    }
-                                    R.id.menu_delete -> {
-                                        val dialog: Dialog = Dialog((activity)!!)
-                                        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-                                        dialog.setContentView(R.layout.dialog_confirmation)
-                                        val txtTitle: TextView = dialog.findViewById(R.id.txtTitle)
-                                        val txtDesc: TextView = dialog.findViewById(R.id.txtDesc)
-                                        txtTitle.text = "Confirm"
-                                        txtDesc.text = "Are you sure you want to delete this video?"
-                                        val txtNO: TextView = dialog.findViewById(R.id.txtNO)
-                                        val txtOK: TextView = dialog.findViewById(R.id.txtOK)
-                                        txtNO.setOnClickListener(object : View.OnClickListener {
-                                            override fun onClick(v: View?) {
-                                                dialog.dismiss()
-                                            }
-                                        })
-                                        txtOK.setOnClickListener(object : View.OnClickListener {
-                                            override fun onClick(v: View?) {
-                                                downloadsViewModel!!.startDelete(
-                                                    downloads.get(
-                                                        position
-                                                    ).id.toLong(), dialog.context
-                                                )
-                                                dialog.dismiss()
-                                                onResume()
-                                            }
-                                        })
-                                        dialog.show()
-                                        dialog.window!!.setLayout(
-                                            WindowManager.LayoutParams.MATCH_PARENT,
-                                            WindowManager.LayoutParams.MATCH_PARENT
-                                        )
-                                        dialog.window!!.setBackgroundDrawable(
-                                            ColorDrawable(
-                                                Color.TRANSPARENT
-                                            )
-                                        )
-                                    }
                                 }
-                                return true
+                                R.id.menu_open_link -> {
+                                    activity!!.onBackPressed()
+                                    (activity as MainActivity?)!!.isEnableSuggetion = false
+                                    (activity as MainActivity?)!!.navView.selectedItemId =
+                                        R.id.navHome
+                                    WebConnect(
+                                        holder.edtSearch,
+                                        (activity as MainActivity)
+                                    ).connect()
+                                }
+                                R.id.menu_delete -> {
+                                    val dialog: Dialog = Dialog((activity)!!)
+                                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+                                    dialog.setContentView(R.layout.dialog_confirmation)
+                                    val txtTitle: TextView = dialog.findViewById(R.id.txtTitle)
+                                    val txtDesc: TextView = dialog.findViewById(R.id.txtDesc)
+                                    txtTitle.text = "Confirm"
+                                    txtDesc.text = "Are you sure you want to delete this video?"
+                                    val txtNO: TextView = dialog.findViewById(R.id.txtNO)
+                                    val txtOK: TextView = dialog.findViewById(R.id.txtOK)
+                                    txtNO.setOnClickListener { dialog.dismiss() }
+                                    txtOK.setOnClickListener {
+                                        downloadsViewModel!!.startDelete(
+                                            downloadList[position].id.toLong(), dialog.context
+                                        )
+                                        downloadList.removeAt(position)
+                                        notifyItemRemoved(position)
+                                        notifyItemChanged(position)
+                                        dialog.dismiss()
+                                    }
+                                    dialog.show()
+                                    dialog.window!!.setLayout(
+                                        WindowManager.LayoutParams.MATCH_PARENT,
+                                        WindowManager.LayoutParams.MATCH_PARENT
+                                    )
+                                    dialog.window!!.setBackgroundDrawable(
+                                        ColorDrawable(
+                                            Color.TRANSPARENT
+                                        )
+                                    )
+                                }
                             }
-                        })
+                            true
+                        }
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             popup.setForceShowIcon(true)
                         }
@@ -640,7 +603,7 @@ class AllDownloadFragment : Fragment() {
                 }
             } else if (itemHolder is ProgressViewHolder) {
                 progressViewHolder = itemHolder
-                val downloadInfo: DownloadInfo = downloadList!![position]
+                val downloadInfo: DownloadInfo = progressList!![position]
                 val playImage = R.drawable.ic_play
                 val pauseImage = R.drawable.ic_pause
                 var isPlaying = false
@@ -668,7 +631,7 @@ class AllDownloadFragment : Fragment() {
         }
 
         override fun getItemCount(): Int {
-            return downloads.size + downloadList!!.size
+            return downloadList.size + progressList!!.size
         }
 
         override fun loading() {
@@ -745,7 +708,7 @@ class AllDownloadFragment : Fragment() {
     }
 
     fun renameFile(downloadData: DownloadData, file: DocumentFile?) {
-        val dialog: Dialog = Dialog((activity)!!)
+        val dialog = Dialog((activity)!!)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_rename)
         val edtName: EditText = dialog.findViewById(R.id.edtName)
@@ -803,7 +766,7 @@ class AllDownloadFragment : Fragment() {
         }
     }
 
-    fun enablingWiFiDisplay() {
+    private fun enablingWiFiDisplay() {
         try {
             startActivity(Intent("android.settings.WIFI_DISPLAY_SETTINGS"))
             return
@@ -857,12 +820,12 @@ class AllDownloadFragment : Fragment() {
 
     fun getMimeType(uri: Uri): String? {
         var mimeType: String? = null
-        if ((ContentResolver.SCHEME_CONTENT == uri.scheme)) {
+        mimeType = if ((ContentResolver.SCHEME_CONTENT == uri.scheme)) {
             val cr: ContentResolver = requireActivity().contentResolver
-            mimeType = cr.getType(uri)
+            cr.getType(uri)
         } else {
             val fileExtension: String = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
-            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+            MimeTypeMap.getSingleton().getMimeTypeFromExtension(
                 fileExtension.lowercase(
                     Locale.getDefault()
                 )
