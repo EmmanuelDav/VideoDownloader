@@ -303,7 +303,20 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                 }
 
                 override fun onPageStarted(webview: WebView?, url: String?, favicon: Bitmap?) {
-                    updateFoundVideosBar()
+                    Handler(Looper.getMainLooper()).post {
+                        mVideoInfo = null
+                        Log.d(
+                            TAG,
+                            "shouldOverrideUrlLoading: $url $url"
+                        )
+                        val urlBox: EditText = baseActivity!!.findViewById(R.id.inputURLText)
+                        baseActivity!!.isEnableSuggetion = false
+                        urlBox.setText(url)
+                        urlBox.setSelection(urlBox.text.length)
+                        this@BrowserWindow.url = url
+                        viewModel!!.fetchInfo(url!!)
+                        updateFoundVideosBar()
+                    }
                     view.findViewById<View>(R.id.loadingProgress).visibility = View.GONE
                     loadingPageProgress!!.visibility = View.VISIBLE
                     Log.d(TAG, "onPageStarted: fetched $url")
@@ -329,20 +342,9 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     isReload: Boolean
                 ) {
                     mVideoInfo = null
-                    Handler(Looper.getMainLooper()).post {
-                        mVideoInfo = null
-                        Log.d(
-                            TAG,
-                            "shouldOverrideUrlLoading: $url $url"
-                        )
-                        val urlBox: EditText = baseActivity!!.findViewById(R.id.inputURLText)
-                        baseActivity!!.isEnableSuggetion = false
-                        urlBox.setText(url)
-                        urlBox.setSelection(urlBox.text.length)
-                        this@BrowserWindow.url = url
-                        viewModel!!.fetchInfo(url!!)
-                        updateFoundVideosBar()
-                    }
+updateFoundVideosBar()
+                    Log.d(TAG, "doUpdateVisitedHistory: $url")
+                    viewModel!!.fetchInfo(url!!)
                     super.doUpdateVisitedHistory(view, url, isReload)
                 }
 

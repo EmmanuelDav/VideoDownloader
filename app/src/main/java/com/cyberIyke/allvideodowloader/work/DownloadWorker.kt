@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
+import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -26,11 +27,11 @@ import java.util.*
 import kotlin.collections.ArrayList
 import com.cyberIyke.allvideodowloader.R
 import okhttp3.internal.checkDuration
+import kotlin.math.log
 
 
 class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
-    private val notificationManager =
-        appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
+    private val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
 
 
     override suspend fun doWork(): Result {
@@ -64,24 +65,23 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
             request.addOption("-f", formatId)
         }
         var destUri: Uri? = null
-        val downloadList = ArrayList<DownloadInfo>()
 
 
         try {
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
-                val index = downloadList.indexOfFirst { it.id.hashCode() == id.hashCode() }
-                if (index == -1) {
-                    val downloadInfo = DownloadInfo(id.hashCode(), taskId, name, progress.toInt(), line)
-                    downloadList.add(downloadInfo)
+                val existingDownload = downloadList.find { it.name == name }
+                if (existingDownload != null) {
+                    existingDownload.progress = progress.toInt()
+                    existingDownload.line = line
+                    val updatedIndex = downloadList.indexOf(existingDownload)
+                    downloadList[updatedIndex] = existingDownload
                 } else {
-                    downloadList[index].progress = progress.toInt()
-                    downloadList[index].line = line
+                    downloadList.add(DownloadInfo(id.hashCode(), taskId, name, progress.toInt(), line))
                 }
-
+                Log.d("TAG", "doWork: ${downloadList.size}")
                 val progressIntent = Intent("DOWNLOAD_PROGRESS")
                 progressIntent.putExtra("downloadList", downloadList)
                 LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(progressIntent)
-
                 showProgress(id.hashCode(), taskId, name, progress.toInt(), line, tmpFile)
             }
             val treeUri = Uri.parse(downloadDir)
@@ -168,6 +168,8 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         const val sizeKey = "size"
         const val taskIdKey = "taskId"
         const val duration = "duration"
+        private val downloadList = ArrayList<DownloadInfo>()
+
     }
 }
 
