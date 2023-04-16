@@ -175,7 +175,7 @@ class AllDownloadFragment : Fragment() {
                 val strRename: String? = renameVideoPref.getString(download.id.toString(), "")
                 if (strRename != null) {
                     if (strRename.isNotEmpty()) {
-                        val desFile: File = File(strRename)
+                        val desFile = File(strRename)
                         if (desFile.exists()) {
                             downloadAdapter.addDownload(download)
                         }
@@ -187,19 +187,24 @@ class AllDownloadFragment : Fragment() {
             }
             if (downloadInterface != null) {
                 downloadInterface!!.notLoading()
+                for (i in downloadAdapter.progressList!!){
+                    if (i.progress>= 100){
+                        downloadAdapter.progressList!!.remove(i)
+                    }
+                }
             }
         }
     }
 
     inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(), DownloadInterface {
         val downloadList: MutableList<DownloadData> = ArrayList()
-        var progressList: List<DownloadInfo>? = ArrayList()
+        var progressList: ArrayList<DownloadInfo>? = ArrayList()
         var downloaded: Boolean = false
         var originalHeight: Int = 0
         var progressViewHolder: ProgressViewHolder? = null
 
-        fun loadProgress(downloadDataList: List<DownloadInfo>?) {
-            progressList = downloadDataList
+        fun loadProgress(downloadDataList: ArrayList<DownloadInfo>?) {
+            progressList = downloadDataList!!
             notifyDataSetChanged()
         }
 

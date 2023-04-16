@@ -485,11 +485,11 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
     }
 
     fun isNumber(string: String): Boolean {
-        try {
-            val amount: Int = string.toInt()
-            return true
+        return try {
+            string.toInt()
+            true
         } catch (e: Exception) {
-            return false
+            false
         }
     }
 
