@@ -66,6 +66,7 @@ class AllDownloadFragment : Fragment() {
     lateinit var renameVideoPref: RenameVideoPref
     var progressReceiver: BroadcastReceiver? = null
     private var mView: View? = null
+    var downloadProgress : DownloadProgressDao? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -77,6 +78,7 @@ class AllDownloadFragment : Fragment() {
         renameVideoPref = RenameVideoPref(requireActivity())
         downloadsList = mView!!.findViewById(R.id.downloadsList)
         downloadAdapter = DownloadAdapter()
+        downloadProgress = AppDatabase.getDatabase(requireContext()).downloadProgressDao()
         downloadsList.layoutManager = LinearLayoutManager(activity)
         downloadsList.adapter = downloadAdapter
         llSelectAll = mView!!.findViewById(R.id.llSelectAll)
@@ -126,7 +128,6 @@ class AllDownloadFragment : Fragment() {
             txtSelectedCount.text = selectedList.size.toString() + " selected"
             downloadAdapter.notifyDataSetChanged()
         }
-        val downloadProgress = AppDatabase.getDatabase(requireContext()).downloadProgressDao()
 
         progressReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
@@ -139,7 +140,7 @@ class AllDownloadFragment : Fragment() {
                             )
                         downloadInfoArrayList!!.forEach {
                             CoroutineScope(Dispatchers.IO).launch {
-                                downloadProgress.update(
+                                downloadProgress!!.update(
                                     DownloadProgress(
                                         "",
                                         it.taskId,
@@ -202,20 +203,12 @@ class AllDownloadFragment : Fragment() {
                 }
                 downloadAdapter.notifyDataSetChanged()
             }
-            if (downloadInterface != null) {
-                downloadInterface!!.notLoading()
-                for (i in downloadAdapter.progressList!!){
-                    if (i.progress>= 100){
-                        downloadAdapter.progressList!!.remove(i)
-                    }
-                }
-            }
         }
-        downloadsViewModel!!.allProgress.observe(viewLifecycleOwner, Observer {
+        downloadsViewModel!!.allProgress.observe(viewLifecycleOwner) {
             val list = kotlin.collections.ArrayList(it)
             downloadAdapter.loadProgress(list)
 
-        })
+        }
     }
 
     inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(), DownloadInterface {
@@ -643,6 +636,11 @@ class AllDownloadFragment : Fragment() {
                     activity!!.sendBroadcast(cancelIntent)
                 }
                 originalHeight = progressViewHolder!!.itemView.layoutParams.height
+                if (downloadInfo.progress == 100){
+                    CoroutineScope(Dispatchers.IO).launch {
+                        downloadProgress!!.delete(downloadInfo)
+                    }
+                }
             }
         }
 
