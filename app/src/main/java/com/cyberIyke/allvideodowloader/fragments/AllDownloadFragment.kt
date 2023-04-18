@@ -152,9 +152,6 @@ class AllDownloadFragment : Fragment() {
                             }
                         }
                     }
-                    if (downloadInterface != null) {
-                        downloadInterface!!.loading()
-                    }
                 }
             }
         }
@@ -211,7 +208,7 @@ class AllDownloadFragment : Fragment() {
         }
     }
 
-    inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(), DownloadInterface {
+    inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         val downloadList: MutableList<DownloadData> = ArrayList()
         var progressList: ArrayList<DownloadProgress>? = ArrayList()
         var downloaded: Boolean = false
@@ -224,7 +221,6 @@ class AllDownloadFragment : Fragment() {
         }
 
         fun addDownload(download: Download) {
-            downloadInterface = this
             var found = false
             var data: DownloadData? = null
             var dataPosition: Int = -1
@@ -628,14 +624,17 @@ class AllDownloadFragment : Fragment() {
                 progressViewHolder!!.downloadProgressText.text = downloadInfo.line
                 progressViewHolder!!.imgSelect.visibility = View.GONE
                 progressViewHolder!!.imgPause.visibility = View.GONE
+                progressViewHolder!!.imgMore.visibility = View.GONE
                 progressViewHolder!!.downloadVideoName.text = downloadInfo.name
                 progressViewHolder!!.imgCancel.setOnClickListener {
                     val cancelIntent = Intent(context, CancelReceiver::class.java)
                     cancelIntent.putExtra("taskId", downloadInfo.taskId)
                     cancelIntent.putExtra("notificationId", downloadInfo.taskId)
                     activity!!.sendBroadcast(cancelIntent)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        downloadProgress!!.delete(downloadInfo)
+                    }
                 }
-                originalHeight = progressViewHolder!!.itemView.layoutParams.height
                 if (downloadInfo.progress == 100){
                     CoroutineScope(Dispatchers.IO).launch {
                         downloadProgress!!.delete(downloadInfo)
@@ -648,19 +647,7 @@ class AllDownloadFragment : Fragment() {
             return downloadList.size + progressList!!.size
         }
 
-        override fun loading() {
-            if (progressViewHolder != null) {
-                progressViewHolder!!.itemView.visibility = View.VISIBLE
-                progressViewHolder!!.itemView.layoutParams.height = -2
-            }
-        }
 
-        override fun notLoading() {
-            if (progressViewHolder != null) {
-                progressViewHolder!!.itemView.visibility = View.GONE
-                progressViewHolder!!.itemView.layoutParams.height = 0
-            }
-        }
 
         internal inner class ViewHolder constructor(itemView: View) :
             RecyclerView.ViewHolder(itemView) {

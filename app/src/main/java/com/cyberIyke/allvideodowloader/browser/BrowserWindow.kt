@@ -58,6 +58,7 @@ import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import com.yausername.youtubedl_android.mapper.VideoInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -187,44 +188,40 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             }
 
             mVideoInfo = videoInfo
-            GlobalScope.launch(Dispatchers.Main) {
+            CoroutineScope(Dispatchers.IO).launch {
                 val formats = generateFormatsList(videoInfo, resources)
-            }
+                if (videoList != null) {
+                    videoList!!.recreateVideoList(
+                        qualities,
+                        imgVideo!!,
+                        txtTitle!!,
+                        txtDownload!!,
+                        dialog!!,
+                        videoInfo
+                    )
+                } else {
+                    videoList = object : VideoList(
+                        activity,
+                        qualities,
+                        imgVideo!!,
+                        txtTitle!!,
+                        txtDownload!!,
+                        dialog!!,
+                        videoInfo,
+                        formats
+                    ) {
+                        override fun onItemClicked(vidFormatItem: VidFormatItem?) {
 
-            val formats = kotlin.collections.ArrayList<Format>()
-            if (videoList != null) {
-                videoList!!.recreateVideoList(
-                    qualities,
-                    imgVideo!!,
-                    txtTitle!!,
-                    txtDownload!!,
-                    dialog!!,
-                    videoInfo
-                )
-            } else {
-                videoList = object : VideoList(
-                    activity,
-                    qualities,
-                    imgVideo!!,
-                    txtTitle!!,
-                    txtDownload!!,
-                    dialog!!,
-                    videoInfo,
-                    formats
-                ) {
-                    override fun onItemClicked(vidFormatItem: VidFormatItem?) {
-
-                        viewModel!!.selectedItem = (vidFormatItem)!!
-                        DownloadPathDialogFragment().show(
-                            childFragmentManager,
-                            "download_location_chooser_dialog"
-                        )
+                            viewModel!!.selectedItem = (vidFormatItem)!!
+                            DownloadPathDialogFragment().show(
+                                childFragmentManager,
+                                "download_location_chooser_dialog"
+                            )
+                        }
                     }
                 }
+                updateFoundVideosBar()
             }
-
-
-            updateFoundVideosBar()
         }
     }
 
@@ -314,7 +311,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                         urlBox.setText(url)
                         urlBox.setSelection(urlBox.text.length)
                         this@BrowserWindow.url = url
-                        viewModel!!.fetchInfo(url!!)
+                        //viewModel!!.fetchInfo(url!!)
                         updateFoundVideosBar()
                     }
                     view.findViewById<View>(R.id.loadingProgress).visibility = View.GONE
@@ -343,7 +340,6 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                 ) {
                     mVideoInfo = null
                     updateFoundVideosBar()
-                    Log.d(TAG, "doUpdateVisitedHistory: $url")
                     viewModel!!.fetchInfo(url!!)
                     super.doUpdateVisitedHistory(view, url, isReload)
                 }
@@ -620,7 +616,6 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
             (activity)!!,
             viewLifecycleOwner
         )
-        // downloadsViewModel.getId(viewModel.selectedItem.getId(), activity);
     }
 
     override fun onFilePicker(dialog: DownloadPathDialogFragment) {
