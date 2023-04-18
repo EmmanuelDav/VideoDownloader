@@ -15,6 +15,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.cyberIyke.allvideodowloader.database.AppDatabase
 import com.cyberIyke.allvideodowloader.database.Download
+import com.cyberIyke.allvideodowloader.database.DownloadProgress
 import com.cyberIyke.allvideodowloader.database.DownloadsRepository
 import com.cyberIyke.allvideodowloader.work.DeleteWorker
 import kotlinx.coroutines.Dispatchers
@@ -23,12 +24,15 @@ import kotlinx.coroutines.launch
 class DownloadsViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: DownloadsRepository
     val allDownloads: LiveData<List<Download>>
+    val allProgress: LiveData<List<DownloadProgress>>
     val loadState: MutableLiveData<WorkInfo.State?> = MutableLiveData(WorkInfo.State.SUCCEEDED)
 
     init {
         val downloadsDao = AppDatabase.getDatabase(application).downloadsDao()
+        val downloadProgress = AppDatabase.getDatabase(application).downloadProgressDao()
         repository = DownloadsRepository(downloadsDao)
         allDownloads = repository.allDownloads
+        allProgress = downloadProgress.getAllDownloads()
     }
 
     fun insert(word: Download) = viewModelScope.launch(Dispatchers.IO) {

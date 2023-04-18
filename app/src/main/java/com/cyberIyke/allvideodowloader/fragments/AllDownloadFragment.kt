@@ -37,6 +37,9 @@ import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLength
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
 import com.cyberIyke.allvideodowloader.work.CancelReceiver
 import com.cyberIyke.allvideodowloader.work.PauseReceiver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import wseemann.media.FFmpegMediaMetadataRetriever
 import java.io.File
 import java.io.IOException
@@ -123,6 +126,8 @@ class AllDownloadFragment : Fragment() {
             txtSelectedCount.text = selectedList.size.toString() + " selected"
             downloadAdapter.notifyDataSetChanged()
         }
+        val downloadProgress = AppDatabase.getDatabase(requireContext()).downloadProgressDao()
+
         progressReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
                 if ((intent.action == "DOWNLOAD_PROGRESS")) {
@@ -132,7 +137,19 @@ class AllDownloadFragment : Fragment() {
                                 "downloadList",
                                 DownloadInfo::class.java
                             )
-                        downloadAdapter.loadProgress(downloadInfoArrayList)
+                        downloadInfoArrayList!!.forEach {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                downloadProgress.update(
+                                    DownloadProgress(
+                                        "",
+                                        it.taskId,
+                                        it.name,
+                                        it.progress,
+                                        it.line
+                                    )
+                                )
+                            }
+                        }
                     }
                     if (downloadInterface != null) {
                         downloadInterface!!.loading()
@@ -194,16 +211,21 @@ class AllDownloadFragment : Fragment() {
                 }
             }
         }
+        downloadsViewModel!!.allProgress.observe(viewLifecycleOwner, Observer {
+            val list = kotlin.collections.ArrayList(it)
+            downloadAdapter.loadProgress(list)
+
+        })
     }
 
     inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>(), DownloadInterface {
         val downloadList: MutableList<DownloadData> = ArrayList()
-        var progressList: ArrayList<DownloadInfo>? = ArrayList()
+        var progressList: ArrayList<DownloadProgress>? = ArrayList()
         var downloaded: Boolean = false
         var originalHeight: Int = 0
         var progressViewHolder: ProgressViewHolder? = null
 
-        fun loadProgress(downloadDataList: ArrayList<DownloadInfo>?) {
+        fun loadProgress(downloadDataList: ArrayList<DownloadProgress>?) {
             progressList = downloadDataList!!
             notifyDataSetChanged()
         }
@@ -608,7 +630,7 @@ class AllDownloadFragment : Fragment() {
                 }
             } else if (itemHolder is ProgressViewHolder) {
                 progressViewHolder = itemHolder
-                val downloadInfo: DownloadInfo = progressList!![position]
+                val downloadInfo: DownloadProgress = progressList!![position]
                 progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
                 progressViewHolder!!.downloadProgressText.text = downloadInfo.line
                 progressViewHolder!!.imgSelect.visibility = View.GONE
@@ -617,7 +639,7 @@ class AllDownloadFragment : Fragment() {
                 progressViewHolder!!.imgCancel.setOnClickListener {
                     val cancelIntent = Intent(context, CancelReceiver::class.java)
                     cancelIntent.putExtra("taskId", downloadInfo.taskId)
-                    cancelIntent.putExtra("notificationId", downloadInfo.id)
+                    cancelIntent.putExtra("notificationId", downloadInfo.taskId)
                     activity!!.sendBroadcast(cancelIntent)
                 }
                 originalHeight = progressViewHolder!!.itemView.layoutParams.height

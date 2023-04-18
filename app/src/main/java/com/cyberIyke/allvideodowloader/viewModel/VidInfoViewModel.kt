@@ -2,6 +2,7 @@ package com.cyberIyke.allvideodowloader.viewModel
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
@@ -10,10 +11,15 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.cyberIyke.allvideodowloader.MyApp
+import com.cyberIyke.allvideodowloader.database.AppDatabase
+import com.cyberIyke.allvideodowloader.database.DownloadProgress
+import com.cyberIyke.allvideodowloader.model.DownloadInfo
 import com.cyberIyke.allvideodowloader.model.VidInfoItem
 import com.cyberIyke.allvideodowloader.work.DownloadWorker
+import com.google.gson.Gson
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.mapper.VideoInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -67,7 +73,7 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
         vidFormatItem: VidInfoItem.VidFormatItem,
         downloadDir: String,
         activity: Activity,
-        livecycle : LifecycleOwner
+        livecycle: LifecycleOwner
     ) {
         val vidInfo = vidFormatItem.vidInfo
         val vidFormat = vidFormatItem.vidFormat
@@ -82,6 +88,11 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             ).show()
             return
         }
+        CoroutineScope(Dispatchers.IO).launch {
+            val downloadProgress = AppDatabase.getDatabase(activity).downloadProgressDao()
+            downloadProgress.insert(DownloadProgress(vidInfo.thumbnail!!, vidInfo.id!!, vidInfo.title!!, 0, "waiting....."))
+        }
+
         val workData = workDataOf(
             DownloadWorker.urlKey to vidInfo.webpageUrl,
             DownloadWorker.nameKey to vidInfo.title,
@@ -94,11 +105,13 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             DownloadWorker.duration to vidInfo.duration
         )
 
-        val workRequest = workTag?.let { OneTimeWorkRequestBuilder<DownloadWorker>().addTag(it).setInputData(workData).build() }
+        val workRequest = workTag.let {
+            OneTimeWorkRequestBuilder<DownloadWorker>().addTag(it!!).setInputData(workData).build()
+        }
 
-            workManager.enqueueUniqueWork(
-                workTag!!, ExistingWorkPolicy.KEEP, workRequest!!
-            )
+        workManager.enqueueUniqueWork(
+            workTag!!, ExistingWorkPolicy.KEEP, workRequest
+        )
 
         Toast.makeText(
             activity, "download_queued", Toast.LENGTH_LONG

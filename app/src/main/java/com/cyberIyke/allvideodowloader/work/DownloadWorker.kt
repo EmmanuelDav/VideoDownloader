@@ -26,6 +26,9 @@ import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 import com.cyberIyke.allvideodowloader.R
+import com.cyberIyke.allvideodowloader.database.DownloadProgress
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import okhttp3.internal.checkDuration
 import kotlin.math.log
 
@@ -64,6 +67,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
             request.addOption("-f", formatId)
         }
         var destUri: Uri? = null
+
 
 
 
