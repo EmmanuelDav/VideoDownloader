@@ -338,6 +338,7 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
                     url: String?,
                     isReload: Boolean
                 ) {
+                    Log.d(TAG, "doUpdateVisitedHistory: $url")
                     mVideoInfo = null
                     updateFoundVideosBar()
                     viewModel!!.fetchInfo(url!!)

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "401552270830",
+    "firebase_url": "https://vidbot-hackathon.firebaseio.com",
+    "project_id": "vidbot-hackathon",
+    "storage_bucket": "vidbot-hackathon.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401552270830:android:281687d6923fce42ef5aff",
+        "android_client_info": {
+          "package_name": "com.cyberIyke.allvideodowloader"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "401552270830-5l4qj0dqobfqmcgvkno4uc9qgnbejre4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhGTes7_DxrXyD7SePJVNtSnuGlYrf0wg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "401552270830-5l4qj0dqobfqmcgvkno4uc9qgnbejre4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
