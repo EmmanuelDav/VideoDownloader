@@ -133,21 +133,15 @@ class AllDownloadFragment : Fragment() {
             override fun onReceive(context: Context?, intent: Intent) {
                 if ((intent.action == "DOWNLOAD_PROGRESS")) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        val downloadInfoArrayList: ArrayList<DownloadInfo>? =
+                        val downloadInfoArrayList: ArrayList<DownloadProgress>? =
                             intent.getParcelableArrayListExtra(
                                 "downloadList",
-                                DownloadInfo::class.java
+                                DownloadProgress::class.java
                             )
                         downloadInfoArrayList!!.forEach {
                             CoroutineScope(Dispatchers.IO).launch {
                                 downloadProgress!!.update(
-                                    DownloadProgress(
-                                        "",
-                                        it.taskId,
-                                        it.name,
-                                        it.progress,
-                                        it.line
-                                    )
+                                    it
                                 )
                             }
                         }
@@ -204,7 +198,6 @@ class AllDownloadFragment : Fragment() {
         downloadsViewModel!!.allProgress.observe(viewLifecycleOwner) {
             val list = kotlin.collections.ArrayList(it)
             downloadAdapter.loadProgress(list)
-
         }
     }
 
@@ -212,7 +205,6 @@ class AllDownloadFragment : Fragment() {
         val downloadList: MutableList<DownloadData> = ArrayList()
         var progressList: ArrayList<DownloadProgress>? = ArrayList()
         var downloaded: Boolean = false
-        var originalHeight: Int = 0
         var progressViewHolder: ProgressViewHolder? = null
 
         fun loadProgress(downloadDataList: ArrayList<DownloadProgress>?) {
@@ -282,7 +274,7 @@ class AllDownloadFragment : Fragment() {
                 )
                 var tempFile: File = File(downloadData.download!!.downloadedPath)
                 val file: File = tempFile
-                Glide.with((activity)!!).load(downloadData.download!!.downloadedPath)
+                Glide.with((activity)!!).load(downloadData.download!!.thumbnail)
                     .into(holder.imgVideo)
                 val strRename: String? =
                     renameVideoPref.getString(downloadData.download!!.id.toString(), "")
@@ -626,6 +618,7 @@ class AllDownloadFragment : Fragment() {
                 progressViewHolder!!.imgPause.visibility = View.GONE
                 progressViewHolder!!.imgMore.visibility = View.GONE
                 progressViewHolder!!.downloadVideoName.text = downloadInfo.name
+                Glide.with(requireContext()).load(downloadInfo.thumbnail).into(progressViewHolder!!.imgVideo)
                 progressViewHolder!!.imgCancel.setOnClickListener {
                     val cancelIntent = Intent(context, CancelReceiver::class.java)
                     cancelIntent.putExtra("taskId", downloadInfo.taskId)
@@ -646,8 +639,6 @@ class AllDownloadFragment : Fragment() {
         override fun getItemCount(): Int {
             return downloadList.size + progressList!!.size
         }
-
-
 
         internal inner class ViewHolder constructor(itemView: View) :
             RecyclerView.ViewHolder(itemView) {

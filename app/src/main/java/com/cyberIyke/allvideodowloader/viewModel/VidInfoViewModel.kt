@@ -102,7 +102,8 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             DownloadWorker.downloadDirKey to downloadDir,
             DownloadWorker.sizeKey to vidFormat.fileSizeApproximate,
             DownloadWorker.taskIdKey to vidInfo.id,
-            DownloadWorker.duration to vidInfo.duration
+            DownloadWorker.duration to vidInfo.duration,
+            DownloadWorker.thumbnail to vidInfo.thumbnail
         )
 
         val workRequest = workTag.let {

@@ -47,6 +47,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         val size = inputData.getLong(sizeKey, 0L)
         val taskId = inputData.getString(taskIdKey)!!
         val duration = inputData.getInt(duration,0)
+        val thumbnail = inputData.getString(thumbnail)!!
 
         createNotificationChannel()
         val notificationId = id.hashCode()
@@ -75,7 +76,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
                 val index = downloadList.indexOfFirst { it.name == name }
                 if (index == -1) {
-                    downloadList.add(DownloadInfo(id.hashCode(), taskId, name, progress.toInt(), line))
+                    downloadList.add(DownloadProgress(thumbnail, taskId, name, progress.toInt(), line))
                 } else {
                     downloadList[index].progress = progress.toInt()
                     downloadList[index].line = line
@@ -111,6 +112,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         download.downloadedPath = destUri.toString()
         download.downloadedPercent = 100.00
         download.downloadedSize = size
+        download.thumbnail = thumbnail
         download.mediaType = if (vcodec == "none" && acodec != "none") "audio" else "video"
         repository.insert(download)
         return Result.success()
@@ -169,7 +171,8 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         const val sizeKey = "size"
         const val taskIdKey = "taskId"
         const val duration = "duration"
-        val downloadList = ArrayList<DownloadInfo>()
+        const val thumbnail = "thumbnail"
+        val downloadList = ArrayList<DownloadProgress>()
     }
 }
 

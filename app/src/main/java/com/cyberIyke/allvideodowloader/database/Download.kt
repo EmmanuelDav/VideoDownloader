@@ -32,4 +32,7 @@ data class Download(
 
     @ColumnInfo(name = "media_type")
     lateinit var mediaType: String
+
+    @ColumnInfo(name = "thumbnail")
+    lateinit var thumbnail: String
 }
