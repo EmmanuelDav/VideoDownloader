@@ -58,10 +58,7 @@ import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import com.yausername.youtubedl_android.mapper.VideoInfo
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.io.*
 import java.net.HttpURLConnection
@@ -72,8 +69,7 @@ import javax.net.ssl.SSLSocketFactory
 import kotlin.collections.ArrayList
 
 
-class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(),
-    View.OnClickListener, OnBackPressedListener, DialogListener {
+class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickListener, OnBackPressedListener, DialogListener {
 
     var url: String? = null
     private var mView: View? = null
@@ -189,36 +185,39 @@ class BrowserWindow constructor(private val activity: Activity?) : BaseFragment(
 
             mVideoInfo = videoInfo
             CoroutineScope(Dispatchers.IO).launch {
-                val formats = generateFormatsList(videoInfo, resources)
-                if (videoList != null) {
-                    videoList!!.recreateVideoList(
-                        qualities,
-                        imgVideo!!,
-                        txtTitle!!,
-                        txtDownload!!,
-                        dialog!!,
-                        videoInfo
-                    )
-                } else {
-                    videoList = object : VideoList(
-                        activity,
-                        qualities,
-                        imgVideo!!,
-                        txtTitle!!,
-                        txtDownload!!,
-                        dialog!!,
-                        videoInfo,
-                        formats
-                    ) {
-                        override fun onItemClicked(vidFormatItem: VidFormatItem?) {
+               val formats = generateFormatsList(videoInfo, resources)
+                withContext(Dispatchers.Main) {
+                    if (videoList != null) {
+                        videoList!!.recreateVideoList(
+                            qualities,
+                            imgVideo!!,
+                            txtTitle!!,
+                            txtDownload!!,
+                            dialog!!,
+                            videoInfo
+                        )
+                    } else {
+                        videoList = object : VideoList(
+                            activity,
+                            qualities,
+                            imgVideo!!,
+                            txtTitle!!,
+                            txtDownload!!,
+                            dialog!!,
+                            videoInfo,
+                            formats
+                        ) {
+                            override fun onItemClicked(vidFormatItem: VidFormatItem?) {
 
-                            viewModel!!.selectedItem = (vidFormatItem)!!
-                            DownloadPathDialogFragment().show(
-                                childFragmentManager,
-                                "download_location_chooser_dialog"
-                            )
+                                viewModel!!.selectedItem = (vidFormatItem)!!
+                                DownloadPathDialogFragment().show(
+                                    childFragmentManager,
+                                    "download_location_chooser_dialog"
+                                )
+                            }
                         }
                     }
+
                 }
                 updateFoundVideosBar()
             }

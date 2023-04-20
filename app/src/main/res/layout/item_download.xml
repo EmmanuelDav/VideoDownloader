@@ -96,7 +96,7 @@
                 android:max="100"
                 android:progressBackgroundTint="@color/text_6"
                 android:progressTint="@color/primary_green"
-                tools:progress="40" />
+                tools:progress="0" />
 
             <LinearLayout
                 android:layout_width="match_parent"

@@ -39,8 +39,7 @@ import com.cyberIyke.allvideodowloader.views.cardstack.StackAdapter
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.io.*
 
-class BrowserManager(private val activity: Activity) : BaseFragment() {
-
+class BrowserManager(val activity: Activity) : BaseFragment() {
     private var adBlock: AdBlocker? = null
     var windowsList: MutableList<BrowserWindow>? = null
     private var blockedWebsites: List<String?>? = null

@@ -90,7 +90,7 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
         }
         CoroutineScope(Dispatchers.IO).launch {
             val downloadProgress = AppDatabase.getDatabase(activity).downloadProgressDao()
-            downloadProgress.insert(DownloadProgress(vidInfo.thumbnail!!, vidInfo.id!!, vidInfo.title!!, 0, "waiting....."))
+            downloadProgress.insert(DownloadProgress(vidInfo.thumbnail!!, vidInfo.id!!, vidInfo.title!!, 0, "download waiting....."))
         }
 
         val workData = workDataOf(

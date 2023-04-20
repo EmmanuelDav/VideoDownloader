@@ -31,12 +31,10 @@ import com.cyberIyke.allvideodowloader.database.*
 import com.cyberIyke.allvideodowloader.helper.RenameVideoPref
 import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.DownloadInterface
-import com.cyberIyke.allvideodowloader.model.DownloadInfo
 import com.cyberIyke.allvideodowloader.utils.Utils
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLengthFile
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
 import com.cyberIyke.allvideodowloader.work.CancelReceiver
-import com.cyberIyke.allvideodowloader.work.PauseReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,7 +44,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
+
 
 class AllDownloadFragment : Fragment() {
 
@@ -200,6 +198,7 @@ class AllDownloadFragment : Fragment() {
             downloadAdapter.loadProgress(list)
         }
     }
+
 
     inner class DownloadAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         val downloadList: MutableList<DownloadData> = ArrayList()
@@ -619,6 +618,7 @@ class AllDownloadFragment : Fragment() {
                 progressViewHolder!!.imgMore.visibility = View.GONE
                 progressViewHolder!!.downloadVideoName.text = downloadInfo.name
                 Glide.with(requireContext()).load(downloadInfo.thumbnail).into(progressViewHolder!!.imgVideo)
+
                 progressViewHolder!!.imgCancel.setOnClickListener {
                     val cancelIntent = Intent(context, CancelReceiver::class.java)
                     cancelIntent.putExtra("taskId", downloadInfo.taskId)

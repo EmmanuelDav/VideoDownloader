@@ -82,10 +82,10 @@ abstract class VideoList internal constructor(
         this.bottomSheetDialog = bottomSheetDialog
         this.videoInfo = videoInfo
         selectedVideo = 0
-        val videoListAdapter: VideoListAdapter = VideoListAdapter()
-        videoListAdapter.fill(videoInfo)
-        view.adapter = videoListAdapter
+        val videoListAdapter = VideoListAdapter()
         view.layoutManager = GridLayoutManager(activity, 3)
+        view.adapter = videoListAdapter
+        videoListAdapter.fill(videoInfo)
         view.setHasFixedSize(true)
         txtDownload.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View) {
