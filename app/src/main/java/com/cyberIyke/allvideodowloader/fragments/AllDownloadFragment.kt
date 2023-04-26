@@ -31,6 +31,7 @@ import com.cyberIyke.allvideodowloader.database.*
 import com.cyberIyke.allvideodowloader.helper.RenameVideoPref
 import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.DownloadInterface
+import com.cyberIyke.allvideodowloader.utils.CustomProgressBarDrawable
 import com.cyberIyke.allvideodowloader.utils.Utils
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLengthFile
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
@@ -558,6 +559,7 @@ class AllDownloadFragment : Fragment() {
                                 holder.imgPause.visibility = View.GONE
                                 holder.imgResume.visibility = View.GONE
                                 holder.downloadProgressBar.visibility = View.GONE
+                                holder.downloadProgressBar1.visibility = View.GONE
                                 holder.txtDuration.visibility = View.VISIBLE
                                 holder.imgMore.visibility = View.VISIBLE
                                 val dateString: String = SimpleDateFormat("MMMM dd yyyy").format(
@@ -611,14 +613,21 @@ class AllDownloadFragment : Fragment() {
             } else if (itemHolder is ProgressViewHolder) {
                 progressViewHolder = itemHolder
                 val downloadInfo: DownloadProgress = progressList!![position]
-                progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
+                if (downloadInfo.progress <= 0  && downloadInfo.line.toString().contains("download waiting.....")){
+                    progressViewHolder!!.downloadProgressBar1.progressDrawable = CustomProgressBarDrawable(requireContext().getColor(R.color.primary_green))
+                    progressViewHolder!!.downloadProgressBar1.visibility = View.VISIBLE
+                    progressViewHolder!!.downloadProgressBar.visibility = View.GONE
+                }else{
+                    progressViewHolder!!.downloadProgressBar1.visibility = View.GONE
+                    progressViewHolder!!.downloadProgressBar.visibility = View.VISIBLE
+                    progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
+                }
                 progressViewHolder!!.downloadProgressText.text = downloadInfo.line
                 progressViewHolder!!.imgSelect.visibility = View.GONE
                 progressViewHolder!!.imgPause.visibility = View.GONE
                 progressViewHolder!!.imgMore.visibility = View.GONE
                 progressViewHolder!!.downloadVideoName.text = downloadInfo.name
                 Glide.with(requireContext()).load(downloadInfo.thumbnail).into(progressViewHolder!!.imgVideo)
-
                 progressViewHolder!!.imgCancel.setOnClickListener {
                     val cancelIntent = Intent(context, CancelReceiver::class.java)
                     cancelIntent.putExtra("taskId", downloadInfo.taskId)
@@ -644,6 +653,7 @@ class AllDownloadFragment : Fragment() {
             RecyclerView.ViewHolder(itemView) {
             var downloadVideoName: TextView
             var downloadProgressBar: ProgressBar
+            var downloadProgressBar1: ProgressBar
             var imgVideo: ImageView
             var downloadProgressText: TextView
             var imgCancel: ImageView
@@ -668,12 +678,14 @@ class AllDownloadFragment : Fragment() {
                 imgVideo = itemView.findViewById(R.id.imgVideo)
                 downloadVideoName = itemView.findViewById(R.id.downloadVideoName)
                 downloadProgressBar = itemView.findViewById(R.id.downloadProgressBar)
+                downloadProgressBar1 = itemView.findViewById(R.id.downloadProgressBar1)
             }
         }
 
         inner class ProgressViewHolder constructor(itemView: View) :
             RecyclerView.ViewHolder(itemView) {
             var downloadProgressBar: ProgressBar
+            var downloadProgressBar1: ProgressBar
             var imgVideo: ImageView
             var downloadProgressText: TextView
             var downloadVideoName: TextView
@@ -693,6 +705,7 @@ class AllDownloadFragment : Fragment() {
                 imgVideo = itemView.findViewById(R.id.imgVideo)
                 downloadVideoName = itemView.findViewById(R.id.downloadVideoName)
                 downloadProgressBar = itemView.findViewById(R.id.downloadProgressBar)
+                downloadProgressBar1 = itemView.findViewById(R.id.downloadProgressBar1)
             }
         }
     }
