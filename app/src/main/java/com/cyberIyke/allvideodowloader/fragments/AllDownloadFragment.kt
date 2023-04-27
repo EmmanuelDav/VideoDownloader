@@ -33,6 +33,8 @@ import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.DownloadInterface
 import com.cyberIyke.allvideodowloader.utils.CustomProgressBarDrawable
 import com.cyberIyke.allvideodowloader.utils.Utils
+import com.cyberIyke.allvideodowloader.utils.Utils.Companion.calculateDownloadedAndRemainingMB
+import com.cyberIyke.allvideodowloader.utils.Utils.Companion.downloadSpeed
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLengthFile
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
 import com.cyberIyke.allvideodowloader.work.CancelReceiver
@@ -196,7 +198,7 @@ class AllDownloadFragment : Fragment() {
         }
         downloadsViewModel!!.allProgress.observe(viewLifecycleOwner) {
             val list = kotlin.collections.ArrayList(it)
-            downloadAdapter.loadProgress(list)
+            downloadAdapter.loadProgress(list!!)
         }
     }
 
@@ -208,8 +210,8 @@ class AllDownloadFragment : Fragment() {
         var progressViewHolder: ProgressViewHolder? = null
 
         fun loadProgress(downloadDataList: ArrayList<DownloadProgress>?) {
-            progressList = downloadDataList!!
-            notifyDataSetChanged()
+                progressList = downloadDataList
+                notifyDataSetChanged()
         }
 
         fun addDownload(download: Download) {
@@ -272,7 +274,7 @@ class AllDownloadFragment : Fragment() {
                         downloadData.download!!.downloadedPath
                     )
                 )
-                var tempFile: File = File(downloadData.download!!.downloadedPath)
+                var tempFile = File(downloadData.download!!.downloadedPath)
                 val file: File = tempFile
                 Glide.with((activity)!!).load(downloadData.download!!.thumbnail)
                     .into(holder.imgVideo)
@@ -398,20 +400,6 @@ class AllDownloadFragment : Fragment() {
                         //  fetch.remove(downloadData.download.getId());
                     }
                 })
-                holder.imgResume.setOnClickListener(object : View.OnClickListener {
-                    override fun onClick(v: View?) {
-//                    if (status == Status.FAILED || status == Status.CANCELLED) {
-//                        //fetch.retry(downloadData.download.getId());
-//                    } else {
-//                      //  fetch.resume(downloadData.download.getId());
-//                    }
-                    }
-                })
-                holder.imgPause.setOnClickListener(object : View.OnClickListener {
-                    override fun onClick(v: View?) {
-                        //fetch.pause((int) downloadData.download.getId());
-                    }
-                })
                 holder.imgMore.setOnClickListener(object : View.OnClickListener {
                     override fun onClick(v: View?) {
                         val popup: PopupMenu = PopupMenu(activity, holder.imgMore)
@@ -521,8 +509,6 @@ class AllDownloadFragment : Fragment() {
                     }
                 })
                 holder.imgCancel.visibility = View.GONE
-                holder.imgPause.visibility = View.GONE
-                holder.imgResume.visibility = View.GONE
                 holder.txtDuration.visibility = View.GONE
                 holder.imgMore.visibility = View.GONE
                 holder.imgSelect.visibility = View.GONE
@@ -534,30 +520,22 @@ class AllDownloadFragment : Fragment() {
                         when (state) {
                             WorkInfo.State.FAILED -> {
                                 holder.imgCancel.visibility = View.VISIBLE
-                                holder.imgPause.visibility = View.GONE
-                                holder.imgResume.visibility = View.VISIBLE
                                 val strDescFailed: String =
                                     "Failed " + downloadData.download!!.downloadedPercent + "% " + getStringSizeLengthFile(
                                         downloadData.download!!.downloadedSize
                                     ) + "/" + getStringSizeLengthFile(
                                         downloadData.download!!.totalSize
                                     )
-                                holder.downloadProgressText.text = strDescFailed
+                                holder.downloadTextSize.text = strDescFailed
                             }
                             WorkInfo.State.RUNNING -> {}
                             WorkInfo.State.ENQUEUED -> {
                                 holder.imgCancel.visibility = View.VISIBLE
-                                holder.imgPause.visibility = View.VISIBLE
-                                holder.imgResume.visibility = View.GONE
                             }
                             WorkInfo.State.SUCCEEDED -> {
                                 downloaded = true
                                 holder.imgCancel.visibility = View.VISIBLE
-                                holder.imgPause.visibility = View.VISIBLE
-                                holder.imgResume.visibility = View.GONE
                                 holder.imgCancel.visibility = View.GONE
-                                holder.imgPause.visibility = View.GONE
-                                holder.imgResume.visibility = View.GONE
                                 holder.downloadProgressBar.visibility = View.GONE
                                 holder.downloadProgressBar1.visibility = View.GONE
                                 holder.txtDuration.visibility = View.VISIBLE
@@ -570,7 +548,7 @@ class AllDownloadFragment : Fragment() {
                                 val strDescComplete: String = getStringSizeLengthFile(
                                     downloadData.download!!.downloadedSize
                                 ) + "  " + dateString
-                                holder.downloadProgressText.text = strDescComplete
+                                holder.downloadTextSize.text = strDescComplete
                                 holder.txtDuration.text = Utils.formatDuration(downloadData.download!!.duration)
                             }
                             WorkInfo.State.CANCELLED -> {
@@ -580,10 +558,8 @@ class AllDownloadFragment : Fragment() {
                                     ) + "/" + getStringSizeLengthFile(
                                         downloadData.download!!.totalSize
                                     )
-                                holder.downloadProgressText.text = strDesc2
+                                holder.downloadTextSize.text = strDesc2
                                 holder.imgCancel.visibility = View.GONE
-                                holder.imgPause.visibility = View.GONE
-                                holder.imgResume.visibility = View.VISIBLE
                             }
                             WorkInfo.State.BLOCKED -> {}
                             else -> {}
@@ -592,8 +568,6 @@ class AllDownloadFragment : Fragment() {
                 )
                 if (isSelectedMode) {
                     holder.imgCancel.visibility = View.GONE
-                    holder.imgPause.visibility = View.GONE
-                    holder.imgResume.visibility = View.GONE
                     holder.imgMore.visibility = View.GONE
                     holder.imgSelect.visibility = View.VISIBLE
                     var isContain: Boolean = false
@@ -613,7 +587,7 @@ class AllDownloadFragment : Fragment() {
             } else if (itemHolder is ProgressViewHolder) {
                 progressViewHolder = itemHolder
                 val downloadInfo: DownloadProgress = progressList!![position]
-                if (downloadInfo.progress <= 0  && downloadInfo.line.toString().contains("download waiting.....")){
+                if (downloadInfo.progress <= 0  && downloadInfo.line.contains("download waiting.....")){
                     progressViewHolder!!.downloadProgressBar1.progressDrawable = CustomProgressBarDrawable(requireContext().getColor(R.color.primary_green))
                     progressViewHolder!!.downloadProgressBar1.visibility = View.VISIBLE
                     progressViewHolder!!.downloadProgressBar.visibility = View.GONE
@@ -622,9 +596,10 @@ class AllDownloadFragment : Fragment() {
                     progressViewHolder!!.downloadProgressBar.visibility = View.VISIBLE
                     progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
                 }
-                progressViewHolder!!.downloadProgressText.text = downloadInfo.line
+                progressViewHolder!!.downloadSpeed.text = downloadSpeed(downloadInfo.progress)
+                var downloadsize = calculateDownloadedAndRemainingMB(10, downloadInfo.progress.toLong())
+                progressViewHolder!!.downloadSize.text = "${downloadsize!!.first}/${downloadsize.second}"
                 progressViewHolder!!.imgSelect.visibility = View.GONE
-                progressViewHolder!!.imgPause.visibility = View.GONE
                 progressViewHolder!!.imgMore.visibility = View.GONE
                 progressViewHolder!!.downloadVideoName.text = downloadInfo.name
                 Glide.with(requireContext()).load(downloadInfo.thumbnail).into(progressViewHolder!!.imgVideo)
@@ -655,10 +630,9 @@ class AllDownloadFragment : Fragment() {
             var downloadProgressBar: ProgressBar
             var downloadProgressBar1: ProgressBar
             var imgVideo: ImageView
-            var downloadProgressText: TextView
+            var downloadTextSpeed: TextView
+            var downloadTextSize: TextView
             var imgCancel: ImageView
-            var imgPause: ImageView
-            var imgResume: ImageView
             var imgMore: ImageView
             var txtDuration: TextView
             var edtSearch: EditText
@@ -671,10 +645,9 @@ class AllDownloadFragment : Fragment() {
                 edtSearch = itemView.findViewById(R.id.edtSearch)
                 txtDuration = itemView.findViewById(R.id.txtDuration)
                 imgMore = itemView.findViewById(R.id.imgMore)
-                imgResume = itemView.findViewById(R.id.imgResume)
-                imgPause = itemView.findViewById(R.id.imgPause)
                 imgCancel = itemView.findViewById(R.id.imgCancel)
-                downloadProgressText = itemView.findViewById(R.id.downloadProgressText)
+                downloadTextSize = itemView.findViewById(R.id.download_size)
+                downloadTextSpeed = itemView.findViewById(R.id.download_speed)
                 imgVideo = itemView.findViewById(R.id.imgVideo)
                 downloadVideoName = itemView.findViewById(R.id.downloadVideoName)
                 downloadProgressBar = itemView.findViewById(R.id.downloadProgressBar)
@@ -687,21 +660,19 @@ class AllDownloadFragment : Fragment() {
             var downloadProgressBar: ProgressBar
             var downloadProgressBar1: ProgressBar
             var imgVideo: ImageView
-            var downloadProgressText: TextView
+            var downloadSize: TextView
+            var downloadSpeed: TextView
             var downloadVideoName: TextView
             var imgMore: ImageView
             var imgCancel: ImageView
-            var imgPause: ImageView
             var imgSelect: ImageView
-            var imgResume: ImageView
 
             init {
                 imgSelect = itemView.findViewById(R.id.imgSelect)
-                imgPause = itemView.findViewById(R.id.imgPause)
                 imgMore = itemView.findViewById(R.id.imgMore)
                 imgCancel = itemView.findViewById(R.id.imgCancel)
-                imgResume = itemView.findViewById(R.id.imgResume)
-                downloadProgressText = itemView.findViewById(R.id.downloadProgressText)
+                downloadSpeed = itemView.findViewById(R.id.download_speed)
+                downloadSize = itemView.findViewById(R.id.download_size)
                 imgVideo = itemView.findViewById(R.id.imgVideo)
                 downloadVideoName = itemView.findViewById(R.id.downloadVideoName)
                 downloadProgressBar = itemView.findViewById(R.id.downloadProgressBar)

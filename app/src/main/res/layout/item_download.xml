@@ -91,63 +91,58 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
 
+                <ProgressBar
+                    android:id="@+id/downloadProgressBar"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/_4sdp"
+                    android:layout_marginVertical="8dp"
+                    android:max="100"
+                    android:progressBackgroundTint="@color/text_6"
+                    android:progressTint="@color/primary_green"
+                    android:visibility="invisible"
+                    tools:progress="0" />
 
-            <ProgressBar
-                android:id="@+id/downloadProgressBar"
-                style="@android:style/Widget.ProgressBar.Horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/_4sdp"
-                android:layout_marginVertical="8dp"
-                android:visibility="invisible"
-                android:max="100"
-                android:progressBackgroundTint="@color/text_6"
-                android:progressTint="@color/primary_green"
-                tools:progress="0" />
-
-            <ProgressBar
-                android:id="@+id/downloadProgressBar1"
-                style="@android:style/Widget.ProgressBar.Horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/_4sdp"
-                android:layout_marginVertical="8dp"
-                android:visibility="invisible"
-                android:max="100"
-                android:progressBackgroundTint="@color/text_6"
-                android:progressTint="@color/primary_green"
-                tools:progress="0" />
+                <ProgressBar
+                    android:id="@+id/downloadProgressBar1"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/_4sdp"
+                    android:layout_marginVertical="8dp"
+                    android:max="100"
+                    android:progressBackgroundTint="@color/text_6"
+                    android:progressTint="@color/primary_green"
+                    android:visibility="invisible"
+                    tools:progress="0" />
 
             </RelativeLayout>
 
 
             <LinearLayout
                 android:layout_width="match_parent"
+                android:orientation="vertical"
                 android:layout_height="wrap_content">
 
                 <TextView
-                    android:id="@+id/downloadProgressText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:id="@+id/download_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
                     android:layout_centerInParent="true"
                     android:layout_weight="1"
                     android:singleLine="true"
-                    android:text="File Download Progress"
                     android:textColor="@color/text_4"
-                    android:textSize="@dimen/_10sdp" />
+                    android:textSize="@dimen/_9sdp" />
 
-                <ImageView
-                    android:id="@+id/imgPause"
-                    android:layout_width="@dimen/_14sdp"
-                    android:layout_height="@dimen/_14sdp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/ic_pause_new" />
+                <TextView
+                    android:id="@+id/download_speed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_centerInParent="true"
+                    android:layout_weight="1"
+                    android:singleLine="true"
+                    android:textColor="@color/text_4"
+                    android:textSize="@dimen/_9sdp" />
 
-                <ImageView
-                    android:id="@+id/imgResume"
-                    android:layout_width="@dimen/_14sdp"
-                    android:layout_height="@dimen/_14sdp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/ic_resume"
-                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
 

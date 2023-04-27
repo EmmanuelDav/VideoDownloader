@@ -536,7 +536,7 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
                         isReverse: Boolean
                     ) {
                         super.onAnimationEnd((animation), isReverse)
-                        Glide.with((activity!!))
+                        Glide.with((requireContext().applicationContext))
                             .load(R.drawable.ic_download_enable)
                             .into((videosFoundHUD)!!)
                     }
