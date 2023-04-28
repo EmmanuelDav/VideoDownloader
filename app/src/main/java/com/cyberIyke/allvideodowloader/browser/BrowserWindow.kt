@@ -608,14 +608,9 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
             .getString(getString(R.string.download_location_key), null)
         if (path == null) {
             Toast.makeText(context, R.string.invalid_download_location, Toast.LENGTH_SHORT).show()
+        }else{
+            removeDialog()
         }
-        removeDialog()
-        viewModel!!.startDownload(
-            viewModel!!.selectedItem,
-            (path)!!,
-            (activity)!!,
-            viewLifecycleOwner
-        )
     }
 
     override fun onFilePicker(dialog: DownloadPathDialogFragment) {
@@ -667,6 +662,7 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
         toast.duration = Toast.LENGTH_LONG
         toast.view = layout
         toast.show()
+
         (activity as MainActivity?)!!.downloadCount =
             (activity!!.downloadCount + 1)
         activity.badgeDownload.setNumber(activity.downloadCount)

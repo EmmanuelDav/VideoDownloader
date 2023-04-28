@@ -253,14 +253,6 @@ class Utils(private var context: Context) {
             formats
         }
 
-        fun downloadSpeed(progress :Int): String {
-            val progressValue = progress
-            val downloadSpeed = progressValue * 1024 // Assuming progress value is in KB/s
-            val downloadSpeedInKbps = downloadSpeed / 1024
-            val downloadSpeedInMbps = downloadSpeedInKbps / 1024.0
-            return "%.2f MB/s".format(downloadSpeedInMbps)
-        }
-
         fun calculateDownloadedAndRemainingMB(
             totalFileSizeMB: Long,
             downloadedBytes: Long
@@ -270,5 +262,4 @@ class Utils(private var context: Context) {
             return Pair(downloadedMB, remainingMB)
         }
     }
-
 }

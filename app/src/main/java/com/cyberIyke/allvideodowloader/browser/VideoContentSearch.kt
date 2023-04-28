@@ -66,7 +66,7 @@ abstract class VideoContentSearch constructor(
                     ) {
                         addVideoToList(uCon, page, title, contentType)
                     } else if ((contentType == "application/x-mpegurl") || (contentType == "application/vnd.apple.mpegurl")) {
-                        addVideosToListFromM3U8(uCon, page, title)
+                       // addVideosToListFromM3U8(uCon, page, title)
                     }
                 }
             }
@@ -240,12 +240,12 @@ abstract class VideoContentSearch constructor(
                     onVideoFound(null, type, link, name, page, true, website, audio)
                     return
                 }
-                while ((buffReader.readLine().also({ line = it })) != null) {
-                    if (line.endsWith(".m3u8")) {
-                        val link: String = prefix + line
-                        onVideoFound(null, type, link, name, page, true, website, audio)
-                    }
-                }
+//                while ((buffReader.readLine().also({ line = it })) != null) {
+//                    if (line.endsWith(".m3u8")) {
+//                        val link: String = prefix + line
+//                        onVideoFound(null, type, link, name, page, true, website, audio)
+//                    }
+//                }
             }
         } catch (e: IOException) {
             e.printStackTrace()

@@ -33,8 +33,6 @@ import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.DownloadInterface
 import com.cyberIyke.allvideodowloader.utils.CustomProgressBarDrawable
 import com.cyberIyke.allvideodowloader.utils.Utils
-import com.cyberIyke.allvideodowloader.utils.Utils.Companion.calculateDownloadedAndRemainingMB
-import com.cyberIyke.allvideodowloader.utils.Utils.Companion.downloadSpeed
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLengthFile
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
 import com.cyberIyke.allvideodowloader.work.CancelReceiver
@@ -596,9 +594,8 @@ class AllDownloadFragment : Fragment() {
                     progressViewHolder!!.downloadProgressBar.visibility = View.VISIBLE
                     progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
                 }
-                progressViewHolder!!.downloadSpeed.text = downloadSpeed(downloadInfo.progress)
-                var downloadsize = calculateDownloadedAndRemainingMB(10, downloadInfo.progress.toLong())
-                progressViewHolder!!.downloadSize.text = "${downloadsize!!.first}/${downloadsize.second}"
+                progressViewHolder!!.downloadSpeed.text = ""
+                progressViewHolder!!.downloadSize.text = ""
                 progressViewHolder!!.imgSelect.visibility = View.GONE
                 progressViewHolder!!.imgMore.visibility = View.GONE
                 progressViewHolder!!.downloadVideoName.text = downloadInfo.name
