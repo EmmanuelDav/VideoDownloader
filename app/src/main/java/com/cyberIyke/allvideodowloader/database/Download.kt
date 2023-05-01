@@ -35,4 +35,9 @@ data class Download(
 
     @ColumnInfo(name = "thumbnail")
     lateinit var thumbnail: String
+
+    @ColumnInfo(name = "url")
+    lateinit var url: String
+
+
 }

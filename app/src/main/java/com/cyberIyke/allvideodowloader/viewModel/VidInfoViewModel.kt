@@ -73,7 +73,6 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
         vidFormatItem: VidInfoItem.VidFormatItem,
         downloadDir: String,
         activity: Activity,
-        livecycle: LifecycleOwner
     ) {
         val vidInfo = vidFormatItem.vidInfo
         val vidFormat = vidFormatItem.vidFormat
@@ -90,7 +89,8 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
         }
         CoroutineScope(Dispatchers.IO).launch {
             val downloadProgress = AppDatabase.getDatabase(activity).downloadProgressDao()
-            downloadProgress.insert(DownloadProgress(vidInfo.thumbnail!!, vidInfo.id!!, vidInfo.title!!, 0, "download waiting....."))
+            downloadProgress.insert(DownloadProgress(vidInfo.thumbnail!!, vidInfo.id!!, vidInfo.title!!, 0,
+                vidInfo.fileSizeApproximate,"download waiting....."))
         }
 
         val workData = workDataOf(

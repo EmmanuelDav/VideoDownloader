@@ -76,7 +76,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
                 val index = downloadList.indexOfFirst { it.name == name }
                 if (index == -1) {
-                    downloadList.add(DownloadProgress(thumbnail, taskId, name, progress.toInt(), line))
+                    downloadList.add(DownloadProgress(thumbnail, taskId, name, progress.toInt(), size, line))
                 } else {
                     downloadList[index].progress = progress.toInt()
                     downloadList[index].line = line
@@ -90,8 +90,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
             val docId = DocumentsContract.getTreeDocumentId(treeUri)
             val destDir = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId)
             tmpFile.listFiles()?.forEach {
-                val mimeType =
-                    MimeTypeMap.getSingleton().getMimeTypeFromExtension(it.extension) ?: "*/*"
+                val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(it.extension) ?: "*/*"
                 destUri = DocumentsContract.createDocument(
                     applicationContext.contentResolver, destDir, mimeType, it.name
                 )
@@ -113,6 +112,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         download.downloadedPercent = 100.00
         download.downloadedSize = size
         download.thumbnail = thumbnail
+        download.url = url
         download.mediaType = if (vcodec == "none" && acodec != "none") "audio" else "video"
         repository.insert(download)
         return Result.success()

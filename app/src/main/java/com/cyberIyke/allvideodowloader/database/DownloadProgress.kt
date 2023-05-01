@@ -14,4 +14,5 @@ class DownloadProgress (var thumbnail: String,
                         var taskId: String,
                         var name: String,
                         var progress: Int,
+                        var size: Long,
                         var line: String): Parcelable

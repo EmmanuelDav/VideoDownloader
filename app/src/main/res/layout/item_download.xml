@@ -16,7 +16,7 @@
 
         <androidx.cardview.widget.CardView
             android:layout_width="@dimen/_86sdp"
-            android:layout_height="@dimen/_64sdp"
+            android:layout_height="@dimen/_60sdp"
             android:layout_marginEnd="@dimen/_5sdp"
             app:cardBackgroundColor="#D9D9D9"
             app:cardCornerRadius="@dimen/_5sdp">
@@ -131,7 +131,7 @@
                     android:layout_centerInParent="true"
                     android:layout_weight="1"
                     android:singleLine="true"
-                    android:layout_marginBottom="@dimen/_2sdp"
+                    android:layout_marginBottom="@dimen/_1sdp"
                     android:textColor="@color/text_4"
                     android:textSize="@dimen/_10sdp" />
 

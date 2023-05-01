@@ -71,6 +71,8 @@ import kotlin.collections.ArrayList
 
 class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickListener, OnBackPressedListener, DialogListener {
 
+    constructor() : this(null)
+
     var url: String? = null
     private var mView: View? = null
     private var page: TouchableWebView? = null
@@ -208,7 +210,6 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
                             formats
                         ) {
                             override fun onItemClicked(vidFormatItem: VidFormatItem?) {
-
                                 viewModel!!.selectedItem = (vidFormatItem)!!
                                 DownloadPathDialogFragment().show(
                                     childFragmentManager,
@@ -236,9 +237,7 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
             }
             mView = inflater.inflate(R.layout.browser_lay, container, false)
             viewModel = ViewModelProvider(this)[VidInfoViewModel::class.java]
-            downloadsViewModel = ViewModelProvider(this).get(
-                DownloadsViewModel::class.java
-            )
+            downloadsViewModel = ViewModelProvider(this)[DownloadsViewModel::class.java]
             mView!!.visibility = visibility
             if (page == null) {
                 page = mView!!.findViewById(R.id.page)
@@ -610,6 +609,11 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
             Toast.makeText(context, R.string.invalid_download_location, Toast.LENGTH_SHORT).show()
         }else{
             removeDialog()
+            viewModel!!.startDownload(
+                viewModel!!.selectedItem,
+                (path),
+                (activity)!!,
+            )
         }
     }
 
@@ -638,7 +642,6 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
                     viewModel!!.selectedItem,
                     uri.toString(),
                     (requireActivity()),
-                    viewLifecycleOwner
                 )
             }
         }

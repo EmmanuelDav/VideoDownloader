@@ -9,12 +9,16 @@ import android.media.MediaScannerConnection.OnScanCompletedListener
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.util.Log
 import android.view.*
 import android.view.View.OnLongClickListener
 import android.webkit.MimeTypeMap
 import android.widget.*
-import androidx.core.content.FileProvider
+import androidx.annotation.RequiresApi
 import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -33,16 +37,16 @@ import com.cyberIyke.allvideodowloader.helper.WebConnect
 import com.cyberIyke.allvideodowloader.interfaces.DownloadInterface
 import com.cyberIyke.allvideodowloader.utils.CustomProgressBarDrawable
 import com.cyberIyke.allvideodowloader.utils.Utils
+import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getLocalFilePathFromContentUri
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLengthFile
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
 import com.cyberIyke.allvideodowloader.work.CancelReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import wseemann.media.FFmpegMediaMetadataRetriever
 import java.io.File
-import java.io.IOException
 import java.io.OutputStream
+import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -65,7 +69,7 @@ class AllDownloadFragment : Fragment() {
     lateinit var renameVideoPref: RenameVideoPref
     var progressReceiver: BroadcastReceiver? = null
     private var mView: View? = null
-    var downloadProgress : DownloadProgressDao? = null
+    var downloadProgress: DownloadProgressDao? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -104,7 +108,8 @@ class AllDownloadFragment : Fragment() {
                 dialog.dismiss()
                 for (download in selectedList) {
                     val file = DocumentFile.fromSingleUri(
-                        requireActivity().applicationContext, Uri.parse(download.download!!.downloadedPath)
+                        requireActivity().applicationContext,
+                        Uri.parse(download.download!!.downloadedPath)
                     )
                     file?.takeIf { it.exists() }?.delete()
                     downloadAdapter.downloadList.remove(download)
@@ -130,20 +135,11 @@ class AllDownloadFragment : Fragment() {
 
         progressReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
-                if ((intent.action == "DOWNLOAD_PROGRESS")) {
+                if (intent.action == "DOWNLOAD_PROGRESS") {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        val downloadInfoArrayList: ArrayList<DownloadProgress>? =
-                            intent.getParcelableArrayListExtra(
-                                "downloadList",
-                                DownloadProgress::class.java
-                            )
-                        downloadInfoArrayList!!.forEach {
-                            CoroutineScope(Dispatchers.IO).launch {
-                                downloadProgress!!.update(
-                                    it
-                                )
-                            }
-                        }
+                        handleDownloadProgress(intent)
+                    } else {
+                        handleDownloadProgressIn(intent)
                     }
                 }
             }
@@ -154,6 +150,28 @@ class AllDownloadFragment : Fragment() {
                 IntentFilter("DOWNLOAD_PROGRESS")
             )
         return mView!!
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun handleDownloadProgress(intent: Intent) {
+        val downloadInfoArrayList: ArrayList<DownloadProgress>? =
+            intent.getParcelableArrayListExtra("downloadList", DownloadProgress::class.java)
+        downloadInfoArrayList?.forEach { progress ->
+            CoroutineScope(Dispatchers.IO).launch {
+                downloadProgress?.update(progress)
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    fun handleDownloadProgressIn(intent: Intent) {
+        val downloadInfoArrayList: ArrayList<DownloadProgress>? =
+            intent.getParcelableArrayListExtra("downloadList")
+        downloadInfoArrayList?.forEach { progress ->
+            CoroutineScope(Dispatchers.IO).launch {
+                downloadProgress?.update(progress)
+            }
+        }
     }
 
     fun unSelectAll() {
@@ -196,7 +214,7 @@ class AllDownloadFragment : Fragment() {
         }
         downloadsViewModel!!.allProgress.observe(viewLifecycleOwner) {
             val list = kotlin.collections.ArrayList(it)
-            downloadAdapter.loadProgress(list!!)
+            downloadAdapter.loadProgress(list)
         }
     }
 
@@ -208,8 +226,8 @@ class AllDownloadFragment : Fragment() {
         var progressViewHolder: ProgressViewHolder? = null
 
         fun loadProgress(downloadDataList: ArrayList<DownloadProgress>?) {
-                progressList = downloadDataList
-                notifyDataSetChanged()
+            progressList = downloadDataList
+            notifyDataSetChanged()
         }
 
         fun addDownload(download: Download) {
@@ -273,7 +291,7 @@ class AllDownloadFragment : Fragment() {
                     )
                 )
                 var tempFile = File(downloadData.download!!.downloadedPath)
-                val file: File = tempFile
+                val file = tempFile
                 Glide.with((activity)!!).load(downloadData.download!!.thumbnail)
                     .into(holder.imgVideo)
                 val strRename: String? =
@@ -284,6 +302,7 @@ class AllDownloadFragment : Fragment() {
                         tempFile = desFile
                     }
                 }
+                holder.edtSearch.setText(downloadData.download!!.url)
                 holder.downloadVideoName.text = downloadData.download!!.name
                 holder.imgVideo.setOnClickListener(object : View.OnClickListener {
                     override fun onClick(v: View?) {
@@ -306,7 +325,8 @@ class AllDownloadFragment : Fragment() {
                         if (downloaded) {
                             MediaScannerConnection.scanFile(
                                 activity,
-                                arrayOf(documentFile.toString()), null) { path: String?, uri: Uri? ->
+                                arrayOf(documentFile.toString()), null
+                            ) { path: String?, uri: Uri? ->
                                 downloadsViewModel!!.viewContent(
                                     downloadData.download!!.downloadedPath, (context)!!
                                 )
@@ -407,20 +427,13 @@ class AllDownloadFragment : Fragment() {
                                 R.id.menu_share -> shareFile(downloadData.download!!.downloadedPath)
                                 R.id.menu_rename -> renameFile(downloadData, documentFile)
                                 R.id.menu_edit_video -> {
-                                    val videoURI: Uri = FileProvider.getUriForFile(
-                                        (activity)!!,
-                                        BuildConfig.APPLICATION_ID + ".fileprovider",
-                                        file
-                                    )
-                                    val intent: Intent = Intent(Intent.ACTION_EDIT)
-                                    //intent.setDataAndType(videoURI, "video/*");
-                                    intent.setDataAndType(videoURI, getMimeType(videoURI))
+                                    val intent = Intent(Intent.ACTION_EDIT)
+                                    intent.setDataAndType(Uri.parse(downloadData.download!!.downloadedPath), getMimeType(Uri.parse(downloadData.download!!.downloadedPath)))
                                     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                                     try {
-                                        val choose: Intent =
-                                            Intent.createChooser(intent, "Edit with")
+                                        val choose = Intent.createChooser(intent, "Edit with")
                                         startActivityForResult(choose, 1005)
                                     } catch (e: ActivityNotFoundException) {
                                         try {
@@ -438,7 +451,7 @@ class AllDownloadFragment : Fragment() {
                                                 )
                                             )
                                         }
-                                    } catch (e: Exception) {
+                                    } catch (e: java.lang.Exception) {
                                         try {
                                             startActivity(
                                                 Intent(
@@ -455,16 +468,13 @@ class AllDownloadFragment : Fragment() {
                                             )
                                         }
                                     }
+
                                 }
                                 R.id.menu_open_link -> {
                                     activity!!.onBackPressed()
                                     (activity as MainActivity?)!!.isEnableSuggetion = false
-                                    (activity as MainActivity?)!!.navView.selectedItemId =
-                                        R.id.navHome
-                                    WebConnect(
-                                        holder.edtSearch,
-                                        (activity as MainActivity)
-                                    ).connect()
+                                    (activity as MainActivity?)!!.navView.selectedItemId = R.id.navHome
+                                    WebConnect(holder.edtSearch, (activity as MainActivity)).connect()
                                 }
                                 R.id.menu_delete -> {
                                     val dialog: Dialog = Dialog((activity)!!)
@@ -534,8 +544,8 @@ class AllDownloadFragment : Fragment() {
                                 downloaded = true
                                 holder.imgCancel.visibility = View.VISIBLE
                                 holder.imgCancel.visibility = View.GONE
-                                holder.downloadProgressBar.visibility = View.GONE
-                                holder.downloadProgressBar1.visibility = View.GONE
+                                holder.downloadProgressBar.visibility = View.INVISIBLE
+                                holder.downloadProgressBar1.visibility = View.INVISIBLE
                                 holder.txtDuration.visibility = View.VISIBLE
                                 holder.imgMore.visibility = View.VISIBLE
                                 val dateString: String = SimpleDateFormat("MMMM dd yyyy").format(
@@ -547,7 +557,8 @@ class AllDownloadFragment : Fragment() {
                                     downloadData.download!!.downloadedSize
                                 ) + "  " + dateString
                                 holder.downloadTextSize.text = strDescComplete
-                                holder.txtDuration.text = Utils.formatDuration(downloadData.download!!.duration)
+                                holder.txtDuration.text =
+                                    Utils.formatDuration(downloadData.download!!.duration)
                             }
                             WorkInfo.State.CANCELLED -> {
                                 val strDesc2: String =
@@ -585,21 +596,48 @@ class AllDownloadFragment : Fragment() {
             } else if (itemHolder is ProgressViewHolder) {
                 progressViewHolder = itemHolder
                 val downloadInfo: DownloadProgress = progressList!![position]
-                if (downloadInfo.progress <= 0  && downloadInfo.line.contains("download waiting.....")){
-                    progressViewHolder!!.downloadProgressBar1.progressDrawable = CustomProgressBarDrawable(requireContext().getColor(R.color.primary_green))
+                if (downloadInfo.line.contains("download waiting.....")) {
+                    progressViewHolder!!.downloadProgressBar1.progressDrawable =
+                        CustomProgressBarDrawable(requireContext().getColor(R.color.primary_green))
                     progressViewHolder!!.downloadProgressBar1.visibility = View.VISIBLE
                     progressViewHolder!!.downloadProgressBar.visibility = View.GONE
-                }else{
+                } else {
                     progressViewHolder!!.downloadProgressBar1.visibility = View.GONE
                     progressViewHolder!!.downloadProgressBar.visibility = View.VISIBLE
                     progressViewHolder!!.downloadProgressBar.progress = downloadInfo.progress
                 }
-                progressViewHolder!!.downloadSpeed.text = ""
-                progressViewHolder!!.downloadSize.text = ""
+                val result = Utils.extractPercentageAndMB(downloadInfo.line)
+                if (result != null) {
+                    val (percentage, sizeInMB, speedInKiB) = result
+                    val mb = String.format("%.2f MB/S", speedInKiB / 1024)
+                    val text = "$mb+${speedInKiB}KB/S"
+                    val builder = SpannableStringBuilder(text)
+                    val start = 0
+                    val end = mb.length
+                    builder.setSpan(
+                        StyleSpan(Typeface.BOLD),
+                        start,
+                        end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    builder.setSpan(
+                        ForegroundColorSpan(Color.parseColor("#00a69c")),
+                        start,
+                        end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    progressViewHolder!!.downloadSize.text = "$percentage %/$sizeInMB MB"
+                    progressViewHolder!!.downloadSpeed.text = builder
+                } else {
+                    progressViewHolder!!.downloadSize.text = "0.00%/0.00MB"
+                    Log.d(TAG, "onBindViewHolder: ${downloadInfo.size}")
+                    progressViewHolder!!.downloadSpeed.text = "0.00KB/S+0.00MB/S"
+                }
                 progressViewHolder!!.imgSelect.visibility = View.GONE
                 progressViewHolder!!.imgMore.visibility = View.GONE
                 progressViewHolder!!.downloadVideoName.text = downloadInfo.name
-                Glide.with(requireContext()).load(downloadInfo.thumbnail).into(progressViewHolder!!.imgVideo)
+                Glide.with(requireContext()).load(downloadInfo.thumbnail)
+                    .into(progressViewHolder!!.imgVideo)
                 progressViewHolder!!.imgCancel.setOnClickListener {
                     val cancelIntent = Intent(context, CancelReceiver::class.java)
                     cancelIntent.putExtra("taskId", downloadInfo.taskId)
@@ -609,7 +647,7 @@ class AllDownloadFragment : Fragment() {
                         downloadProgress!!.delete(downloadInfo)
                     }
                 }
-                if (downloadInfo.progress == 100){
+                if (downloadInfo.progress == 100) {
                     CoroutineScope(Dispatchers.IO).launch {
                         downloadProgress!!.delete(downloadInfo)
                     }
@@ -771,22 +809,6 @@ class AllDownloadFragment : Fragment() {
                 Toast.makeText(activity, "No App Available", Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    @Throws(IOException::class)
-    fun getFileDuration(file: String?, context: Context?): Long {
-        var result: Long = 0
-        var mFFmpegMediaMetadataRetrieve: FFmpegMediaMetadataRetriever? = null
-        try {
-            mFFmpegMediaMetadataRetrieve = FFmpegMediaMetadataRetriever()
-            mFFmpegMediaMetadataRetrieve.setDataSource(file)
-            val mVideoDuration: String =
-                mFFmpegMediaMetadataRetrieve.extractMetadata(FFmpegMediaMetadataRetriever.METADATA_KEY_DURATION)
-            result = mVideoDuration.toLong()
-        } catch (e: RuntimeException) {
-            e.printStackTrace()
-        }
-        return result
     }
 
     fun getMimeType(uri: Uri): String? {

@@ -4,19 +4,28 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.net.Uri
 import android.os.IBinder
+import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.util.TypedValue
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
+import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import com.cyberIyke.allvideodowloader.R
 import com.cyberIyke.allvideodowloader.model.Format
 import com.yausername.youtubedl_android.mapper.VideoInfo
+
 import kotlinx.coroutines.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
@@ -25,6 +34,7 @@ import java.security.cert.X509Certificate
 import java.text.DecimalFormat
 import java.util.*
 import javax.net.ssl.*
+
 
 class Utils(private var context: Context) {
 
@@ -214,7 +224,11 @@ class Utils(private var context: Context) {
             val hours = durationInSeconds / 3600
             val minutes = (durationInSeconds % 3600) / 60
             val seconds = durationInSeconds % 60
-            return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            return if (hours > 0) {
+                String.format("%d:%02d:%02d", hours, minutes, seconds)
+            } else {
+                String.format("0%d:%02d", minutes, seconds)
+            }
         }
 
         private fun estimateVideoSize(durationInSeconds: Int): List<String> {
@@ -260,6 +274,47 @@ class Utils(private var context: Context) {
             val downloadedMB = (downloadedBytes / (1024 * 1024)).toInt()
             val remainingMB = (totalFileSizeMB - downloadedMB).toInt()
             return Pair(downloadedMB, remainingMB)
+        }
+
+        fun extractPercentageAndMB(input: String): Triple<Double, Double, Double>? {
+            val pattern = """(\d+\.\d+)%.*?(\d+\.\d+)[KMG]?iB.*?(\d+\.\d+)[KMG]?iB/s.*""".toRegex()
+
+            val matchResult = pattern.find(input)
+            if (matchResult != null) {
+                val percentage = matchResult.groupValues[1].toDouble()
+                val size = matchResult.groupValues[2].toDouble()
+                val speed = matchResult.groupValues[3].toDouble()
+
+                return Triple(percentage, size, speed)
+            }
+            return null
+        }
+
+        fun getLocalFilePathFromContentUri(context: Context, contentUri: Uri): String? {
+            val docFile = DocumentFile.fromSingleUri(context, contentUri)
+            val fileName = docFile?.name ?: return null
+            val outputFile = File(context.externalCacheDir, fileName)
+            val inputStream = context.contentResolver.openInputStream(contentUri)
+            val outputStream = FileOutputStream(outputFile)
+            try {
+                val buffer = ByteArray(4 * 1024) // or other buffer size
+                var read: Int
+                while (inputStream?.read(buffer).also { read = it ?: 0 } != -1) {
+                    outputStream.write(buffer, 0, read)
+                }
+                outputStream.flush()
+            } catch (e: IOException) {
+                e.printStackTrace()
+                return null
+            } finally {
+                try {
+                    outputStream.close()
+                    inputStream?.close()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+            return outputFile.path
         }
     }
 }
