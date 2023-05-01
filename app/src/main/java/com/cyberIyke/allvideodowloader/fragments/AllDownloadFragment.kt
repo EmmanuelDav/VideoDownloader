@@ -69,7 +69,7 @@ class AllDownloadFragment : Fragment() {
     lateinit var renameVideoPref: RenameVideoPref
     var progressReceiver: BroadcastReceiver? = null
     private var mView: View? = null
-    var downloadProgress: DownloadProgressDao? = null
+    var downloadProgress: DownloadProgressRepo? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -81,7 +81,8 @@ class AllDownloadFragment : Fragment() {
         renameVideoPref = RenameVideoPref(requireActivity())
         downloadsList = mView!!.findViewById(R.id.downloadsList)
         downloadAdapter = DownloadAdapter()
-        downloadProgress = AppDatabase.getDatabase(requireContext()).downloadProgressDao()
+        val progressDao = AppDatabase.getDatabase(requireContext()).downloadProgressDao()
+        downloadProgress = DownloadProgressRepo(progressDao)
         downloadsList.layoutManager = LinearLayoutManager(activity)
         downloadsList.adapter = downloadAdapter
         llSelectAll = mView!!.findViewById(R.id.llSelectAll)

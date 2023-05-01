@@ -13,6 +13,8 @@ import androidx.work.*
 import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.database.AppDatabase
 import com.cyberIyke.allvideodowloader.database.DownloadProgress
+import com.cyberIyke.allvideodowloader.database.DownloadProgressDao
+import com.cyberIyke.allvideodowloader.database.DownloadProgressRepo
 import com.cyberIyke.allvideodowloader.model.DownloadInfo
 import com.cyberIyke.allvideodowloader.model.VidInfoItem
 import com.cyberIyke.allvideodowloader.work.DownloadWorker
@@ -89,8 +91,8 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
         }
         CoroutineScope(Dispatchers.IO).launch {
             val downloadProgress = AppDatabase.getDatabase(activity).downloadProgressDao()
-            downloadProgress.insert(DownloadProgress(vidInfo.thumbnail!!, vidInfo.id!!, vidInfo.title!!, 0,
-                vidInfo.fileSizeApproximate,"download waiting....."))
+            val download = DownloadProgressRepo(downloadProgress)
+            download.insert(DownloadProgress(vidInfo.thumbnail!!, vidInfo.id!!, vidInfo.title!!, 0, vidInfo.fileSizeApproximate,"download waiting....."))
         }
 
         val workData = workDataOf(
