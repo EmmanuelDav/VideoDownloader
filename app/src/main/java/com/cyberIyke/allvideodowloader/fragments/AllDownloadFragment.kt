@@ -34,19 +34,17 @@ import com.cyberIyke.allvideodowloader.activities.MainActivity
 import com.cyberIyke.allvideodowloader.database.*
 import com.cyberIyke.allvideodowloader.helper.RenameVideoPref
 import com.cyberIyke.allvideodowloader.helper.WebConnect
-import com.cyberIyke.allvideodowloader.interfaces.DownloadInterface
 import com.cyberIyke.allvideodowloader.utils.CustomProgressBarDrawable
 import com.cyberIyke.allvideodowloader.utils.Utils
-import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getLocalFilePathFromContentUri
 import com.cyberIyke.allvideodowloader.utils.Utils.Companion.getStringSizeLengthFile
 import com.cyberIyke.allvideodowloader.viewModel.DownloadsViewModel
+import com.cyberIyke.allvideodowloader.viewModel.VidInfoViewModel
 import com.cyberIyke.allvideodowloader.work.CancelReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.OutputStream
-import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -57,11 +55,11 @@ class AllDownloadFragment : Fragment() {
     lateinit var downloadsList: RecyclerView
     lateinit var downloadAdapter: DownloadAdapter
     var downloadsViewModel: DownloadsViewModel? = null
+    var downloadProgress: VidInfoViewModel? = null
     var selectedList: ArrayList<DownloadData> = ArrayList()
     var isSelectedMode: Boolean = false
     private lateinit var llBottom: LinearLayout
     private lateinit var rlTopSelected: RelativeLayout
-    var downloadInterface: DownloadInterface? = null
     lateinit var txtSelectedCount: TextView
     lateinit var imgCancel: ImageView
     lateinit var llDeleteSelected: LinearLayout
@@ -69,7 +67,6 @@ class AllDownloadFragment : Fragment() {
     lateinit var renameVideoPref: RenameVideoPref
     var progressReceiver: BroadcastReceiver? = null
     private var mView: View? = null
-    var downloadProgress: DownloadProgressRepo? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -78,11 +75,10 @@ class AllDownloadFragment : Fragment() {
     ): View {
         mView = inflater.inflate(R.layout.fragment_all_download, container, false)
         downloadsViewModel = ViewModelProvider(this)[DownloadsViewModel::class.java]
+        downloadProgress = ViewModelProvider(this)[VidInfoViewModel::class.java]
         renameVideoPref = RenameVideoPref(requireActivity())
         downloadsList = mView!!.findViewById(R.id.downloadsList)
         downloadAdapter = DownloadAdapter()
-        val progressDao = AppDatabase.getDatabase(requireContext()).downloadProgressDao()
-        downloadProgress = DownloadProgressRepo(progressDao)
         downloadsList.layoutManager = LinearLayoutManager(activity)
         downloadsList.adapter = downloadAdapter
         llSelectAll = mView!!.findViewById(R.id.llSelectAll)

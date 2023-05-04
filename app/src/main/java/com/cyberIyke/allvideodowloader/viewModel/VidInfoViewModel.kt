@@ -11,10 +11,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.cyberIyke.allvideodowloader.MyApp
-import com.cyberIyke.allvideodowloader.database.AppDatabase
-import com.cyberIyke.allvideodowloader.database.DownloadProgress
-import com.cyberIyke.allvideodowloader.database.DownloadProgressDao
-import com.cyberIyke.allvideodowloader.database.DownloadProgressRepo
+import com.cyberIyke.allvideodowloader.database.*
 import com.cyberIyke.allvideodowloader.model.DownloadInfo
 import com.cyberIyke.allvideodowloader.model.VidInfoItem
 import com.cyberIyke.allvideodowloader.work.DownloadWorker
@@ -30,6 +27,25 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
     val vidFormats: MutableLiveData<VideoInfo?> = MutableLiveData()
     val loadState: MutableLiveData<LoadState> = MutableLiveData(LoadState.INITIAL)
     val thumbnail: MutableLiveData<String> = MutableLiveData()
+    private val progressRepo: DownloadProgressRepo
+
+    init {
+        val downloadProgress = AppDatabase.getDatabase(context).downloadProgressDao()
+        progressRepo = DownloadProgressRepo(downloadProgress)
+    }
+
+    fun insert(word: DownloadProgress) = viewModelScope.launch(Dispatchers.IO) {
+        progressRepo.insert(word)
+    }
+
+    fun update(word: DownloadProgress) = viewModelScope.launch(Dispatchers.IO) {
+        progressRepo.update(word)
+    }
+
+    fun delete(word: DownloadProgress) = viewModelScope.launch(Dispatchers.IO) {
+        progressRepo.delete(word)
+    }
+
 
     lateinit var selectedItem: VidInfoItem.VidFormatItem
 
@@ -89,11 +105,17 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             ).show()
             return
         }
-        CoroutineScope(Dispatchers.IO).launch {
-            val downloadProgress = AppDatabase.getDatabase(activity).downloadProgressDao()
-            val download = DownloadProgressRepo(downloadProgress)
-            download.insert(DownloadProgress(vidInfo.thumbnail!!, vidInfo.id!!, vidInfo.title!!, 0, vidInfo.fileSizeApproximate,"download waiting....."))
-        }
+
+        insert(
+            DownloadProgress(
+                vidInfo.thumbnail!!,
+                vidInfo.id!!,
+                vidInfo.title!!,
+                0,
+                vidInfo.fileSizeApproximate,
+                "download waiting....."
+            )
+        )
 
         val workData = workDataOf(
             DownloadWorker.urlKey to vidInfo.webpageUrl,

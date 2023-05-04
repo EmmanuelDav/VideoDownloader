@@ -258,27 +258,18 @@ class Utils(private var context: Context) {
             val videoFormats = resources.getStringArray(R.array.video_formats)
             val size = estimateVideoSize(videoInfo.duration)
 
-            if (videoFormats.isNotEmpty() && size.isNotEmpty()) {
-                for (i in 0 until minOf(videoFormats.size, size.size)) {
-                    formats.add(Format(videoFormats[i], "", "", "", size[i], 0, ""))
+            if (videoInfo.formats!!.size <= 1){
+                if (videoFormats.isNotEmpty() && size.isNotEmpty()) {
+                    for (i in 0 until minOf(videoFormats.size, size.size)) {
+                        formats.add(Format(videoFormats[i], "", "", "", size[i], 0, ""))
+                    }
                 }
             }
-
             formats
-        }
-
-        fun calculateDownloadedAndRemainingMB(
-            totalFileSizeMB: Long,
-            downloadedBytes: Long
-        ): Pair<Int?, Int?> {
-            val downloadedMB = (downloadedBytes / (1024 * 1024)).toInt()
-            val remainingMB = (totalFileSizeMB - downloadedMB).toInt()
-            return Pair(downloadedMB, remainingMB)
         }
 
         fun extractPercentageAndMB(input: String): Triple<Double, Double, Double>? {
             val pattern = """(\d+\.\d+)%.*?(\d+\.\d+)[KMG]?iB.*?(\d+\.\d+)[KMG]?iB/s.*""".toRegex()
-
             val matchResult = pattern.find(input)
             if (matchResult != null) {
                 val percentage = matchResult.groupValues[1].toDouble()
@@ -288,33 +279,6 @@ class Utils(private var context: Context) {
                 return Triple(percentage, size, speed)
             }
             return null
-        }
-
-        fun getLocalFilePathFromContentUri(context: Context, contentUri: Uri): String? {
-            val docFile = DocumentFile.fromSingleUri(context, contentUri)
-            val fileName = docFile?.name ?: return null
-            val outputFile = File(context.externalCacheDir, fileName)
-            val inputStream = context.contentResolver.openInputStream(contentUri)
-            val outputStream = FileOutputStream(outputFile)
-            try {
-                val buffer = ByteArray(4 * 1024) // or other buffer size
-                var read: Int
-                while (inputStream?.read(buffer).also { read = it ?: 0 } != -1) {
-                    outputStream.write(buffer, 0, read)
-                }
-                outputStream.flush()
-            } catch (e: IOException) {
-                e.printStackTrace()
-                return null
-            } finally {
-                try {
-                    outputStream.close()
-                    inputStream?.close()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
-            return outputFile.path
         }
     }
 }

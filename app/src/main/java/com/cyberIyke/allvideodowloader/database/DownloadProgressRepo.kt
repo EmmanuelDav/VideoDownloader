@@ -6,7 +6,6 @@ class DownloadProgressRepo(private val downloadsDao: DownloadProgressDao) {
 
     val allDownloads: LiveData<List<DownloadProgress>> = downloadsDao.getAllDownloads()
 
-
     suspend fun insert(download: DownloadProgress) {
         downloadsDao.insert(download)
     }

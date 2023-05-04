@@ -543,12 +543,14 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
                 animY.start()
             }
         } else {
-            requireActivity().runOnUiThread {
-                Glide.with((requireActivity()))
-                    .load(R.drawable.ic_download_dis)
-                    .into((videosFoundHUD)!!)
-                if (foundVideosWindow!!.visibility == View.VISIBLE) foundVideosWindow!!.visibility =
-                    View.GONE
+            if (isAdded){
+                requireActivity().runOnUiThread {
+                    Glide.with((requireActivity()))
+                        .load(R.drawable.ic_download_dis)
+                        .into((videosFoundHUD)!!)
+                    if (foundVideosWindow!!.visibility == View.VISIBLE) foundVideosWindow!!.visibility =
+                        View.GONE
+                }
             }
         }
     }
@@ -591,7 +593,7 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
 
     override fun onResume() {
         super.onResume()
-        if (baseActivity!!.navView.selectedItemId == R.id.navHome && !baseActivity!!.isDisableOnResume) {
+        if (baseActivity?.navView?.selectedItemId == R.id.navHome && !baseActivity!!.isDisableOnResume) {
             if (page != null) page!!.onResume()
         }
         Handler().postDelayed({ baseActivity!!.isDisableOnResume = false }, 500)

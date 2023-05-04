@@ -10,6 +10,7 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.preference.PreferenceManager
 import android.util.Log
 import android.view.*
 import android.view.inputmethod.EditorInfo
@@ -37,6 +38,7 @@ import com.cyberIyke.allvideodowloader.views.NotificationBadge
 import com.cyberIyke.allvideodowloader.views.cardstack.CardStackView
 import com.cyberIyke.allvideodowloader.views.cardstack.StackAdapter
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.gson.Gson
 import java.io.*
 
 class BrowserManager(val activity: Activity) : BaseFragment() {
@@ -77,30 +79,15 @@ class BrowserManager(val activity: Activity) : BaseFragment() {
         cardWindowTab = relativeLayout.findViewById(R.id.cardWindowTab)
         browserTabAdapter = BrowserTabAdapter(getActivity())
         cardWindowTab.setAdapter(browserTabAdapter)
-        val file = File(requireActivity().filesDir, "ad_filters.dat")
-        try {
-            if (file.exists()) {
-                Log.d("debug", "file exists")
-                val fileInputStream = FileInputStream(file)
-                ObjectInputStream(fileInputStream).use{ objectInputStream ->
-                    adBlock = objectInputStream.readObject() as AdBlocker
-                }
-                fileInputStream.close()
-            } else {
-                adBlock = AdBlocker()
-                val fileOutputStream = FileOutputStream(file)
-                ObjectOutputStream(fileOutputStream).use { objectOutputStream ->
-                    objectOutputStream.writeObject(
-                        adBlock
-                    )
-                }
-                fileOutputStream.close()
-            }
-        } catch (ignored: IOException) {
-            //
-            Log.d(TAG, "onCreate: "+ignored.message)
-        } catch (ignored: ClassNotFoundException) {
+        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val adBlockerJson = sharedPrefs.getString("adBlocker", null)
+        adBlock = if (adBlockerJson != null) {
+            Gson().fromJson(adBlockerJson, AdBlocker::class.java)
+        } else {
+            AdBlocker()
         }
+        val adBlockerJsonn = Gson().toJson(adBlock)
+        sharedPrefs.edit().putString("adBlocker", adBlockerJsonn).apply()
         updateAdFilters()
         blockedWebsites = listOf(*resources.getStringArray(R.array.blocked_sites))
     }

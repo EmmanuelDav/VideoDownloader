@@ -70,8 +70,6 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) : CoroutineW
         var destUri: Uri? = null
 
 
-
-
         try {
             YoutubeDL.getInstance().execute(request, taskId) { progress, _, line ->
                 val index = downloadList.indexOfFirst { it.name == name }
