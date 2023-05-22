@@ -280,5 +280,19 @@ class Utils(private var context: Context) {
             }
             return null
         }
+
+        fun checkForPlaylist(url: String): String? {
+            if (url.contains("dailymotion.com")) {
+                if (url.contains("playlist")) {
+                    val questionMarkIndex = url.indexOf("?")
+                    return if (questionMarkIndex != -1) {
+                        url.substring(0, questionMarkIndex)
+                    } else {
+                        url
+                    }
+                }
+            }
+            return url
+        }
     }
 }

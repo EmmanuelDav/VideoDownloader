@@ -14,6 +14,7 @@ import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.database.*
 import com.cyberIyke.allvideodowloader.model.DownloadInfo
 import com.cyberIyke.allvideodowloader.model.VidInfoItem
+import com.cyberIyke.allvideodowloader.utils.Utils
 import com.cyberIyke.allvideodowloader.work.DownloadWorker
 import com.google.gson.Gson
 import com.yausername.youtubedl_android.YoutubeDL
@@ -70,7 +71,8 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             Log.d(MyApp.TAG, "fetchInfo: In Progress")
             try {
                 withContext(Dispatchers.IO) {
-                    vidInfo = YoutubeDL.getInstance().getInfo(url)
+                    val url  = Utils.checkForPlaylist(url)
+                    vidInfo = YoutubeDL.getInstance().getInfo(url!!)
                 }
             } catch (e: Exception) {
                 updateLoading(LoadState.FAILED)
