@@ -69,7 +69,8 @@ import javax.net.ssl.SSLSocketFactory
 import kotlin.collections.ArrayList
 
 
-class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickListener, OnBackPressedListener, DialogListener {
+class BrowserWindow(val activity: Activity?) : BaseFragment(), View.OnClickListener,
+    OnBackPressedListener, DialogListener {
 
     constructor() : this(null)
 
@@ -187,7 +188,7 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
 
             mVideoInfo = videoInfo
             CoroutineScope(Dispatchers.IO).launch {
-               val formats = generateFormatsList(videoInfo, resources)
+                val formats = generateFormatsList(videoInfo, resources)
                 withContext(Dispatchers.Main) {
                     if (videoList != null) {
                         videoList!!.recreateVideoList(
@@ -211,14 +212,23 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
                         ) {
                             override fun onItemClicked(vidFormatItem: VidFormatItem?) {
                                 viewModel!!.selectedItem = (vidFormatItem)!!
-                                DownloadPathDialogFragment().show(
-                                    childFragmentManager,
-                                    "download_location_chooser_dialog"
-                                )
+                                val path: String? =
+                                    PreferenceManager.getDefaultSharedPreferences(context)
+                                        .getString(getString(R.string.download_location_key), null)
+                                if (path == null) {
+                                    DownloadPathDialogFragment().show(
+                                        childFragmentManager,
+                                        "download_location_chooser_dialog"
+                                    )
+                                } else {
+                                    removeDialog()
+                                    viewModel?.selectedItem?.let {
+                                        viewModel!!.startDownload(it, (path), (activity))
+                                    }
+                                }
                             }
                         }
                     }
-
                 }
                 updateFoundVideosBar()
             }
@@ -543,7 +553,7 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
                 animY.start()
             }
         } else {
-            if (isAdded){
+            if (isAdded) {
                 requireActivity().runOnUiThread {
                     Glide.with((requireActivity()))
                         .load(R.drawable.ic_download_dis)
@@ -609,13 +619,15 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
             .getString(getString(R.string.download_location_key), null)
         if (path == null) {
             Toast.makeText(context, R.string.invalid_download_location, Toast.LENGTH_SHORT).show()
-        }else{
+        } else {
             removeDialog()
-            viewModel!!.startDownload(
-                viewModel!!.selectedItem,
-                (path),
-                (activity)!!,
-            )
+            viewModel?.selectedItem?.let {
+                viewModel!!.startDownload(
+                    it,
+                    (path),
+                    (activity)!!,
+                )
+            }
         }
     }
 
@@ -640,11 +652,13 @@ class BrowserWindow ( val activity: Activity?) : BaseFragment(), View.OnClickLis
                 )
                 setDefaultDownloadLocation(uri.toString())
                 removeDialog()
-                viewModel!!.startDownload(
-                    viewModel!!.selectedItem,
-                    uri.toString(),
-                    (requireActivity()),
-                )
+                viewModel?.selectedItem?.let {
+                    viewModel!!.startDownload(
+                        it,
+                        uri.toString(),
+                        (requireActivity()),
+                    )
+                }
             }
         }
     }

@@ -108,7 +108,7 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
 
         insert(
             DownloadProgress(
-                vidInfo.thumbnail!!,
+                vidFormat.url!!,
                 vidInfo.id!!,
                 vidInfo.title!!,
                 0,
