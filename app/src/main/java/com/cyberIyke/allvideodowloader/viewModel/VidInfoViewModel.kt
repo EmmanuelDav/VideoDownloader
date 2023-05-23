@@ -72,7 +72,6 @@ class VidInfoViewModel(val context: Application) : AndroidViewModel(context) {
             try {
                 withContext(Dispatchers.IO) {
                     val url  = Utils.checkForPlaylist(url)
-
                     vidInfo = YoutubeDL.getInstance().getInfo(url!!)
                 }
             } catch (e: Exception) {

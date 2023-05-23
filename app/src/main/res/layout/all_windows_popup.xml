@@ -37,7 +37,10 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/llAdd"
         android:layout_below="@+id/llCloseAll"
-        android:layout_margin="@dimen/_10sdp" />
+        android:layout_marginStart="@dimen/_10sdp"
+        android:layout_marginTop="@dimen/_10sdp"
+        android:layout_marginEnd="@dimen/_10sdp"
+        android:layout_marginBottom="@dimen/_10sdp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvRecent"

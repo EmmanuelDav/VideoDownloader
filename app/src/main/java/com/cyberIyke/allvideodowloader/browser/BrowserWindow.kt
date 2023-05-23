@@ -304,6 +304,9 @@ class BrowserWindow(val activity: Activity?) : BaseFragment(), View.OnClickListe
                         dialog.window!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
                         return true
                     }
+                    if (request.url.toString().startsWith("fb://")) {
+                        return true;
+                    }
                     return super.shouldOverrideUrlLoading(view, request)
                 }
 
