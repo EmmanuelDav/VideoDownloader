@@ -80,7 +80,7 @@ dependencies {
 
 
 
-    implementation 'com.google.android.gms:play-services-ads:19.8.0'
+    implementation 'com.google.android.gms:play-services-ads:22.4.0'
     /*admob open app ad*/
     def lifecycle_version = "2.2.0"
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
@@ -140,9 +140,8 @@ dependencies {
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever-core:1.0.19'
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever-native:1.0.19'
 
-    implementation "com.github.JunkFood02.youtubedl-android:library:$youtubedlAndroidVer"
-    implementation "com.github.JunkFood02.youtubedl-android:ffmpeg:$youtubedlAndroidVer"
-    implementation "com.github.JunkFood02.youtubedl-android:aria2c:$youtubedlAndroidVer"
+    implementation "com.github.yausername.youtubedl-android:library:3a0252d88b4ae573068c63c3d08fc52c66102d55"
+    implementation "com.github.yausername.youtubedl-android:ffmpeg:3a0252d88b4ae573068c63c3d08fc52c66102d55"
 
     def arch_lifecycle_version = "2.4.0"
     def work_version = "2.7.0"
