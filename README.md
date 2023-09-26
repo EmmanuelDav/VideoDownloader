@@ -17,8 +17,12 @@ Based on [yausername's youtubedl-android](https://github.com/yausername/youtubed
 
 ## Screenshots
 
-<img src="screenshots/screenshot1.png" width="170"> <img src="screenshots/screenshot11.png" width="170"> <img src="screenshots/screenshot2.png" width="170"> <img src="screenshots/screenshot4.png" width="170"> <img src="screenshots/screenshot5.png" width="170">
-<img src="screenshots/screenshot6.png" width="170">
+<img src="screenshots/Screenshot1.png" width="170"> 
+<img src="screenshots/Screenshot11.png" width="170">
+<img src="screenshots/Screenshot2.png" width="170"> 
+<img src="screenshots/Screenshot4.png" width="170">
+<img src="screenshots/Screenshot5.png" width="170">
+<img src="screenshots/Screenshot6.png" width="170">
 
 
 ## License
