@@ -18,22 +18,22 @@ object AdController {
     var adDisplayCounter = 7
     var nativeAd: UnifiedNativeAd? = null
     fun initAd(context: Context?) {
-        MobileAds.initialize(context) { initializationStatus: InitializationStatus? -> }
+        MobileAds.initialize(context!!) { initializationStatus: InitializationStatus? -> }
     }
 
-    var gadView: AdView? = null
+    private var gadView: AdView? = null
     fun loadBannerAd(context: Context, adContainer: LinearLayout) {
-        AdController.gadView = AdView(context)
-        AdController.gadView!!.adUnitId = context.getString(R.string.admob_banner_ad_id)
-        adContainer.addView(AdController.gadView)
-        AdController.loadBanner(context)
+        gadView = AdView(context)
+        gadView!!.adUnitId = context.getString(R.string.admob_banner_ad_id)
+        adContainer.addView(gadView)
+        loadBanner(context)
     }
 
     private fun loadBanner(context: Context?) {
         val adRequest = AdRequest.Builder().build()
         val adSize = AdController.getAdSize(context as Activity)
-        AdController.gadView!!.adSize = adSize
-        AdController.gadView!!.loadAd(adRequest)
+      //  gadView!!.adSize = adSize
+        gadView!!.loadAd(adRequest)
     }
 
     fun getAdSize(context: Activity): AdSize {
@@ -49,7 +49,7 @@ object AdController {
     fun largeBannerAd(context: Context, adContainer: LinearLayout) {
         val adView = AdView(context)
         val adRequest = AdRequest.Builder().build()
-        adView.adSize = AdSize.LARGE_BANNER
+       // adView.adSize = AdSize.LARGE_BANNER
         adView.adUnitId = context.getString(R.string.admob_banner_ad_id)
         adView.loadAd(adRequest)
         adContainer.addView(adView)

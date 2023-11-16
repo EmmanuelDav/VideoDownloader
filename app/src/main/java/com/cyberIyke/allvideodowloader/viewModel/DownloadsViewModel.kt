@@ -15,8 +15,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.cyberIyke.allvideodowloader.database.*
 import com.cyberIyke.allvideodowloader.work.DeleteWorker
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class DownloadsViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: DownloadsRepository
@@ -49,24 +51,39 @@ class DownloadsViewModel(application: Application) : AndroidViewModel(applicatio
     fun startDelete(id: Long, context: Context) {
         val workTag = "tag_$id"
         val workManager = WorkManager.getInstance(context.applicationContext!!)
-        val state = workManager.getWorkInfosByTag(workTag).get()?.getOrNull(0)?.state
 
-        if (state === WorkInfo.State.RUNNING || state === WorkInfo.State.ENQUEUED) {
-            return
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                // Use withContext to switch to a background thread for the blocking call
+                val workInfos = withContext(Dispatchers.IO) {
+                    workManager.getWorkInfosByTag(workTag).await()
+                }
+
+                val state = workInfos.firstOrNull()?.state
+
+                if (state == WorkInfo.State.RUNNING || state == WorkInfo.State.ENQUEUED) {
+                    return@launch
+                }
+
+                val workData = workDataOf(
+                    DeleteWorker.fileIdKey to id
+                )
+
+                val workRequest = OneTimeWorkRequestBuilder<DeleteWorker>()
+                    .addTag(workTag)
+                    .setInputData(workData)
+                    .build()
+
+                workManager.enqueueUniqueWork(
+                    workTag,
+                    ExistingWorkPolicy.KEEP,
+                    workRequest
+                )
+
+            } catch (e: Exception) {
+                // Handle exceptions
+            }
         }
-        val workData = workDataOf(
-            DeleteWorker.fileIdKey to id
-        )
-        val workRequest = OneTimeWorkRequestBuilder<DeleteWorker>()
-            .addTag(workTag)
-            .setInputData(workData)
-            .build()
-
-        workManager.enqueueUniqueWork(
-            workTag,
-            ExistingWorkPolicy.KEEP,
-            workRequest
-        )
     }
 
     fun viewContent(path: String, context: Context) {

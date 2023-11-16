@@ -25,6 +25,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.work.impl.Schedulers
 import com.cyberIyke.allvideodowloader.BuildConfig
 import com.cyberIyke.allvideodowloader.MyApp
 import com.cyberIyke.allvideodowloader.R
@@ -52,11 +53,16 @@ import com.cyberIyke.allvideodowloader.webservice.SearchModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.gyf.immersionbar.ImmersionBar
-import com.yausername.ffmpeg.FFmpeg
+import com.yausername.youtubedl_android.YoutubeDL
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
+import com.yausername.youtubedl_android.YoutubeDL.UpdateStatus.ALREADY_UP_TO_DATE
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionListener {
@@ -89,6 +95,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
     var suggestionAdapter: SuggestionAdapter? = null
     var isEnableSuggetion: Boolean = false
     var isDisableOnResume: Boolean = false
+    private var isUpdated = false
+    private var preferences: SharedPreferences? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,6 +123,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
         badge.tabSelected(false)
         navView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
         setUPBrowserToolbarView()
+        updateYoutubeDL()
         initViews()
     }
 
@@ -244,6 +253,31 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, OnEditorActionLi
             }
         })
         mBottomSheetDialog.show()
+    }
+
+    private fun updateYoutubeDL() {
+        preferences = getSharedPreferences("youtbe-dl", MODE_PRIVATE);
+        isUpdated = preferences!!.getBoolean("isUpdated", false)
+        if (!isUpdated) {
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    val status = withContext(Dispatchers.IO) {
+                        YoutubeDL.getInstance().updateYoutubeDL(this@MainActivity, YoutubeDL.UpdateChannel._STABLE)
+                    }
+                    when (status) {
+                        YoutubeDL.UpdateStatus.DONE -> {
+                            preferences!!.edit().putBoolean("isUpdated", true).apply()
+                        }
+
+                        else -> {
+
+                        }
+                    }
+                } catch (e: Exception) {
+                    if (BuildConfig.DEBUG) Log.e(TAG, "failed to update", e)
+                }
+            }
+        }
     }
 
     private fun insertDefaultShortcut() {

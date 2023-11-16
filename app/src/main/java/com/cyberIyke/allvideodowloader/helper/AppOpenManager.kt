@@ -47,7 +47,7 @@ class AppOpenManager(private val myApplication: Application) : ActivityLifecycle
         val request = adRequest
         AppOpenAd.load(
             myApplication, currentActivity!!.getString(R.string.admob_open_ad_id), request,
-            AppOpenAd.APP_OPEN_AD_ORIENTATION_PORTRAIT, loadCallback
+            AppOpenAd.APP_OPEN_AD_ORIENTATION_PORTRAIT, loadCallback as AppOpenAdLoadCallback
         )
     }
 
