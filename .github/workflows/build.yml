@@ -20,9 +20,6 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Android-OpenCV-SDK Setup
-        run: ./setupOpenCV.sh
-
       - name: Set execution flag for gradlew
         run: chmod +x gradlew
       - name: Build APK
