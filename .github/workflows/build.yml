@@ -2,8 +2,15 @@ name: Build & Publish Release APK
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - '*'
+      - "v*"
+  workflow_dispatch:  # Manual trigger
+    inputs:
+      tag:
+        description: 'Tag to build and release'
+        required: true
 
 jobs:
   Gradle:
@@ -22,5 +29,5 @@ jobs:
       - name: Releasing using Hub
         uses: kyze8439690/action-release-releaseapk@master
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APP_FOLDER: app
